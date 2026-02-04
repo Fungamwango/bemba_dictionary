@@ -4,6 +4,6 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "bemdic-social"
-database_id = "<your-database-id>"
+database_id = "39749b92-2348-46ec-b460-26c96149a87c"
 # After creating the database with: npx wrangler d1 create bemdic-social
 # Replace <your-database-id> with the actual ID from the output
