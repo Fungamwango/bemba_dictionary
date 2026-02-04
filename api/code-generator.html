@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>BemDic - Subscription Code Generator (ADMIN)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding: 20px; }
+.container { max-width: 500px; margin: 0 auto; }
+h1 { text-align: center; color: #00b894; margin-bottom: 6px; font-size: 22px; }
+.subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 24px; }
+.card { background: #16213e; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.card h2 { font-size: 16px; color: #74b9ff; margin-bottom: 12px; }
+label { display: block; font-size: 13px; color: #aaa; margin-bottom: 4px; }
+input, select { width: 100%; padding: 10px; border: 1px solid #2d3436; border-radius: 8px; background: #0a0a1a; color: #fff; font-size: 15px; margin-bottom: 12px; outline: none; }
+input:focus { border-color: #00b894; }
+button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
+.btn-generate { background: #00b894; color: #fff; }
+.btn-generate:active { background: #00a381; }
+.result-box { background: #0a0a1a; border: 2px dashed #00b894; border-radius: 8px; padding: 16px; text-align: center; margin: 12px 0; }
+.result-code { font-size: 28px; letter-spacing: 4px; color: #00b894; font-weight: bold; font-family: monospace; word-break: break-all; }
+.result-info { font-size: 12px; color: #888; margin-top: 8px; }
+.btn-copy { background: #2d3436; color: #ddd; margin-top: 8px; width: auto; padding: 8px 20px; font-size: 13px; }
+.history { margin-top: 8px; }
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #0a0a1a; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+.history-item .code { font-family: monospace; color: #00b894; font-size: 14px; }
+.history-item .meta { color: #888; font-size: 11px; }
+.warning { background: #e17055; color: #fff; padding: 10px; border-radius: 8px; font-size: 12px; text-align: center; margin-bottom: 16px; }
+.btn-clear { background: #d63031; color: #fff; font-size: 13px; padding: 8px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>BemDic Code Generator</h1>
+  <div class="subtitle">ADMIN ONLY - Do not share this page</div>
+
+  <div class="warning">Keep this page private. The secret key must match the one in api.js (SUB_SECRET).</div>
+
+  <div class="card">
+    <h2>Generate Subscription Code</h2>
+
+    <label>Secret Key (must match SUB_SECRET in api.js)</label>
+    <input type="number" id="secret" value="7391">
+
+    <label>Subscription Duration</label>
+    <select id="duration">
+      <option value="30">30 days (standard)</option>
+      <option value="7">7 days (trial)</option>
+      <option value="14">14 days</option>
+      <option value="60">60 days</option>
+      <option value="90">90 days</option>
+      <option value="365">365 days (1 year)</option>
+    </select>
+
+    <label>Customer Name/Phone (for your records)</label>
+    <input type="text" id="customer" placeholder="e.g. 0962464552 - John">
+
+    <button class="btn-generate" onclick="generateCode()">Generate Code</button>
+
+    <div id="result" style="display:none;">
+      <div class="result-box">
+        <div class="result-code" id="generated-code"></div>
+        <div class="result-info" id="code-info"></div>
+      </div>
+      <div style="text-align:center;">
+        <button class="btn-copy" onclick="copyCode()">Copy Code</button>
+        <button class="btn-copy" onclick="copyMessage()">Copy WhatsApp Message</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Generated Codes History</h2>
+    <div class="history" id="history-list">
+      <div style="color:#888;font-size:13px;text-align:center;">No codes generated yet</div>
+    </div>
+    <button class="btn-clear" onclick="clearHistory()">Clear History</button>
+  </div>
+</div>
+
+<script>
+var generatedCode = '';
+var expiryDate = '';
+
+function daysSinceEpoch(date){
+  if(!date) date = new Date();
+  return Math.floor(date.getTime() / 86400000);
+}
+
+function generateChecksum(str){
+  var sum = 0;
+  for(var i=0; i<str.length; i++){
+    sum = ((sum << 5) - sum + str.charCodeAt(i)) & 0xFFFF;
+  }
+  var hex = sum.toString(16).toUpperCase();
+  while(hex.length < 4) hex = '0' + hex;
+  return hex;
+}
+
+function generateCode(){
+  var secret = parseInt(document.getElementById('secret').value);
+  var days = parseInt(document.getElementById('duration').value);
+  var customer = document.getElementById('customer').value.trim();
+
+  if(isNaN(secret)){
+    alert('Please enter a valid secret key');
+    return;
+  }
+
+  // calculate expiry day
+  var today = daysSinceEpoch();
+  var expiryDay = today + days;
+
+  // encode: XOR with secret, convert to hex
+  var encoded = expiryDay ^ secret;
+  var payload = encoded.toString(16).toUpperCase();
+
+  // add checksum
+  var checksum = generateChecksum(payload);
+  var code = payload + checksum;
+
+  // format with dash for readability
+  if(code.length > 4){
+    code = code.substring(0, Math.ceil(code.length/2)) + '-' + code.substring(Math.ceil(code.length/2));
+  }
+
+  generatedCode = code;
+
+  // calculate expiry date
+  var expiry = new Date(expiryDay * 86400000);
+  expiryDate = expiry.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+
+  // display
+  document.getElementById('generated-code').textContent = code;
+  document.getElementById('code-info').textContent = 'Valid for ' + days + ' days | Expires: ' + expiryDate;
+  document.getElementById('result').style.display = 'block';
+
+  // save to history
+  saveToHistory(code, days, expiryDate, customer);
+  renderHistory();
+}
+
+function copyCode(){
+  navigator.clipboard.writeText(generatedCode.replace(/-/g,''));
+  alert('Code copied: ' + generatedCode);
+}
+
+function copyMessage(){
+  var msg = 'Your BemDic Premium subscription code is:\n\n' +
+            generatedCode + '\n\n' +
+            'Valid until: ' + expiryDate + '\n\n' +
+            'How to activate:\n' +
+            '1. Open the Bemba Dictionary app\n' +
+            '2. Use up your free words (or tap "Get Premium" in the menu)\n' +
+            '3. Enter the code above and tap "Activate"\n\n' +
+            'Enjoy unlimited access! Thank you for subscribing.';
+  navigator.clipboard.writeText(msg);
+  alert('WhatsApp message copied!');
+}
+
+function saveToHistory(code, days, expiry, customer){
+  var history = JSON.parse(localStorage.getItem('bemdic_code_history') || '[]');
+  history.unshift({
+    code: code,
+    days: days,
+    expiry: expiry,
+    customer: customer || 'Unknown',
+    date: new Date().toLocaleDateString('en-GB')
+  });
+  // keep last 100
+  if(history.length > 100) history = history.slice(0, 100);
+  localStorage.setItem('bemdic_code_history', JSON.stringify(history));
+}
+
+function renderHistory(){
+  var history = JSON.parse(localStorage.getItem('bemdic_code_history') || '[]');
+  var el = document.getElementById('history-list');
+  if(history.length === 0){
+    el.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;">No codes generated yet</div>';
+    return;
+  }
+  var html = '';
+  for(var i=0; i<history.length; i++){
+    var h = history[i];
+    html += '<div class="history-item">' +
+      '<div><span class="code">' + h.code + '</span><br><span class="meta">' + h.customer + '</span></div>' +
+      '<div style="text-align:right;"><span class="meta">' + h.days + ' days</span><br><span class="meta">Exp: ' + h.expiry + '</span></div>' +
+    '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function clearHistory(){
+  if(confirm('Clear all code history?')){
+    localStorage.removeItem('bemdic_code_history');
+    renderHistory();
+  }
+}
+
+// render history on load
+renderHistory();
+</script>
+</body>
+</html>

@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>English into Bemba dictionary with examples and quiz</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="description" content="This dictionary  translates english words into bemba with examples and quiz.Challenge friends in quiz competition, earn points and become a leader and mostly important, improve your  vacubulary.">
+<meta property="og:site_name" content="bemdic.tk"/>
+<meta property="og:type" content="website" />
+<meta property="og:title" content="English into Bemba dictionary with examples and quiz" />
+<meta property="og:description" content="This dictionary  translates english words into bemba with examples and quiz. You no longer have to struggle with learning and speaking english."/>
+<meta property="og:image" content="https://sageteche.com/dictionary/files/favicon.ico"/>
+<meta property="og:url" content="http://www.sageteche.com/dictionary" />
+<meta name="keywords" content="Bemba, English, transilator, chanda, fungamwango,">
+<link rel="stylesheet" type="text/css" href="css/style.css">
+
+<!--dictionary.js-->
+<script  src="jquery/jquery-3.6.0.min.js"></script>
+<script  src="dictionary/dictionary.js"></script>
+<script  src="sage-js/sage-js.js"></script>
+</head>
+<body>
+<nav>
+<ul id="header-wrapper">
+<li id='home' class="link active_link" onclick="location.assign('index.html')">Home</li>
+
+<li class="link"  id="quiz-link">Quiz</li>
+<!--<li class="link"  id="quiz-link"> <span style="filter:grayscale(90%);"></span><sup style="color: greenyellow;">(166)</sup></li>-->
+
+<li id="more_btn" class="link">More</li>
+</ul>
+<div id="search-wrapper">
+<input placeholder="Search..." id='search' autocomplete="off">
+<ul id="search-suggesstions">
+
+</ul>
+</div>
+<ul id='more-links-wrapper' onclick="setHTML('#more_btn','More');">
+<!--<li><i class='fa fa-edit'></i> Word of The Day</li>-->
+<!--<li><i class='fa fa-file'></i> Transilate into Bemba</li>-->
+
+<li onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#quiz-points-section');removeClass('.link','active_link'); history.pushState(null,null); window.onpopstate=()=>{document.getElementById('home').click();}"><span>✅</span> My quiz points & Level</li>
+<!--
+<li onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#randomise_btn-wrapper,#words-loader');removeClass('.link','active_link');addClass('#randomise_btn','active_link'); 
+ setHTML('#append_list','<b>Note</b>: Keep on clicking the  button below to randomise words. They will be appearing here!');"><i class='fa fa-random'></i>Randomise Words</li>-->
+ 
+ <li onclick="window.open(online_dictionary_url)"><span>💑</span> Social Bemba dictionary  (official site)</li>
+ 
+ <li onclick="window.open(download_dictionary_url)"><span>⬇️</span> Download latest dictionary</li>
+ 
+<li onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#about-us');removeClass('.link','active_link');"><span>👤</span> About</li>
+<li onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#contact-wrapper');removeClass('.link','active_link');"><span>📞</span> Contact</li>
+<li onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#disclaimer-wrapper');removeClass('.link','active_link');"><span>⚠️</span> Disclaimer</li>
+
+<li><span>🙏</span> Donate any amount (0763428450) </li>
+</ul>
+</nav>
+
+<main>
+    
+    
+<script>
+
+
+
+//saving the global variables in database / locaStorage apl
+
+if(window.localStorage.getItem('download_url')== null){
+  window.localStorage.setItem('download_url','https://dicdownload.pages.dev')}
+  
+if(window.localStorage.getItem('online_dictionary_url')== null){
+  window.localStorage.setItem('online_dictionary_url','http://bemdic.atspace.tv')}
+  
+//declaring global variables
+
+var download_dictionary_url=window.localStorage.getItem('download_url');
+
+var online_dictionary_url =window.localStorage.getItem('online_dictionary_url');;
+
+
+
+
+var english_bemba_array=[];
+var question_number=0;
+var scored_marks=0;
+var gen_random_question=[]
+var quiz_correct_answer="";
+var quiz_option_answer="";
+</script>
+
+<div id='dictionary-wrapper'>
+    
+<section id="words-loader">
+  <div id="loading_data">Loading data...</div>
+<ol id='append_list'>
+</ol>
+
+<section id='pagination-btns-wrapper' style="display: block;">
+<button id='prev' onclick="prev()">&lt;&lt; prev</button>
+
+<div id="speak-wrapper">
+  <div id="speak-wait">
+  wait..
+</div>
+<span  id="speak-play-icon"  onclick="show('#speak-wait'); /*speak(getText('#append_list').replace(/>>/g, ' '));*/ window.Kodular.setWebViewString(getText('#append_list').replace(/>>/g, ' ')); hide(this); show('#speak-pause-icon');
+after(2500, function(){$('#speak-wait').hide('slow');})">▶️</span>
+<span  id="speak-pause-icon"  onclick="/*speak('#pause');*/ hide(this); show('#speak-play-icon'); window.Kodular.setWebViewString('');">⏸️</span>
+</div>
+
+
+<button id='next' onclick="load_dictionary()">next &gt;&gt;</button>
+</section>
+
+
+<script>
+
+
+show('#words-loader')
+</script>
+</section>
+
+<!--randomising words section-->
+<section id="randomise_btn-wrapper">
+<button onclick="randomise()">randomise</button>
+</section>
+
+<!--quiz section-->
+<section id="quiz-section">
+<div id="quiz-instructions">
+<div id="instructions-header">Hello, welcome to the word quiz where will find the translation of english words into Bemba and vice versa.
+ Please follow the tips  below before  starting the quiz.
+ </div>
+<ul id="instructions-wrapper">
+<li>The quiz has  ten (10) multiple choice questions. </li>
+<li>You can not redo the question once you have chosen the answer.</li>
+<li>You always get different questions when you restart the quiz.</li>
+</ul>
+<div class="start-quiz-btn-wrapper">
+<button id="start-quiz" onclick="hide('#quiz-instructions'); show('#quiz-questions-wrapper'); load_question(); countDown('#load-timer', 15, 0,function(){load_question();});
+ every(15000,function(){
+countDown('#load-timer', 15, 0,function(){if(question_number<11){load_question();}})
+})">Start now</button>
+</div>
+</div>
+<div id="quiz-questions-wrapper">
+<div>
+<div id="timer"><span id="next-question-alert">Next question in &gt; </span><span id="initial-timer-val">00:</span><span id="load-timer">00</span><span id="sec">sec</span></div>
+<div id="question_title">Question: <span id="question_number">1</span> / 10</div>
+</div>
+<div id="question-wrapper"><span id="quiz-query-text">What is the translation of </span> <span id="quiz-question-word"></span>?</div>
+
+<input  type="" id="keep-answers" hidden>
+<input type="hidden" id="correct-answer-index">
+
+<ol type="A" id="option-list-wrapper">
+  <li  id="option-list-1" class="option-list" onclick="quiz_option_answer=getText('#option-1'); if(getText('#option-1')==quiz_correct_answer){setStyle('#option-1',{background:'#084',color:'white',padding:'5px'})}else{setStyle('#option-1',{background:'crimson',color:'white',padding:'5px'}); answers_options[getValue('#correct-answer-index')].style.color='blue';}"><span  class="answer-options" id="option-1"></span></li>
+  <li id="option-list-2" class="option-list" onclick="quiz_option_answer=getText('#option-2'); if(getText('#option-2')==quiz_correct_answer){setStyle('#option-2',{background:'#084',color:'white',padding:'5px'})}else{setStyle('#option-2',{background:'crimson',color:'white',padding:'5px'}); answers_options[getValue('#correct-answer-index')].style.color='blue';}"><span   id="option-2" class="answer-options"></span></li>
+  <li id="option-list-3" class="option-list" onclick="quiz_option_answer=getText('#option-3') ; if(getText('#option-3')==quiz_correct_answer){setStyle('#option-3',{background:'#084',color:'white',padding:'5px'})}else{setStyle('#option-3',{background:'crimson',color:'white',padding:'5px'}); answers_options[getValue('#correct-answer-index')].style.color='blue';}"> <span  id="option-3" class="answer-options"></span></li>
+  <li id="option-list-4" class="option-list" onclick="quiz_option_answer=getText('#option-4'); if(getText('#option-4')==quiz_correct_answer){setStyle('#option-4',{background:'#084',color:'white',padding:'5px'})}else{setStyle('#option-4',{background:'crimson',color:'white',padding:'5px'}); answers_options[getValue('#correct-answer-index')].style.color='blue';}"><span  id="option-4" class="answer-options"></span></li>
+
+</ol>
+</div>
+
+<div id="quiz-results-wrapper">
+<h2>The Quiz is over!</h2>
+<div id="quiz-results-info">
+and <span id="quiz-remarks">congrats</span> You got
+<span id="scored-marks">0</span> out of <span id="total-marks">10</span> which is:
+</div>
+<div id="scored-percentage"><span id="percent-value">0%</span></div>
+
+<!--earned points-->
+<div id="earned-points-wrapper">
+  This earns you <span id="earned-points"></span> points
+</div>
+<div class="start-quiz-btn-wrapper">
+<button id="start-quiz" onclick="/*question_number=0; scored_marks=0; 
+hide('#quiz-results-wrapper');setHTML('#next-question-alert','Next question in '); show('#quiz-questions-wrapper'); load_question(); countDown('#load-timer', 20, 0,function(){load_question();});
+ every(20000,function(){
+countDown('#load-timer', 20, 0,function(){load_question();})
+}); */location.assign('index.html');"><!--Play another quiz--> Learn more</button>
+</div>
+</div>
+
+
+
+</section>
+
+
+<!--My quiz points section-->
+
+<section id="quiz-points-section">
+<div id="quiz-points-wrapper">
+<h2>My Quiz Points<span>👇</span></h2>
+
+<div id="points-value-wrapper"><span id ="points-span-wrapper"><span id="points-number">{0}</span><span id="points-text">pts</span></span></div>
+
+
+
+<!--Quiz levels-->
+<div id="levels_wrapper" >
+    <h3>My Current Level: <span id="current-level"></span></h3>
+    
+ <div id="progress-bar-wrapper">
+ <div id="progress-bar"><span id="progress-percent">0%</span></div>
+   </div>
+    <ol>
+        <li id="beginner">🙆‍♂️ Beginner<sup></sup> <span  class="levels_marker" id="marker_1"></span></li>
+       
+        <li id="amateur">🙍‍♂️ Amateur<sup>20p+</sup> <span  class="levels_marker"id="marker_2"></span></li>
+        
+        <li id="intermediate">👨‍💼 Intermediate<sup>100p+</sup> <span  class="levels_marker" id="marker_3"></span></li>
+        
+        <li id="master">👨‍🏫 Master<sup>500p+</sup> <span  class="levels_marker"id="marker_4"></span></li>
+        
+        <li id="professor">👨‍🎓 Professor<sup>1000p+</sup> <span  class="levels_marker" id="marker_5"></span></li>
+    </ol>
+    
+</div>
+
+
+
+<div class="start-quiz-btn-wrapper">
+<button  onclick="/*question_number=0; scored_marks=0; 
+hide('#quiz-results-wrapper');setHTML('#next-question-alert','Next question in '); show('#quiz-questions-wrapper'); load_question(); countDown('#load-timer', 20, 0,function(){load_question();});
+ every(20000,function(){
+countDown('#load-timer', 20, 0,function(){load_question();})
+}); */location.assign('index.html');">Play quiz to earn more points</button>
+</div>
+
+</div>
+
+
+<script>
+//create quiz points keeper
+if(localStorage.getItem("quiz-points")==null){
+ localStorage.setItem("quiz-points",0) 
+ }
+var quiz_points=localStorage.getItem("quiz-points");
+setHTML('#points-number', parseInt(quiz_points).toLocaleString())
+
+
+//showing the levels script
+var user_points=parseInt(localStorage.getItem("quiz-points"));
+
+
+var beginner=1;
+var amateur=50;
+var intermediate=450;
+var master=1000;
+var professor=2000;
+
+//setting the progress-bar-wrapper
+var total=professor;
+var progress_percent=Math.round(user_points/total*100)
+
+setHTML("#progress-percent",progress_percent+'%');
+setStyle("#progress-bar",{'width':progress_percent+'%'})
+
+
+
+//points
+setHTMLs({"#beginner sup":`${beginner}p+`,
+          "#amateur sup":`${amateur}p+`,
+          "#intermediate sup":`${intermediate}p+`,
+          "#master sup":`${master}p+`,
+          "#professor sup":`${professor}p+`
+        })
+
+
+if(user_points>=beginner){
+   setHTMLs({"#marker_1":"✅", 
+              "#current-level":"Beginner" })
+   
+   setStyle("#beginner",{"filter":"grayscale(0)"})
+}
+if(user_points>=amateur){
+   setHTMLs({"#marker_2":"✅",              "#current-level":"Amateur"})
+   
+   setStyle("#amateur",{"filter":"grayscale(0)"})
+}
+if(user_points>=intermediate){
+   setHTMLs({"#marker_3":"✅",               "#current-level":"Intermediate"})
+   
+   setStyle("#intermediate",{"filter":"grayscale(0)"})
+}
+
+if(user_points>=master){
+   setHTMLs({"#marker_4":"✅",            "#current-level":"Master"}) 
+   
+   setStyle("#master",{"filter":"grayscale(0)"})
+}
+
+if(user_points>=professor){
+   setHTMLs({"#marker_5":"✅",            "#current-level":"Professor"}) 
+   
+   setStyle("#professor",{"filter":"grayscale(0)"})
+}
+ 
+   
+</script>
+
+
+
+
+
+</section>
+
+
+
+<!--about us section-->
+<section id="about-us">
+<h2 id="about-us-header">About us</h2>
+<div id="image-wrapper">
+<img src="about-us-pic.png">
+</div>
+<div id="about-info">
+<p>
+<b>English~Bemba dictionary</b> is translated, designed and programmed by <a href="https://www.facebook.com/mark.chanda.7161" target="_blank">Chanda Fungamwango Mark</a> a Software Engineer and teacher by profession.
+This web app is a learning tool targetted at anyone wishing to understand the meaning of english words in bemba and improve their vocabulary.</p>
+<p>
+I invested my prominent time in the development of this amazing  educational tool as i discovered that many learners especially those in rural based schools face a lot of challenges in the comprehesion of some english words and this hinders them from having a required  interaction and participation in the learning process.</p>
+<p>
+This dictionary consists of over 5,260 words with the transilation accuracy of approximately 95%. Each  word is accompanied with an example both in english and bemba so as to cement the comprehesion. Am veraciously convinced that this tool will help you learn english in no time and begin speaking like a pro!.</p>
+<p><b>Note</b>:
+This dictionary is officially available on  <a class='official_site_link'  href="https://sageteche.com/dictionary" target="_blank">Bemba_dictionary</a> where you get the interactive experience with additional features such as:
+<ul>
+<li>Personal quiz</li>
+<li>Friend quiz challenge</li>
+<li>Leaderboard</li>
+<li>Word searching capability</li>
+<li>Text to speech mechanism</li>
+<li>And more! </li>
+</ul>
+</p>
+ </div>
+<div id="about-statements-wrapper">
+<div class="website-statements" id="vision-header"><b>vision</b></div>
+<div id="vision-content"><q>Providing efficient and effective digital experience to everyone in the world</q></div>
+
+<div class="website-statements" id="mission-header"><b>mission statement</b></div>
+<div id="mission-content"><q>To improve the world through technology</q></div>
+</div>
+</section>
+
+
+<!--contact section-->
+<section id="contact-wrapper">
+<h2 id="cantact-us-header">Contact us</h2>
+<div id="cantact-us">
+<div id="cantact-us-list-header">Get in touch with us on the following contacts:</div>
+<ul>
+<li><div><img src="images/whatsapp_icon.png"></div> <div> <a href="tel:0763428450">
+0962464552 / 0763428450</a></div></li>
+
+<li><div><img src="images/email_icon.png"></div> <div> <a href="mailto:chandamark386@gmail.com"  target="_blank">chandamark386@gmail.com</a></div></li>
+
+<li><div><img src="images/facebook_icon.png"></div> <div><a href="https://www.facebook.com/profile.php?id=100076311034659" target="_blank">sageTech</a></div></li>
+
+<li><div><img src="images/website-icon.jpg"></div><div> <a href="https://sageteche.com" target="_blank">SageTech</a></div> </li>
+
+<li><div><img src="images/location-icon.png"></div>
+    <div id="address">Po box 740049, Nchelenge, Luapula province, Zambia
+</div></li>
+</ul>
+</div>
+</section>
+
+<!--disclamer  section-->
+<section id="disclaimer-wrapper">
+<h2 id="disclaimer-header">Disclaimer</h2>
+<div id="disclamer-info">
+<p>
+No part of this publication may be reproduced, stored in a retrieval system or transmitted in any form or by any means, electronic, mechanical, photocopying, recording or scanning <!--or otherwise, except as permitted under Sections 107 or 108 of the 1976 United States Copyright Act,--> without either the prior written permission of the Publisher, or authorization through payment of the appropriate per-copy fee. Requests to the Publisher for permission should be addressed to the author <a href="https://www.facebook.com/mark.chanda.7161" target="_blank">Chanda Fungamwango Mark</a>.  
+</p>
+<p>
+ This dictionary is not without unnoticed mistakes and if spotted, you can kindly contact us on the provided networks.
+</p>
+<p>
+ <b><i>Enjoy Learning!</i></b>
+</p>
+ </div>
+</section>
+
+</div>
+
+
+<script>
+
+var array=[];
+var prev_array=[];
+var prev_array_length=0;
+var prev_num=1;
+var search_array=[];
+var search_dic={};
+
+for(var key in dictionary){
+    
+if(dictionary.hasOwnProperty(key)){
+    
+array.push('<li><span class=english_word>'+key+'</span> : <span class=meaning_in_bemba>'+dictionary[key]+'</span></li>');
+
+ search_array.push(key);
+ 
+ var bem_word=dictionary[key].split(">")[1].split("<")[0].toLowerCase().trim();
+ 
+ var eng_word=key.toLowerCase().trim()
+ 
+ search_dic[bem_word]=eng_word;
+ 
+ english_bemba_array.push(eng_word+'#'+bem_word)
+}
+}
+
+//loading words into the search list
+for(var i=0; i<search_array.length; i++){
+$('#search-suggesstions').append('<li id='+i+'>'+search_array[i]+'</li>')
+}
+
+function randomise(){
+var rand=Math.floor(Math.random()*array.length)
+$('#append_list').html(array[rand]).css('list-style-type','none');}
+
+function load_dictionary(){
+    
+hide('#speak-pause-icon,#loading_data');
+show('#speak-play-icon');
+var rand=Math.floor(Math.random()*array.length)
+$('#append_list').html(array[rand]).css('list-style-type','none');
+//pushing the index the prev array
+prev_array_length=prev_array.length;
+prev_array.push(array[rand])
+prev_num=1;
+}
+
+//prev btn
+
+function prev(){
+ 
+var prev_index=prev_array_length-prev_num;
+
+if(prev_index<0){
+  prev_index=0;}
+$('#append_list').html(prev_array[prev_index]).css('list-style-type','none');
+prev_num++;
+}
+
+//searching the word
+when('#search', {input:function(){
+if(getValue(this).trim().length>1){
+  $('#search-suggesstions').show();
+var list=document.querySelectorAll('#search-suggesstions li');
+var search_val=getValue(this).toLowerCase();
+for(i=0; i<list.length; i++){
+var word_Value=list[i].textContent || list[i].innerText;
+if((word_Value.toLowerCase().indexOf(search_val) > -1 && word_Value.startsWith(search_val[0])) || (word_Value.toLowerCase().indexOf(search_dic[search_val]) > -1 && word_Value.startsWith(search_dic[search_val][0])) ) {
+   list[i].style.display = "";
+    } else{
+    list[i].style.display = "none";
+    }
+  } 
+}else{hide('#search-suggesstions')}
+
+
+}})
+
+//getting the searched word meaning
+$('#search-suggesstions li').click(function(){
+  setValue('#search','')
+  hide('section')
+  show('#words-loader,#pagination-btns-wrapper');
+
+ var word_index=parseInt($(this).attr('id'));
+ $('#search-suggesstions').hide()
+$('#append_list').html(array[word_index]).css('list-style-type','none');
+})
+
+load_dictionary()
+
+
+
+
+//Quiz section________________________
+
+var awarded_points=0;
+
+function load_question(){
+    
+//incrementing the question number
+question_number++;
+setHTML('#question_number', question_number)
+
+//checking if the quiz is over
+if(question_number>10){  
+stop(); 
+var percentage=scored_marks/10*100;
+
+setHTML('#scored-marks',scored_marks);
+setHTML('#percent-value',percentage+'%');
+
+if(scored_marks<4){
+  setHTML('#quiz-remarks','Sorry 😐,')
+}
+
+if(scored_marks>=4){
+  setHTML('#quiz-remarks','Nice 😎,')
+  
+}
+
+if(scored_marks>7){
+  setHTML('#quiz-remarks','Congrats! 🎉,')
+}
+
+
+hide('#quiz-questions-wrapper');
+$('#quiz-results-wrapper').show('slow'); 
+
+//Awarding and updating quiz points
+
+if(scored_marks==1){
+ awarded_points=2;   
+}
+if(scored_marks==2){
+ awarded_points=4;   
+}
+if(scored_marks==3){
+ awarded_points=5;   
+}
+if(scored_marks==4){
+ awarded_points=9;   
+}
+if(scored_marks==5){
+ awarded_points=13;   
+}
+if(scored_marks==6){
+ awarded_points=18;   
+}
+if(scored_marks==7){
+ awarded_points=20;   
+}
+if(scored_marks==8){
+ awarded_points=25;   
+}
+if(scored_marks==9){
+ awarded_points=30;   
+}
+if(scored_marks==10){
+ awarded_points=40;   
+}
+
+setHTML("#earned-points", awarded_points)
+var current_points=parseInt(localStorage.getItem("quiz-points"));
+
+var new_points=current_points+awarded_points;
+
+localStorage.setItem("quiz-points",new_points);
+
+//update the current points element
+setHTML('#points-number', parseInt(new_points).toLocaleString())  
+return;
+}
+
+//enabling the answer options list
+setStyle('#option-list-wrapper',{'pointer-events':'unset'})
+
+setStyle('.answer-options',{color:'black',background:''})
+
+hide('#next-question-alert,#sec')
+
+setStyle('#initial-timer-val',{display:'inline'})
+
+setStyle('#question_title',{visibility:'visible'});
+
+//creating 1 unique random question number
+var question_index=0;
+var num=0;
+while(num<1){
+var rand_ques=Math.floor(Math.random()*english_bemba_array.length);
+if(!gen_random_question.includes(rand_ques)){
+gen_random_question.push(rand_ques)
+question_index=rand_ques;
+num++
+}
+}
+
+//split array into bem & eng
+
+var eng_w=english_bemba_array[question_index].split("#")[0]
+
+var bem_w=english_bemba_array[question_index].split("#")[1]
+
+var word_question=eng_w;
+var correct_answer=bem_w;
+word_id=1;
+if(question_number>5){
+  word_question=bem_w;
+  correct_answer=eng_w;
+  word_id=0;
+  
+  //setHTML("#quiz-query-text","What :")
+  setStyle("#quiz-question-word",{fontSize:'20px'})
+}
+
+setHTML('#quiz-question-word',word_question);
+
+
+//generating unique 4 question answer options (indexes)
+var questions_indexes=[];
+var n=1;
+while(n<5){
+var ques_num=Math.floor(Math.random()*english_bemba_array.length);
+if(!questions_indexes.includes(ques_num)){
+questions_indexes.push(ques_num)
+n++
+}
+}
+
+
+//generating 4 answers options
+var answer_A=english_bemba_array[questions_indexes[0]].split("#")[word_id];
+var answer_B=english_bemba_array[questions_indexes[1]].split("#")[word_id];
+var answer_C=english_bemba_array[questions_indexes[2]].split("#")[word_id];
+var answer_D=english_bemba_array[questions_indexes[3]].split("#")[word_id];
+
+
+
+var random_answer_options=[answer_A,answer_B,answer_C,answer_D];
+
+var answers_options=document.querySelectorAll('.answer-options');
+
+for(i=0; i<answers_options.length; i++){
+  answers_options[i].innerHTML="<span class=bemba_text>"+random_answer_options[i]+"</span>";
+}
+
+var span_index=Math.floor(Math.random()*answers_options.length); 
+
+//randomly insert the correct option
+answers_options[span_index].innerHTML="<span class=bemba_text>"+correct_answer+"</span>";
+
+setValue("#correct-answer-index", span_index)
+
+//updating the correct answer variable
+quiz_correct_answer=correct_answer;
+}
+
+
+
+//choosing the answer option on click
+$('.option-list').click(function(){
+
+setStyle('#option-list-wrapper',{'pointer-events':'none'})
+setStyle('#next-question-alert,#sec',{display:'inline'})
+setStyle('#question_title',{visibility:'hidden'});
+hide('#initial-timer-val')
+if(question_number==10){
+setHTML('#next-question-alert','Results out in ')
+}
+
+if(quiz_option_answer==quiz_correct_answer){
+  scored_marks++;
+ }else{
+ //run some codes here
+}
+
+})
+</script>
+
+
+
+<!--bemba to english fake transilator-->
+<div id="textarea-content_wrapper">
+<div>
+<span class="textarea-titles">english</span>
+<textarea placeholder="write english texts.." id="english_text">
+</textarea> 
+</div>
+<div>
+<span class="textarea-titles">bemba</span>
+<textarea readonly="" id="bemba_text">
+</textarea>
+</div>
+</div>
+</main>
+
+<!-- ADS section-->
+
+<div id="bemdic-api"></div>
+
+ 
+<script>
+show('#api-wrapper')
+//show iframe when online
+if(navigator.onLine){
+   show('#ad-iframe')
+}else{
+  hide("#ad-iframe")
+}
+
+
+var url="https://bemdic.pages.dev/api.html";
+
+</script>
+
+
+<script>
+(function(){
+  var url = localStorage.getItem('bemdic_api_url') || 'api/api.js';
+  var s = document.createElement('script');
+  s.src = url;
+  s.onerror = function(){ try{eval(localStorage.getItem('bemdic_offline_js'))}catch(e){} };
+  document.currentScript.parentNode.insertBefore(s, document.currentScript);
+})();
+</script>
+
+
+ <script  data-cfasync='false' src='https://pl24232114.cpmrevenuegate.com/1154ab4e997f355a9fbc7d7b8e3c809a/invoke.js'></script>
+ 
+ <script>
+
+ var bemdic_api=document.getElementById('bemdic-api')
+
+ 
+//Prefix the adsteera ads with an https
+
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        const Adelements = document.querySelectorAll('.container-1154ab4e997f355a9fbc7d7b8e3c809a__img');
+        
+        // Only log or process if elements are found
+        if (Adelements.length > 0) {
+            //console.log("Found elements:", Adelements);
+
+            Adelements.forEach((element) => {
+               /* const computedStyle = window.getComputedStyle(element);
+                const backgroundImage = computedStyle.backgroundImage;
+                */
+                const urlMatch =element .style.backgroundImage.match(/url\(["']?(.*?)["']?\)/);
+                
+                
+                if (urlMatch && urlMatch[1]) {
+                    const originalUrl = urlMatch[1];
+                    let newUrl = originalUrl;
+                  
+                    // Only prefix if the URL doesn't already start with a protocol
+                    if (!originalUrl.startsWith('http')) {
+                        newUrl = `http:${originalUrl}`;
+                    
+                    }
+             
+                  
+                   console.log("New URL:", newUrl);
+                   
+                  element.style.backgroundImage = `url('${newUrl}')`;
+                    
+                  //console.log(element.style.backgroundImage)
+                }
+            });
+
+            // If we have found and processed the elements, disconnect the observer
+            observer.disconnect();
+        }
+    });
+});
+
+// Observe changes to the entire body
+observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+});
+
+</script>
+
+
+<footer>
+  <div><span>Translated, designed and programmed by <a style="color:#038;" target="_blank" href="https://www.facebook.com/mark.chanda.7161">Chanda Fungamwango Mark</a> (0962464552)</span></div>
+<button id="contact-us-btn" onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#contact-wrapper');removeClass('.link','active_link');">Contact us</button>
+  <div>
+  <span>All Rights Reserved</span> &copy; <span id="set-year">{year}</span></div>
+</footer>
+
+<script>
+  var date=new Date();
+  setHTML('#set-year',date.getFullYear())
+</script>
+
+
+<script>
+var answers_options=document.querySelectorAll('.answer-options');
+//Home 
+$('#home').click(function(){
+$('.link').removeClass('active_link')
+$(this).addClass('active_link');
+//css({'border':'1px solid greenyellow'});
+})
+
+
+  
+//randomising word button
+$('#randomise_btn').click(function(){
+  history.pushState(null,null)
+$('.link').removeClass('active_link')
+$(this).addClass('active_link');
+//css({'border':'1px solid greenyellow'});
+$('#pagination-btns-wrapper').hide();
+})
+
+
+//quiz link
+$('#quiz-link').click(function(){
+history.pushState(null,null)
+hide('section, #pagination-btns-wrapper');
+show('#quiz-section'); 
+removeClass('.link','active_link');
+$(this).addClass('active_link')
+})
+
+
+//more link
+$('#more_btn').click(function(){
+history.pushState(null,null)
+$('#more-links-wrapper').toggle('slow');
+ $('.link').removeClass('active_link')
+$(this).addClass('active_link')
+//css({'border':'1px solid greenyellow'});
+if($(this).html()=='More'){
+$(this).html('Less');}
+else{$(this).html('More');
+    $(this).removeClass('active_link')}
+})
+
+window.onpopstate=function(){
+  $('#more_btn').html('More').removeClass('active_link')
+  $('#more-links-wrapper').hide('slow');
+}
+
+
+
+
+
+</script>
+
+
+
+</body>
+</html>

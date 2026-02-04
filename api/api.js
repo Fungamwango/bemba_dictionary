@@ -1,0 +1,1727 @@
+// ============================================
+// BEMDIC API + SUBSCRIPTION SYSTEM
+// ============================================
+
+// --- STORE/UPDATE THE API URL (so it can be changed remotely) ---
+localStorage.setItem('bemdic_api_url', 'https://bemdic.pages.dev/api.js');
+
+// --- EXISTING AD SECTION ---
+var elem=document.getElementById('bemdic-api');
+elem.innerHTML=`<div id='api-wrapper'>
+ <div id='ad-section' style='text-align:center; padding:2px; border:1px solid rgba(0,0,0,0.2);height:100%;margin:15px 1px;'> <img  id='ad-img' style='padding:4px; width:100%; object-fit:cover; display:none;'>  <div class='ad-banner' id='container-1154ab4e997f355a9fbc7d7b8e3c809a'></div></div> </div>`;
+
+
+var monetag_link='https://zaltaumi.net/4/7783356'
+
+var url = [monetag_link,'https://becha.co.zm/?pid=1950691'];
+
+document.getElementById('ad-img').addEventListener('click', function() {
+
+window.open(url[Math.floor(Math.random()*url.length)]);
+
+});
+
+var ads_array=['img1.jpeg','img2.jpeg','img3.png','img4.jpeg','img5.jpg','img6.jpg','img7.jpg','img8.jpg','img9.jpg','img10.jpg','img13.jpg','img14.jpg','img15.jpg','img17.gif','img18.png','img19.png','img20.jpg','img21.jpg','img22.jpg','img23.jpg','img24.jpg','img25.jpg','img26.jpg','img27.png','img28.webp','img29.webp','img30.webp','img31.jpg','img32.jpg','img33.webp','img34.jpg','img35.jpg','img36.jpg','img37.jpg','img38.jpg','img39.jpg','img40.gif','img42.jpeg','img43.jpeg','img44.png'];
+
+function runAds(){
+var ads_index=Math.floor(Math.random()*ads_array.length)
+var current_img=ads_array[ads_index];
+document.querySelector("#ad-img").src="https://bemdic.pages.dev/"+current_img;
+}
+
+setInterval (runAds
+, 15000)
+
+//set ad image when the page loads
+document.querySelector("#ad-img").src="https://bemdic.pages.dev/"+ads_array[Math.floor(Math.random()*ads_array.length)];
+document.querySelector("#ad-img").style.display="inline";
+
+//update the online dictionary url
+online_dictionary_url ="https://sageteche.com/dictionary";
+document.querySelectorAll('.official_site_link')[0].href=online_dictionary_url;
+
+document.querySelectorAll('.official_site_link')[0].innerText="https://sageteche.com/dictionary";
+
+
+//set the official site url
+document.querySelectorAll("#contact-wrapper ul li a")[3].href=online_dictionary_url;
+
+//save this url into the localstorage api
+window.localStorage.setItem('online_dictionary_url',online_dictionary_url);
+
+
+
+/*load the website in the iframe
+document.documentElement.innerHTML
+="<iframe id='external_site_iframe' src='https://bemdic.rf.gd/home' style='position: fixed; top: 0;left: 0; width: 100vw; height: 100vh; border: none; display: block;'>";*/
+
+//implementing the social features
+document.body.insertAdjacentHTML('beforeend',`<div id='api_app_data'>
+   <style>
+       nav #header-wrapper li{cursor: pointer;
+                       padding: 5px 8px;
+                    display: inline;}
+
+       #header-wrapper{display:grid;
+                       grid-template-columns: repeat(4, 1fr);
+                        }
+
+       #payments-steps{padding-left:18px;}
+       #payments-steps li{margin-bottom:6px;
+                        line-height:1.4;
+                        font-size:14px;}
+     </style>
+ </div>
+`);
+
+document.querySelector('#quiz-link').insertAdjacentHTML("afterend",'<li class="link" id="friends-link"><span style="filter:grayscale(30%);">👨‍👩‍👧‍👦</span><sup style="color:greenyellow;font-size:11px;" id="notif-badge">(Friends)</sup></li>');
+
+//evalute the intext js codes
+var innerjs=document.querySelectorAll('#api_app_data script');
+for (var i=0; i<innerjs.length; i++){
+ eval(innerjs[i].innerHTML);
+}
+
+
+// ============================================
+// SOCIAL FEATURES SYSTEM
+// ============================================
+(function(){
+
+var API_BASE = 'https://bemdic.pages.dev/api';
+var _pollInterval = null;
+var _pollDelay = 30000;
+var _activePollDelay = 10000;
+var _currentSection = null;
+
+// ---- UTILITIES ----
+function apiCall(endpoint, data, callback) {
+  if (!navigator.onLine) { if (callback) callback({ ok: false, error: 'offline' }); return; }
+  fetch(API_BASE + endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(function(r) { return r.json(); })
+    .then(function(j) { if (callback) callback(j); })
+    .catch(function(e) { if (callback) callback({ ok: false, error: e.message }); });
+}
+function apiGet(endpoint, callback) {
+  if (!navigator.onLine) { if (callback) callback({ ok: false, error: 'offline' }); return; }
+  fetch(API_BASE + endpoint).then(function(r) { return r.json(); })
+    .then(function(j) { if (callback) callback(j); })
+    .catch(function(e) { if (callback) callback({ ok: false, error: e.message }); });
+}
+function generateUUID() {
+  if (crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+function getDeviceId() {
+  var id = localStorage.getItem('bemdic_device_id');
+  if (!id) { id = generateUUID(); localStorage.setItem('bemdic_device_id', id); }
+  return id;
+}
+function getUserData() {
+  var raw = localStorage.getItem('bemdic_user_data');
+  if (raw) try { return JSON.parse(raw); } catch(e) {}
+  return null;
+}
+function escapeHtml(s) {
+  var d = document.createElement('div'); d.appendChild(document.createTextNode(s)); return d.innerHTML;
+}
+function timeAgo(ds) {
+  var now = new Date(), d = new Date(ds + (ds.indexOf('Z') === -1 ? 'Z' : ''));
+  var diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+  return d.toLocaleDateString();
+}
+function getLevelName(pts) {
+  if (pts >= 1000) return 'Professor';
+  if (pts >= 500) return 'Master';
+  if (pts >= 100) return 'Intermediate';
+  if (pts >= 20) return 'Amateur';
+  return 'Beginner';
+}
+function isOnline(lastSeen) {
+  if (!lastSeen) return false;
+  var d = new Date(lastSeen + (lastSeen.indexOf('Z') === -1 ? 'Z' : ''));
+  return (new Date() - d) < 60000;
+}
+function profilePicHtml(pic, size) {
+  size = size || 36;
+  if (pic) return '<img src="' + pic + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;">';
+  return '<span style="display:inline-flex;align-items:center;justify-content:center;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:#e0e0e0;font-size:' + Math.round(size * 0.5) + 'px;">👤</span>';
+}
+function resizeAndUploadPicture(file, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var maxDim = 256;
+      var w = img.width, h = img.height;
+      if (w > h) { if (w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; } }
+      else { if (h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; } }
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      // Try WebP at decreasing quality until under 64KB
+      var quality = 0.8;
+      var dataUrl;
+      for (var q = quality; q >= 0.1; q -= 0.1) {
+        dataUrl = canvas.toDataURL('image/webp', q);
+        // base64 data URL: "data:image/webp;base64,..." — measure decoded size
+        var base64Part = dataUrl.split(',')[1];
+        var byteSize = Math.round(base64Part.length * 3 / 4);
+        if (byteSize <= 65536) break;
+      }
+      // If still too big, shrink dimensions
+      if (dataUrl.split(',')[1].length * 3 / 4 > 65536) {
+        canvas.width = Math.round(w * 0.5); canvas.height = Math.round(h * 0.5);
+        ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        dataUrl = canvas.toDataURL('image/webp', 0.5);
+      }
+      // Upload
+      apiCall('/user/picture', { device_id: getDeviceId(), picture: dataUrl }, function(resp) {
+        if (resp.ok) {
+          var ud = getUserData() || {};
+          ud.picture = dataUrl;
+          localStorage.setItem('bemdic_user_data', JSON.stringify(ud));
+        }
+        if (callback) callback(resp.ok ? dataUrl : null);
+      });
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ---- CSS INJECTION ----
+var ss = document.createElement('style');
+ss.textContent = ''
+  + '#profile-section,#friends-section,#leaderboard-section,#notifications-section,#challenge-section{display:none;padding:10px 6px;}'
+  + '.social-card{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin:8px 0;}'
+  + '.social-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:2px solid #e0e0e0;}'
+  + '.social-tab{flex:1;text-align:center;padding:10px 4px;cursor:pointer;font-size:13px;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;}'
+  + '.social-tab.active-tab{color:#058;border-bottom-color:#058;font-weight:bold;}'
+  + '.s-btn{padding:7px 14px;border:none;border-radius:6px;font-size:12px;cursor:pointer;}'
+  + '.s-btn-p{background:#058;color:#fff;}'
+  + '.s-btn-g{background:#084;color:#fff;}'
+  + '.s-btn-d{background:crimson;color:#fff;}'
+  + '.s-btn-s{background:#eee;color:#333;}'
+  + '.s-empty{text-align:center;color:#999;padding:24px 10px;font-size:13px;}'
+  + '.s-loading{text-align:center;color:#888;padding:16px;font-size:13px;}'
+  // Profile
+  + '#profile-wrapper{text-align:center;}'
+  + '#profile-avatar{font-size:48px;margin:10px 0;cursor:pointer;position:relative;display:inline-block;}'
+  + '#profile-avatar img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #058;}'
+  + '#profile-avatar .pic-edit-hint{position:absolute;bottom:0;right:0;background:#058;color:#fff;border-radius:50%;width:24px;height:24px;font-size:12px;display:flex;align-items:center;justify-content:center;}'
+  + '#pic-file-input{display:none;}'
+  + '#profile-name-display{font-size:18px;font-weight:bold;color:#222;margin:6px 0;}'
+  + '#profile-friend-code{color:#666;font-size:13px;margin:4px 0 12px;}'
+  + '.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;}'
+  + '.stat-box{background:#f5f5f5;border-radius:8px;padding:12px 6px;text-align:center;}'
+  + '.stat-val{font-size:20px;font-weight:bold;color:#058;}'
+  + '.stat-lbl{font-size:11px;color:#888;margin-top:2px;}'
+  // Friends
+  + '.friend-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-bottom:1px solid #f0f0f0;gap:10px;}'
+  + '.friend-pic{flex-shrink:0;position:relative;}'
+  + '.friend-pic .friend-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border:2px solid #fff;}'
+  + '.friend-info{flex:1;min-width:0;}'
+  + '.friend-name{font-weight:bold;font-size:14px;color:#222;}'
+  + '.friend-meta{font-size:11px;color:#888;}'
+  + '.friend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}'
+  + '.dot-on{background:#4caf50;}'
+  + '.dot-off{background:#bbb;}'
+  + '#friend-search-input{width:90%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin:6px 0;outline:none;}'
+  // Leaderboard
+  + '.lb-row{display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f0f0f0;}'
+  + '.lb-rank{width:30px;font-weight:bold;color:#666;font-size:14px;}'
+  + '.lb-name{flex:1;font-size:14px;color:#222;}'
+  + '.lb-pts{font-weight:bold;color:#058;font-size:13px;}'
+  + '.lb-me{background:#e3f2fd;border-radius:6px;}'
+  // Notifications
+  + '.notif-row{display:flex;align-items:flex-start;padding:10px;border-bottom:1px solid #f0f0f0;cursor:pointer;gap:8px;}'
+  + '.notif-row.unread{background:#fff8e1;}'
+  + '.notif-icon{font-size:20px;flex-shrink:0;}'
+  + '.notif-body{flex:1;}'
+  + '.notif-text{font-size:13px;color:#333;}'
+  + '.notif-time{font-size:11px;color:#999;}'
+  // Challenge
+  + '#challenge-info{text-align:center;padding:20px;}'
+  + '#challenge-info h2{color:#333;margin:0 0 8px;}'
+  + '.ch-comparison{display:flex;justify-content:center;align-items:center;gap:16px;margin:20px 0;}'
+  + '.ch-player{text-align:center;}'
+  + '.ch-player-name{font-size:14px;color:#666;margin-bottom:4px;}'
+  + '.ch-player-score{font-size:36px;font-weight:bold;}'
+  + '.ch-vs{font-size:18px;color:#999;font-weight:bold;}'
+  + '.ch-verdict{text-align:center;font-size:18px;font-weight:bold;margin:10px 0;}'
+  + '.ch-bonus{text-align:center;color:#084;font-size:14px;margin:6px 0;}'
+  + '#ch-quiz-wrapper{padding:8px;}'
+  + '#ch-question-title{font-size:13px;color:#666;margin-bottom:8px;}'
+  + '#ch-question-wrapper{background:#f5f5f5;border-radius:8px;padding:14px;margin:10px 0;text-align:center;font-size:16px;}'
+  + '.ch-option{background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;margin:6px 0;cursor:pointer;font-size:14px;}'
+  + '.ch-option.ch-correct{background:#e8f5e9;border-color:#4caf50;color:#2e7d32;}'
+  + '.ch-option.ch-wrong{background:#ffebee;border-color:#e53935;color:#c62828;}'
+  + '#ch-timer-bar{text-align:center;color:#e65100;font-size:13px;margin:6px 0;}'
+  + '.name-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100000;display:flex;align-items:center;justify-content:center;}'
+  + '.name-modal{background:#fff;border-radius:10px;padding:24px;max-width:300px;width:90%;text-align:center;}'
+  + '.name-modal h3{margin:0 0 8px;color:#333;}'
+  + '.name-modal p{color:#666;font-size:13px;margin:0 0 12px;}'
+  + '.name-modal input{width:80%;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:15px;text-align:center;outline:none;}'
+  ;
+document.head.appendChild(ss);
+
+// ---- SECTION INJECTION ----
+var dicWrapper = document.getElementById('dictionary-wrapper');
+if (dicWrapper) {
+  dicWrapper.insertAdjacentHTML('afterend', ''
+    // PROFILE
+    + '<section id="profile-section"><div id="profile-wrapper">'
+    + '<h2>My Profile</h2><div id="profile-avatar"><span id="profile-pic-display">👤</span><span class="pic-edit-hint">📷</span></div>'
+    + '<input type="file" id="pic-file-input" accept="image/*">'
+    + '<div id="profile-name-display"><span id="profile-name-text"></span> <span id="profile-edit-btn" style="cursor:pointer;font-size:14px;">✏️</span></div>'
+    + '<div id="profile-friend-code">Friend Code: <b id="profile-code-value"></b> <span id="profile-copy-code" style="cursor:pointer;">📋</span></div>'
+    + '<div class="stats-grid">'
+    + '<div class="stat-box"><div class="stat-val" id="prof-points">0</div><div class="stat-lbl">Points</div></div>'
+    + '<div class="stat-box"><div class="stat-val" id="prof-level">-</div><div class="stat-lbl">Level</div></div>'
+    + '<div class="stat-box"><div class="stat-val" id="prof-quizzes">0</div><div class="stat-lbl">Quizzes</div></div>'
+    + '<div class="stat-box"><div class="stat-val" id="prof-wins">0</div><div class="stat-lbl">Wins</div></div>'
+    + '<div class="stat-box"><div class="stat-val" id="prof-losses">0</div><div class="stat-lbl">Losses</div></div>'
+    + '<div class="stat-box"><div class="stat-val" id="prof-draws">0</div><div class="stat-lbl">Draws</div></div>'
+    + '</div></div></section>'
+    // FRIENDS
+    + '<section id="friends-section"><div id="friends-wrapper">'
+    + '<div class="social-tabs" id="friends-tabs">'
+    + '<span class="social-tab active-tab" id="tab-friends-list">Friends</span>'
+    + '<span class="social-tab" id="tab-requests">Requests</span>'
+    + '<span class="social-tab" id="tab-search">Add</span>'
+    + '</div>'
+    + '<div id="friends-list-panel"><div id="friends-list-content" class="s-loading">Loading...</div></div>'
+    + '<div id="friends-requests-panel" style="display:none;"><div id="friends-requests-content"></div></div>'
+    + '<div id="friends-search-panel" style="display:none;">'
+    + '<input id="friend-search-input" placeholder="Enter name or friend code...">'
+    + '<button class="s-btn s-btn-p" id="friend-search-btn" style="margin:4px 0;">Search</button>'
+    + '<div id="friend-search-results"></div></div>'
+    + '</div></section>'
+    // LEADERBOARD
+    + '<section id="leaderboard-section"><div id="leaderboard-wrapper">'
+    + '<h2>Leaderboard</h2>'
+    + '<div class="social-tabs" id="lb-tabs">'
+    + '<span class="social-tab active-tab" id="tab-lb-global">Global</span>'
+    + '<span class="social-tab" id="tab-lb-friends">Friends</span>'
+    + '</div>'
+    + '<div id="lb-global-panel"><div id="lb-global-list" class="s-loading">Loading...</div></div>'
+    + '<div id="lb-friends-panel" style="display:none;"><div id="lb-friends-list"></div></div>'
+    + '</div></section>'
+    // NOTIFICATIONS
+    + '<section id="notifications-section"><div id="notifications-wrapper">'
+    + '<h2>Notifications</h2>'
+    + '<div id="notifications-list" class="s-empty">No notifications</div>'
+    + '</div></section>'
+    // CHALLENGE
+    + '<section id="challenge-section">'
+    + '<div id="challenge-info"><h2>Challenge from <span id="ch-opponent-name"></span></h2>'
+    + '<p>They scored <b id="ch-opponent-score"></b>/10. Can you beat them?</p>'
+    + '<button class="s-btn s-btn-g" id="start-challenge-btn" style="padding:12px 30px;font-size:15px;">Accept Challenge</button></div>'
+    + '<div id="ch-quiz-wrapper" style="display:none;">'
+    + '<div id="ch-timer-bar">00:00</div>'
+    + '<div id="ch-question-title">Question: <span id="ch-q-num">1</span> / 10</div>'
+    + '<div id="ch-question-wrapper"><span id="ch-query-text">What is the translation of </span><b id="ch-question-word"></b>?</div>'
+    + '<div id="ch-options"></div></div>'
+    + '<div id="challenge-results" style="display:none;">'
+    + '<h2>Challenge Complete!</h2>'
+    + '<div class="ch-comparison"><div class="ch-player"><div class="ch-player-name" id="ch-you-label">You</div><div class="ch-player-score" id="ch-you-score">0</div></div>'
+    + '<div class="ch-vs">VS</div>'
+    + '<div class="ch-player"><div class="ch-player-name" id="ch-opp-label">-</div><div class="ch-player-score" id="ch-opp-score-final">0</div></div></div>'
+    + '<div class="ch-verdict" id="ch-verdict"></div>'
+    + '<div class="ch-bonus" id="ch-bonus"></div>'
+    + '<button class="s-btn s-btn-p" id="ch-back-btn" style="margin-top:12px;padding:10px 24px;">Back to Friends</button>'
+    + '</div></section>'
+  );
+}
+
+// ---- NAV WIRING ----
+function navTo(sectionId) {
+  hide('section, #pagination-btns-wrapper, #more-links-wrapper');
+  show('#' + sectionId);
+  removeClass('.link', 'active_link');
+  addClass('#friends-link', 'active_link');
+  _currentSection = sectionId;
+  history.pushState({ social: sectionId }, null);
+}
+
+// Friends link → Friends section
+var friendsLink = document.getElementById('friends-link');
+if (friendsLink) {
+  friendsLink.addEventListener('click', function() {
+    navTo('friends-section');
+    loadFriends();
+    adjustPolling();
+  });
+}
+
+// Add Profile + Leaderboard + Notifications to More menu
+var moreLinks = document.getElementById('more-links-wrapper');
+if (moreLinks) {
+  var profileItem = document.createElement('li');
+  profileItem.innerHTML = '<span>👤</span> My Profile';
+  profileItem.style.cursor = 'pointer';
+  profileItem.addEventListener('click', function() { navTo('profile-section'); showProfile(); });
+
+  var lbItem = document.createElement('li');
+  lbItem.innerHTML = '<span>🏆</span> Leaderboard';
+  lbItem.style.cursor = 'pointer';
+  lbItem.addEventListener('click', function() { navTo('leaderboard-section'); showLeaderboard(); });
+
+  var notifItem = document.createElement('li');
+  notifItem.innerHTML = '<span>🔔</span> Notifications';
+  notifItem.style.cursor = 'pointer';
+  notifItem.addEventListener('click', function() { navTo('notifications-section'); showNotifications(); adjustPolling(); });
+
+  // Insert after first child (subscription item may be there)
+  var firstMore = moreLinks.children[0];
+  moreLinks.insertBefore(notifItem, firstMore);
+  moreLinks.insertBefore(lbItem, notifItem);
+  moreLinks.insertBefore(profileItem, lbItem);
+}
+
+// Back button
+window.addEventListener('popstate', function(e) {
+  if (e.state && e.state.social) {
+    navTo(e.state.social);
+  } else {
+    _currentSection = null;
+    adjustPolling();
+  }
+});
+
+// ---- NAME PROMPT ----
+function showNamePrompt(callback) {
+  var overlay = document.createElement('div');
+  overlay.className = 'name-modal-overlay';
+  overlay.innerHTML = '<div class="name-modal">'
+    + '<h3>Welcome!</h3><p>Choose a display name for your profile</p>'
+    + '<input id="name-prompt-input" type="text" placeholder="Your name" maxlength="50">'
+    + '<div style="margin-top:12px;"><button class="s-btn s-btn-p" id="name-prompt-save" style="padding:10px 24px;">Continue</button></div>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  document.getElementById('name-prompt-save').addEventListener('click', function() {
+    var val = document.getElementById('name-prompt-input').value.trim();
+    if (!val) return;
+    document.body.removeChild(overlay);
+    callback(val);
+  });
+}
+
+// ---- USER REGISTRATION ----
+function checkAndRegisterUser() {
+  var deviceId = getDeviceId();
+  var userData = getUserData();
+  if (userData && userData.name) {
+    startPolling();
+    syncPoints();
+    return;
+  }
+  if (!navigator.onLine) return;
+  // Check if we have a name stored
+  var name = localStorage.getItem('bemdic_user_name');
+  if (name) {
+    registerUser(deviceId, name);
+  } else {
+    showNamePrompt(function(n) {
+      localStorage.setItem('bemdic_user_name', n);
+      registerUser(deviceId, n);
+    });
+  }
+}
+function registerUser(deviceId, name) {
+  apiCall('/register', { device_id: deviceId, name: name }, function(resp) {
+    if (resp.ok && resp.user) {
+      localStorage.setItem('bemdic_user_data', JSON.stringify(resp.user));
+      startPolling();
+      syncPoints();
+    }
+  });
+}
+
+// ---- PROFILE ----
+function showProfile() {
+  var ud = getUserData();
+  if (ud) renderProfile(ud);
+  apiCall('/user/profile', { device_id: getDeviceId() }, function(resp) {
+    if (resp.ok && resp.user) {
+      localStorage.setItem('bemdic_user_data', JSON.stringify(resp.user));
+      renderProfile(resp.user);
+    }
+  });
+}
+function renderProfile(u) {
+  var el = function(id) { return document.getElementById(id); };
+  // Profile picture
+  var picEl = el('profile-pic-display');
+  if (picEl) {
+    if (u.picture) picEl.innerHTML = '<img src="' + u.picture + '">';
+    else picEl.innerHTML = '👤';
+  }
+  if (el('profile-name-text')) el('profile-name-text').textContent = u.name || '';
+  if (el('profile-code-value')) el('profile-code-value').textContent = u.friend_code || '';
+  if (el('prof-points')) el('prof-points').textContent = u.points || 0;
+  if (el('prof-level')) el('prof-level').textContent = getLevelName(u.points || 0);
+  if (el('prof-quizzes')) el('prof-quizzes').textContent = u.total_quizzes || 0;
+  if (el('prof-wins')) el('prof-wins').textContent = u.challenges_won || 0;
+  if (el('prof-losses')) el('prof-losses').textContent = u.challenges_lost || 0;
+  if (el('prof-draws')) el('prof-draws').textContent = u.challenges_drawn || 0;
+}
+
+// Profile edit name
+var editBtn = document.getElementById('profile-edit-btn');
+if (editBtn) {
+  editBtn.addEventListener('click', function() {
+    var current = (getUserData() || {}).name || '';
+    var newName = prompt('Enter new display name:', current);
+    if (newName && newName.trim() && newName.trim() !== current) {
+      apiCall('/user/update', { device_id: getDeviceId(), name: newName.trim() }, function(resp) {
+        if (resp.ok) {
+          var ud = getUserData() || {};
+          ud.name = newName.trim();
+          localStorage.setItem('bemdic_user_data', JSON.stringify(ud));
+          localStorage.setItem('bemdic_user_name', newName.trim());
+          showProfile();
+        }
+      });
+    }
+  });
+}
+
+// Profile picture upload
+var profAvatar = document.getElementById('profile-avatar');
+var picInput = document.getElementById('pic-file-input');
+if (profAvatar && picInput) {
+  profAvatar.addEventListener('click', function() { picInput.click(); });
+  picInput.addEventListener('change', function() {
+    if (!this.files || !this.files[0]) return;
+    var picDisplay = document.getElementById('profile-pic-display');
+    if (picDisplay) picDisplay.innerHTML = '<div class="s-loading" style="padding:4px;">Uploading...</div>';
+    resizeAndUploadPicture(this.files[0], function(dataUrl) {
+      if (dataUrl) showProfile();
+      else if (picDisplay) picDisplay.innerHTML = '👤';
+    });
+    picInput.value = '';
+  });
+}
+
+// Copy friend code
+var copyBtn = document.getElementById('profile-copy-code');
+if (copyBtn) {
+  copyBtn.addEventListener('click', function() {
+    var code = (getUserData() || {}).friend_code || '';
+    if (code && navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(function() { alert('Friend code copied!'); });
+    }
+  });
+}
+
+// ---- FRIENDS ----
+function loadFriends() {
+  var listEl = document.getElementById('friends-list-content');
+  if (listEl) listEl.innerHTML = '<div class="s-loading">Loading...</div>';
+
+  apiCall('/friends/list', { device_id: getDeviceId() }, function(resp) {
+    if (!resp.ok) { if (listEl) listEl.innerHTML = '<div class="s-empty">Could not load friends</div>'; return; }
+    renderFriendsList(resp.friends || []);
+    renderRequests(resp.requests || []);
+    // Update requests tab badge
+    var reqTab = document.getElementById('tab-requests');
+    if (reqTab) {
+      var rc = (resp.requests || []).length;
+      reqTab.textContent = 'Requests' + (rc > 0 ? ' (' + rc + ')' : '');
+    }
+  });
+}
+
+function renderFriendsList(friends) {
+  var el = document.getElementById('friends-list-content');
+  if (!el) return;
+  if (!friends.length) { el.innerHTML = '<div class="s-empty">No friends yet. Tap "Add" to find people!</div>'; return; }
+  var html = '';
+  for (var i = 0; i < friends.length; i++) {
+    var f = friends[i];
+    var on = isOnline(f.last_seen);
+    html += '<div class="friend-row">'
+      + '<div class="friend-pic">' + profilePicHtml(f.picture, 40) + '<span class="friend-dot ' + (on ? 'dot-on' : 'dot-off') + '"></span></div>'
+      + '<div class="friend-info"><div class="friend-name">' + escapeHtml(f.name) + '</div>'
+      + '<div class="friend-meta">' + getLevelName(f.points) + ' · ' + f.points + 'pts</div></div>'
+      + '<button class="s-btn s-btn-g" data-fid="' + f.user_id + '" data-fname="' + escapeHtml(f.name) + '">Challenge</button>'
+      + '</div>';
+  }
+  el.innerHTML = html;
+  // Attach challenge handlers
+  var btns = el.querySelectorAll('.s-btn-g');
+  for (var b = 0; b < btns.length; b++) {
+    btns[b].addEventListener('click', function() {
+      startChallenge(parseInt(this.getAttribute('data-fid')), this.getAttribute('data-fname'));
+    });
+  }
+}
+
+function renderRequests(requests) {
+  var el = document.getElementById('friends-requests-content');
+  if (!el) return;
+  if (!requests.length) { el.innerHTML = '<div class="s-empty">No pending requests</div>'; return; }
+  var html = '';
+  for (var i = 0; i < requests.length; i++) {
+    var r = requests[i];
+    html += '<div class="friend-row">'
+      + '<div class="friend-pic">' + profilePicHtml(r.picture, 40) + '</div>'
+      + '<div class="friend-info"><div class="friend-name">' + escapeHtml(r.name) + '</div>'
+      + '<div class="friend-meta">' + r.points + 'pts · ' + r.friend_code + '</div></div>'
+      + '<button class="s-btn s-btn-g" data-rid="' + r.request_id + '" data-action="accept" style="margin-right:4px;">Accept</button>'
+      + '<button class="s-btn s-btn-d" data-rid="' + r.request_id + '" data-action="reject">Reject</button>'
+      + '</div>';
+  }
+  el.innerHTML = html;
+  var btns = el.querySelectorAll('.s-btn');
+  for (var b = 0; b < btns.length; b++) {
+    btns[b].addEventListener('click', function() {
+      var rid = parseInt(this.getAttribute('data-rid'));
+      var act = this.getAttribute('data-action');
+      if (!act) return;
+      apiCall('/friends/respond', { device_id: getDeviceId(), request_id: rid, action: act }, function() {
+        loadFriends();
+      });
+    });
+  }
+}
+
+// Friends tab switching
+var tabFriends = document.getElementById('tab-friends-list');
+var tabReqs = document.getElementById('tab-requests');
+var tabSearch = document.getElementById('tab-search');
+function switchFriendsTab(active) {
+  var tabs = [tabFriends, tabReqs, tabSearch];
+  var panels = ['friends-list-panel', 'friends-requests-panel', 'friends-search-panel'];
+  for (var i = 0; i < tabs.length; i++) {
+    if (tabs[i]) { tabs[i].className = 'social-tab' + (i === active ? ' active-tab' : ''); }
+    var p = document.getElementById(panels[i]);
+    if (p) p.style.display = (i === active ? 'block' : 'none');
+  }
+}
+if (tabFriends) tabFriends.addEventListener('click', function() { switchFriendsTab(0); });
+if (tabReqs) tabReqs.addEventListener('click', function() { switchFriendsTab(1); });
+if (tabSearch) tabSearch.addEventListener('click', function() { switchFriendsTab(2); });
+
+// Search friends
+var searchBtn = document.getElementById('friend-search-btn');
+if (searchBtn) {
+  searchBtn.addEventListener('click', function() {
+    var q = document.getElementById('friend-search-input').value.trim();
+    if (!q) return;
+    var res = document.getElementById('friend-search-results');
+    if (res) res.innerHTML = '<div class="s-loading">Searching...</div>';
+    apiCall('/friends/search', { device_id: getDeviceId(), query: q }, function(resp) {
+      if (!resp.ok || !resp.results) { if (res) res.innerHTML = '<div class="s-empty">No results</div>'; return; }
+      if (!resp.results.length) { if (res) res.innerHTML = '<div class="s-empty">No users found</div>'; return; }
+      var html = '';
+      for (var i = 0; i < resp.results.length; i++) {
+        var u = resp.results[i];
+        html += '<div class="friend-row">'
+          + '<div class="friend-pic">' + profilePicHtml(u.picture, 36) + '</div>'
+          + '<div class="friend-info"><div class="friend-name">' + escapeHtml(u.name) + '</div>'
+          + '<div class="friend-meta">' + u.friend_code + ' · ' + u.points + 'pts</div></div>'
+          + '<button class="s-btn s-btn-p" data-uid="' + u.id + '">Add Friend</button></div>';
+      }
+      if (res) res.innerHTML = html;
+      var btns = res.querySelectorAll('.s-btn-p');
+      for (var b = 0; b < btns.length; b++) {
+        btns[b].addEventListener('click', function() {
+          var uid = parseInt(this.getAttribute('data-uid'));
+          var btn = this;
+          apiCall('/friends/request', { device_id: getDeviceId(), target_user_id: uid }, function(resp) {
+            if (resp.ok) {
+              btn.textContent = resp.auto_accepted ? 'Friends!' : 'Sent!';
+              btn.disabled = true;
+              btn.className = 's-btn s-btn-s';
+            } else {
+              btn.textContent = resp.error || 'Error';
+              btn.className = 's-btn s-btn-s';
+            }
+          });
+        });
+      }
+    });
+  });
+}
+
+// ---- CHALLENGE SYSTEM ----
+// -- Sender flow --
+function startChallenge(friendId, friendName) {
+  window.__bemdic_challenge_mode = true;
+  window.__bemdic_challenge_target = { id: friendId, name: friendName };
+  // Navigate to quiz section (normal quiz flow)
+  hide('section, #pagination-btns-wrapper, #more-links-wrapper');
+  show('#quiz-section');
+  removeClass('.link', 'active_link');
+  addClass('#quiz-link', 'active_link');
+  // Reset quiz state for a fresh quiz
+  question_number = 0;
+  scored_marks = 0;
+  gen_random_question = [];
+  // Show instructions with challenge context
+  var instrHeader = document.getElementById('instructions-header');
+  if (instrHeader) instrHeader.innerHTML = 'Challenge <b>' + escapeHtml(friendName) + '</b>!<br><small style="color:#666;">Play the quiz. Your score will be sent as a challenge.</small>';
+}
+
+// MutationObserver on quiz results to detect challenge quiz completion
+var qrw = document.getElementById('quiz-results-wrapper');
+if (qrw) {
+  var qrwObs = new MutationObserver(function() {
+    if (!window.__bemdic_challenge_mode) return;
+    if (qrw.style.display === 'none' || qrw.offsetParent === null) return;
+    // Quiz finished in challenge mode
+    var questions = [];
+    for (var i = 0; i < gen_random_question.length; i++) {
+      var idx = gen_random_question[i];
+      var parts = english_bemba_array[idx].split('#');
+      questions.push({ index: idx, eng: parts[0], bem: parts[1] });
+    }
+    var target = window.__bemdic_challenge_target;
+    var score = scored_marks;
+
+    // Add "sending challenge" message
+    var epw = document.getElementById('earned-points-wrapper');
+    if (epw) epw.insertAdjacentHTML('afterend', '<div id="ch-sending-msg" style="text-align:center;color:#058;margin:10px 0;font-size:14px;">Sending challenge to <b>' + escapeHtml(target.name) + '</b>...</div>');
+
+    apiCall('/challenge/send', {
+      device_id: getDeviceId(),
+      receiver_id: target.id,
+      sender_score: score,
+      questions: questions
+    }, function(resp) {
+      var msg = document.getElementById('ch-sending-msg');
+      if (resp.ok) {
+        if (msg) { msg.style.color = '#084'; msg.innerHTML = 'Challenge sent! <b>' + escapeHtml(target.name) + '</b> will be notified.'; }
+      } else {
+        if (msg) { msg.style.color = 'crimson'; msg.textContent = 'Failed to send challenge.'; }
+      }
+      window.__bemdic_challenge_mode = false;
+      window.__bemdic_challenge_target = null;
+      syncPoints();
+    });
+    qrwObs.disconnect();
+    // Re-observe for next time
+    setTimeout(function() { qrwObs.observe(qrw, { attributes: true, attributeFilter: ['style'] }); }, 2000);
+  });
+  qrwObs.observe(qrw, { attributes: true, attributeFilter: ['style'] });
+}
+
+// -- Receiver flow --
+var _challengeData = null;
+var _chQuestionNum = 0;
+var _chScore = 0;
+var _chTimerInterval = null;
+
+function openReceivedChallenge(challengeId) {
+  navTo('challenge-section');
+  var info = document.getElementById('challenge-info');
+  var quizW = document.getElementById('ch-quiz-wrapper');
+  var results = document.getElementById('challenge-results');
+  if (info) info.style.display = 'block';
+  if (quizW) quizW.style.display = 'none';
+  if (results) results.style.display = 'none';
+
+  apiCall('/challenge/detail', { device_id: getDeviceId(), challenge_id: challengeId }, function(resp) {
+    if (!resp.ok || !resp.challenge) { if (info) info.innerHTML = '<div class="s-empty">Could not load challenge</div>'; return; }
+    _challengeData = resp.challenge;
+    _challengeData.parsedQuestions = typeof resp.challenge.questions === 'string' ? JSON.parse(resp.challenge.questions) : resp.challenge.questions;
+
+    if (resp.challenge.status === 'completed') {
+      showChallengeResult({
+        sender_name: resp.challenge.is_sender ? 'You' : resp.challenge.opponent_name,
+        receiver_name: resp.challenge.is_sender ? resp.challenge.opponent_name : 'You',
+        sender_score: resp.challenge.sender_score,
+        receiver_score: resp.challenge.receiver_score,
+        is_sender: resp.challenge.is_sender,
+        sender_bonus: resp.challenge.sender_points_awarded,
+        receiver_bonus: resp.challenge.receiver_points_awarded
+      });
+      return;
+    }
+
+    var oppName = document.getElementById('ch-opponent-name');
+    var oppScore = document.getElementById('ch-opponent-score');
+    if (oppName) oppName.textContent = resp.challenge.opponent_name;
+    if (oppScore) oppScore.textContent = resp.challenge.sender_score;
+  });
+}
+
+// Start challenge button
+var startChBtn = document.getElementById('start-challenge-btn');
+if (startChBtn) {
+  startChBtn.addEventListener('click', function() {
+    if (!_challengeData) return;
+    _chQuestionNum = 0;
+    _chScore = 0;
+    document.getElementById('challenge-info').style.display = 'none';
+    document.getElementById('ch-quiz-wrapper').style.display = 'block';
+    loadChallengeQuestion();
+  });
+}
+
+function loadChallengeQuestion() {
+  _chQuestionNum++;
+  if (_chQuestionNum > 10) {
+    // Challenge quiz finished
+    clearInterval(_chTimerInterval);
+    document.getElementById('ch-quiz-wrapper').style.display = 'none';
+    // Submit response
+    apiCall('/challenge/respond', {
+      device_id: getDeviceId(),
+      challenge_id: _challengeData.id,
+      receiver_score: _chScore
+    }, function(resp) {
+      if (resp.ok) {
+        showChallengeResult({
+          sender_name: resp.result.sender_name,
+          receiver_name: 'You',
+          sender_score: resp.result.sender_score,
+          receiver_score: resp.result.receiver_score,
+          is_sender: false,
+          sender_bonus: resp.result.sender_bonus,
+          receiver_bonus: resp.result.receiver_bonus,
+          winner: resp.result.winner
+        });
+        syncPoints();
+      }
+    });
+    return;
+  }
+
+  var q = _challengeData.parsedQuestions[_chQuestionNum - 1];
+  var qNumEl = document.getElementById('ch-q-num');
+  if (qNumEl) qNumEl.textContent = _chQuestionNum;
+
+  // Determine question direction (1-5: eng->bem, 6-10: bem->eng)
+  var askEng = _chQuestionNum <= 5;
+  var questionWord = askEng ? q.eng : q.bem;
+  var correctAnswer = askEng ? q.bem : q.eng;
+  var queryText = document.getElementById('ch-query-text');
+  if (queryText) queryText.textContent = 'What is the translation of ';
+  var qWordEl = document.getElementById('ch-question-word');
+  if (qWordEl) qWordEl.textContent = questionWord;
+
+  // Generate 3 wrong options
+  var wrongAnswers = [];
+  while (wrongAnswers.length < 3) {
+    var ri = Math.floor(Math.random() * english_bemba_array.length);
+    var parts = english_bemba_array[ri].split('#');
+    var wrong = askEng ? parts[1] : parts[0];
+    if (wrong !== correctAnswer && wrongAnswers.indexOf(wrong) === -1) {
+      wrongAnswers.push(wrong);
+    }
+  }
+
+  // Build options array with correct answer randomly placed
+  var options = wrongAnswers.slice();
+  var correctPos = Math.floor(Math.random() * 4);
+  options.splice(correctPos, 0, correctAnswer);
+
+  var optEl = document.getElementById('ch-options');
+  if (!optEl) return;
+  var html = '';
+  for (var i = 0; i < 4; i++) {
+    html += '<div class="ch-option" data-ans="' + escapeHtml(options[i]) + '">' + String.fromCharCode(65 + i) + '. ' + escapeHtml(options[i]) + '</div>';
+  }
+  optEl.innerHTML = html;
+
+  // Click handlers
+  var opts = optEl.querySelectorAll('.ch-option');
+  var answered = false;
+  for (var o = 0; o < opts.length; o++) {
+    opts[o].addEventListener('click', function() {
+      if (answered) return;
+      answered = true;
+      clearInterval(_chTimerInterval);
+      var selected = this.getAttribute('data-ans');
+      if (selected === correctAnswer) {
+        this.classList.add('ch-correct');
+        _chScore++;
+      } else {
+        this.classList.add('ch-wrong');
+        // Highlight correct
+        for (var x = 0; x < opts.length; x++) {
+          if (opts[x].getAttribute('data-ans') === correctAnswer) opts[x].classList.add('ch-correct');
+        }
+      }
+      // Disable all
+      for (var x = 0; x < opts.length; x++) opts[x].style.pointerEvents = 'none';
+      setTimeout(loadChallengeQuestion, 1500);
+    });
+  }
+
+  // Timer (15 seconds per question)
+  var timeLeft = 15;
+  var timerBar = document.getElementById('ch-timer-bar');
+  if (timerBar) timerBar.textContent = '00:' + (timeLeft < 10 ? '0' : '') + timeLeft;
+  clearInterval(_chTimerInterval);
+  _chTimerInterval = setInterval(function() {
+    timeLeft--;
+    if (timerBar) timerBar.textContent = '00:' + (timeLeft < 10 ? '0' : '') + timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(_chTimerInterval);
+      if (!answered) {
+        answered = true;
+        for (var x = 0; x < opts.length; x++) {
+          if (opts[x].getAttribute('data-ans') === correctAnswer) opts[x].classList.add('ch-correct');
+          opts[x].style.pointerEvents = 'none';
+        }
+        setTimeout(loadChallengeQuestion, 1500);
+      }
+    }
+  }, 1000);
+}
+
+function showChallengeResult(data) {
+  var info = document.getElementById('challenge-info');
+  var quizW = document.getElementById('ch-quiz-wrapper');
+  var results = document.getElementById('challenge-results');
+  if (info) info.style.display = 'none';
+  if (quizW) quizW.style.display = 'none';
+  if (results) results.style.display = 'block';
+
+  var youScore, oppScore, youName, oppName, youBonus;
+  if (data.is_sender) {
+    youScore = data.sender_score; oppScore = data.receiver_score;
+    youName = 'You'; oppName = data.receiver_name;
+    youBonus = data.sender_bonus;
+  } else {
+    youScore = data.receiver_score; oppScore = data.sender_score;
+    youName = 'You'; oppName = data.sender_name;
+    youBonus = data.receiver_bonus;
+  }
+
+  var youLabel = document.getElementById('ch-you-label');
+  var youScoreEl = document.getElementById('ch-you-score');
+  var oppLabel = document.getElementById('ch-opp-label');
+  var oppScoreEl = document.getElementById('ch-opp-score-final');
+  var verdict = document.getElementById('ch-verdict');
+  var bonus = document.getElementById('ch-bonus');
+
+  if (youLabel) youLabel.textContent = youName;
+  if (youScoreEl) { youScoreEl.textContent = youScore + '/10'; youScoreEl.style.color = youScore > oppScore ? '#084' : (youScore < oppScore ? 'crimson' : '#058'); }
+  if (oppLabel) oppLabel.textContent = oppName;
+  if (oppScoreEl) { oppScoreEl.textContent = oppScore + '/10'; oppScoreEl.style.color = oppScore > youScore ? '#084' : (oppScore < youScore ? 'crimson' : '#058'); }
+
+  var winner = data.winner || (youScore > oppScore ? (data.is_sender ? 'sender' : 'receiver') : (youScore < oppScore ? (data.is_sender ? 'receiver' : 'sender') : 'draw'));
+  var iWon = (data.is_sender && winner === 'sender') || (!data.is_sender && winner === 'receiver');
+  var isDraw = winner === 'draw';
+
+  if (verdict) {
+    if (isDraw) { verdict.textContent = "It's a Draw!"; verdict.style.color = '#058'; }
+    else if (iWon) { verdict.textContent = 'You Win!'; verdict.style.color = '#084'; }
+    else { verdict.textContent = 'You Lost!'; verdict.style.color = 'crimson'; }
+  }
+  if (bonus && youBonus) bonus.textContent = '+' + youBonus + ' bonus points earned';
+}
+
+// Back from challenge results
+var chBackBtn = document.getElementById('ch-back-btn');
+if (chBackBtn) {
+  chBackBtn.addEventListener('click', function() {
+    navTo('friends-section');
+    loadFriends();
+  });
+}
+
+// ---- LEADERBOARD ----
+function showLeaderboard() {
+  loadGlobalLB();
+}
+function loadGlobalLB() {
+  var el = document.getElementById('lb-global-list');
+  if (el) el.innerHTML = '<div class="s-loading">Loading...</div>';
+  apiGet('/leaderboard/global', function(resp) {
+    if (!resp.ok) { if (el) el.innerHTML = '<div class="s-empty">Could not load</div>'; return; }
+    renderLB(el, resp.leaders, null);
+  });
+}
+function loadFriendsLB() {
+  var el = document.getElementById('lb-friends-list');
+  if (el) el.innerHTML = '<div class="s-loading">Loading...</div>';
+  apiCall('/leaderboard/friends', { device_id: getDeviceId() }, function(resp) {
+    if (!resp.ok) { if (el) el.innerHTML = '<div class="s-empty">Could not load</div>'; return; }
+    renderLB(el, resp.leaders, resp.my_code);
+  });
+}
+function renderLB(el, leaders, myCode) {
+  if (!el || !leaders.length) { if (el) el.innerHTML = '<div class="s-empty">No data yet</div>'; return; }
+  var html = '';
+  var medals = ['🏆', '🥈', '🥉'];
+  for (var i = 0; i < leaders.length; i++) {
+    var l = leaders[i];
+    var isMe = myCode && l.friend_code === myCode;
+    html += '<div class="lb-row' + (isMe ? ' lb-me' : '') + '">'
+      + '<span class="lb-rank">' + (i < 3 ? medals[i] : '#' + (i + 1)) + '</span>'
+      + '<span class="lb-name">' + escapeHtml(l.name) + '</span>'
+      + '<span class="lb-pts">' + l.points + 'pts</span></div>';
+  }
+  el.innerHTML = html;
+}
+
+// LB tab switching
+var tabLBGlobal = document.getElementById('tab-lb-global');
+var tabLBFriends = document.getElementById('tab-lb-friends');
+if (tabLBGlobal) {
+  tabLBGlobal.addEventListener('click', function() {
+    tabLBGlobal.className = 'social-tab active-tab'; tabLBFriends.className = 'social-tab';
+    document.getElementById('lb-global-panel').style.display = 'block';
+    document.getElementById('lb-friends-panel').style.display = 'none';
+    loadGlobalLB();
+  });
+}
+if (tabLBFriends) {
+  tabLBFriends.addEventListener('click', function() {
+    tabLBFriends.className = 'social-tab active-tab'; tabLBGlobal.className = 'social-tab';
+    document.getElementById('lb-friends-panel').style.display = 'block';
+    document.getElementById('lb-global-panel').style.display = 'none';
+    loadFriendsLB();
+  });
+}
+
+// ---- NOTIFICATIONS ----
+function startPolling() {
+  if (_pollInterval) return;
+  pollNow();
+  _pollInterval = setInterval(pollNow, _pollDelay);
+}
+function adjustPolling() {
+  clearInterval(_pollInterval);
+  _pollInterval = null;
+  var delay = (_currentSection === 'friends-section' || _currentSection === 'notifications-section') ? _activePollDelay : _pollDelay;
+  pollNow();
+  _pollInterval = setInterval(pollNow, delay);
+}
+function pollNow() {
+  if (!navigator.onLine) return;
+  var ud = getUserData();
+  if (!ud) return;
+  apiCall('/notifications/poll', { device_id: getDeviceId() }, function(resp) {
+    if (resp.ok) {
+      updateBadge(resp.unread_count);
+      localStorage.setItem('bemdic_notifications', JSON.stringify(resp.notifications));
+    }
+  });
+}
+function updateBadge(count) {
+  var badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = '(' + count + ')';
+    badge.style.color = '#ff4444';
+  } else {
+    badge.textContent = '(Friends)';
+    badge.style.color = 'greenyellow';
+  }
+}
+function showNotifications() {
+  var el = document.getElementById('notifications-list');
+  var raw = localStorage.getItem('bemdic_notifications');
+  var notifs = [];
+  if (raw) try { notifs = JSON.parse(raw); } catch(e) {}
+  if (!notifs.length) { if (el) el.innerHTML = '<div class="s-empty">No notifications</div>'; return; }
+
+  var html = '';
+  var icons = { challenge_received: '🎯', challenge_result: '🏆', friend_request: '👤', friend_accepted: '🤝' };
+  for (var i = 0; i < notifs.length; i++) {
+    var n = notifs[i];
+    var data = typeof n.data === 'string' ? JSON.parse(n.data) : n.data;
+    var text = '';
+    if (n.type === 'challenge_received') text = '<b>' + escapeHtml(data.from_name) + '</b> challenged you! (scored ' + data.sender_score + '/10)';
+    else if (n.type === 'challenge_result') {
+      var w = data.winner;
+      if (w === 'draw') text = 'Draw with <b>' + escapeHtml(data.from_name) + '</b>! (' + data.sender_score + '-' + data.receiver_score + ')';
+      else text = '<b>' + escapeHtml(data.from_name) + '</b> completed your challenge (' + data.sender_score + '-' + data.receiver_score + '). +' + data.bonus + 'pts';
+    }
+    else if (n.type === 'friend_request') text = '<b>' + escapeHtml(data.from_name) + '</b> wants to be your friend';
+    else if (n.type === 'friend_accepted') text = '<b>' + escapeHtml(data.from_name) + '</b> accepted your friend request';
+
+    html += '<div class="notif-row' + (n.read ? '' : ' unread') + '" data-ntype="' + n.type + '" data-ndata=\'' + escapeHtml(JSON.stringify(data)) + '\' data-nid="' + n.id + '">'
+      + '<span class="notif-icon">' + (icons[n.type] || '🔔') + '</span>'
+      + '<div class="notif-body"><div class="notif-text">' + text + '</div>'
+      + '<div class="notif-time">' + timeAgo(n.created_at) + '</div></div></div>';
+  }
+  if (el) el.innerHTML = html;
+
+  // Mark all as read
+  apiCall('/notifications/mark-read', { device_id: getDeviceId(), notification_ids: 'all' }, function() {
+    updateBadge(0);
+  });
+
+  // Click handlers
+  var rows = el.querySelectorAll('.notif-row');
+  for (var r = 0; r < rows.length; r++) {
+    rows[r].addEventListener('click', function() {
+      var type = this.getAttribute('data-ntype');
+      var data = JSON.parse(this.getAttribute('data-ndata'));
+      if (type === 'challenge_received' && data.challenge_id) openReceivedChallenge(data.challenge_id);
+      else if (type === 'challenge_result' && data.challenge_id) openReceivedChallenge(data.challenge_id);
+      else if (type === 'friend_request') { navTo('friends-section'); switchFriendsTab(1); loadFriends(); }
+      else if (type === 'friend_accepted') { navTo('friends-section'); loadFriends(); }
+    });
+  }
+}
+
+// ---- POINTS SYNC ----
+function syncPoints() {
+  var localPts = parseInt(localStorage.getItem('quiz-points')) || 0;
+  apiCall('/user/sync-points', { device_id: getDeviceId(), local_points: localPts }, function(resp) {
+    if (resp.ok && resp.server_points !== undefined) {
+      localStorage.setItem('quiz-points', resp.server_points);
+      var pn = document.getElementById('points-number');
+      if (pn) pn.textContent = resp.server_points;
+    }
+  });
+}
+
+// ---- INIT ----
+checkAndRegisterUser();
+
+})();
+
+
+// ============================================
+// SUBSCRIPTION & USAGE LIMIT SYSTEM
+// ============================================
+
+(function(){
+
+// --- CONFIG (change these as needed) ---
+var SUB_SECRET = 7391;  // secret number for code validation - CHANGE THIS to your own number
+var FREE_WORD_LIMIT = 30;
+var FREE_QUIZ_LIMIT = 10;
+var SUB_DAYS = 30;
+var PAYMENT_NUMBER = '0763428450'; // your mobile money number
+var PAYMENT_AMOUNT = 'K5';
+
+// --- HELPER: get today as YYYY-MM-DD ---
+function getToday(){
+  var d = new Date();
+  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+
+// --- HELPER: days since epoch (for code system) ---
+function daysSinceEpoch(date){
+  if(!date) date = new Date();
+  return Math.floor(date.getTime() / 86400000);
+}
+
+// --- SUBSCRIPTION CODE VALIDATION ---
+function generateChecksum(str){
+  var sum = 0;
+  for(var i=0; i<str.length; i++){
+    sum = ((sum << 5) - sum + str.charCodeAt(i)) & 0xFFFF;
+  }
+  var hex = sum.toString(16).toUpperCase();
+  while(hex.length < 4) hex = '0' + hex;
+  return hex;
+}
+
+function validateCode(code){
+  code = code.replace(/[\s\-]/g,'').toUpperCase();
+  if(code.length < 6) return false;
+  var payload = code.substring(0, code.length - 4);
+  var checksum = code.substring(code.length - 4);
+  if(generateChecksum(payload) !== checksum) return false;
+  var encoded = parseInt(payload, 16);
+  if(isNaN(encoded)) return false;
+  var expiryDay = encoded ^ SUB_SECRET;
+  var today = daysSinceEpoch();
+  if(expiryDay > today) return expiryDay;
+  return false;
+}
+
+// --- USAGE TRACKING (persisted in localStorage) ---
+function getUsage(){
+  var raw = localStorage.getItem('bemdic_usage');
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
+  return { date: getToday(), words: 0, quizzes: 0 };
+}
+
+function saveUsage(usage){
+  localStorage.setItem('bemdic_usage', JSON.stringify(usage));
+}
+
+function resetIfNewDay(usage){
+  if(usage.date !== getToday()){
+    usage.date = getToday();
+    usage.words = 0;
+    usage.quizzes = 0;
+  }
+  return usage;
+}
+
+function incrementWords(){
+  var usage = resetIfNewDay(getUsage());
+  usage.words++;
+  saveUsage(usage);
+  return usage.words;
+}
+
+function incrementQuizzes(){
+  var usage = resetIfNewDay(getUsage());
+  usage.quizzes++;
+  saveUsage(usage);
+  return usage.quizzes;
+}
+
+// --- SUBSCRIPTION STATUS (persisted in localStorage) ---
+function getSubscription(){
+  var raw = localStorage.getItem('bemdic_sub');
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
+  return null;
+}
+
+function isSubscribed(){
+  var sub = getSubscription();
+  if(!sub) return false;
+  return sub.expiryDay > daysSinceEpoch();
+}
+
+function getSubDaysLeft(){
+  var sub = getSubscription();
+  if(!sub) return 0;
+  var left = sub.expiryDay - daysSinceEpoch();
+  return left > 0 ? left : 0;
+}
+
+function activateSubscription(code){
+  var expiryDay = validateCode(code);
+  if(expiryDay){
+    localStorage.setItem('bemdic_sub', JSON.stringify({
+      code: code.replace(/[\s\-]/g,'').toUpperCase(),
+      expiryDay: expiryDay,
+      activatedOn: getToday()
+    }));
+    return true;
+  }
+  return false;
+}
+
+// --- PAYWALL MODAL (stored in localStorage for persistence) ---
+var subscription_modal = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;">'
+  + '<div style="background:#fff;border-radius:12px;padding:24px 18px;max-width:340px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.3);">'
+  + '<h2 style="margin:0 0 8px;color:#222;font-size:20px;">Get Unlimited dictionary</h2>'
+  + '<p style="color:#444;font-size:14px;line-height:1.5;margin:8px 0;" id="bemdic-pw-reason"></p>'
+  + '<p style="color:#444;font-size:14px;"> for just <b>'+PAYMENT_AMOUNT+'</b>/month!</p>'
+  + '<div style="text-align:left;background:#f5f5f5;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13px;color:#333;">'
+  + '<div style="color:#084; margin-bottom:8px;">How to subscribe:</div>'
+  + '<ol id="payments-steps"><li>Send <b>'+PAYMENT_AMOUNT+'</b> to <b>'+PAYMENT_NUMBER+'</b> via Airtel/MTN/Zamtel Money</li>'
+  + '<li>WhatsApp your <b>transaction ID</b> or <b>Screenshot</b> to <b>'+PAYMENT_NUMBER+'</b></li>'
+  + '<li>You will receive a <b>subscription code</b> once verified</li>'
+  + '<li>Enter the code below to activate</li></ol>'
+  + '</div>'
+  + '<div><input type="text" id="bemdic-sub-code" placeholder="Enter code e.g. A3F2-B1C4" maxlength="20" style="width:80%;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:16px;text-align:center;letter-spacing:2px;margin:8px 0;outline:none;"></div>'
+  + '<div id="bemdic-pw-error" style="color:crimson;font-size:13px;min-height:18px;margin:4px 0;"></div>'
+  + '<div><button id="bemdic-activate-btn" style="display:inline-block;padding:10px 28px;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin:6px 4px;background:#084;color:#fff;">Activate</button>'
+  + '<button id="bemdic-close-btn" style="display:inline-block;padding:10px 28px;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin:6px 4px;background:#eee;color:#555;">Try Tomorrow</button></div>'
+  + '</div></div>';
+
+// store the modal HTML in localStorage so it persists
+localStorage.setItem('subscription_modal', subscription_modal);
+
+function showPaywall(reason){
+  if(document.getElementById('bemdic-paywall')) return;
+
+  var reasonText = '';
+  if(reason === 'words'){
+    var u = resetIfNewDay(getUsage());
+    if(u.words >= FREE_WORD_LIMIT) reasonText = 'You have used your <b>'+FREE_WORD_LIMIT+' free word translations</b> for today. Come back tomorrow or subscribe for unlimited access.';
+  } else if(reason === 'quizzes'){
+    var u = resetIfNewDay(getUsage());
+    if(u.quizzes >= FREE_QUIZ_LIMIT) reasonText = 'You have used your <b>'+FREE_QUIZ_LIMIT+' free quiz session</b> for today. Come back tomorrow or subscribe for unlimited access.';
+  }
+
+  // read modal from localStorage
+  var modalHTML = localStorage.getItem('subscription_modal') || subscription_modal;
+
+  var modal = document.createElement('div');
+  modal.id = 'bemdic-paywall';
+  modal.innerHTML = modalHTML;
+
+  document.body.appendChild(modal);
+
+  // set the reason text
+  var reasonEl = document.getElementById('bemdic-pw-reason');
+  if(reasonEl) reasonEl.innerHTML = reasonText;
+
+  // activate button
+  document.getElementById('bemdic-activate-btn').addEventListener('click', function(){
+    var code = document.getElementById('bemdic-sub-code').value.trim();
+    var errEl = document.getElementById('bemdic-pw-error');
+    if(!code){
+      errEl.textContent = 'Please enter your subscription code';
+      return;
+    }
+    if(activateSubscription(code)){
+      errEl.style.color = '#084';
+      errEl.textContent = 'Activated! Enjoy ' + SUB_DAYS + ' days of unlimited access!';
+      setTimeout(function(){
+        document.body.removeChild(modal);
+        // remove the free bar if present
+        var freeBar = document.getElementById('bemdic-free-bar');
+        if(freeBar) freeBar.parentNode.removeChild(freeBar);
+        // automatically show content after activation
+        var wl = document.getElementById('words-loader');
+        var pb = document.getElementById('pagination-btns-wrapper');
+        if(wl) wl.style.display = 'block';
+        if(pb) pb.style.display = 'block';
+        if(typeof _original_load_dictionary === 'function') _original_load_dictionary();
+      }, 1500);
+    } else {
+      errEl.style.color = 'crimson';
+      errEl.textContent = 'Invalid or expired code. Please check and try again.';
+    }
+  });
+
+  // close button
+  document.getElementById('bemdic-close-btn').addEventListener('click', function(){
+    document.body.removeChild(modal);
+  });
+
+  // close modal on back button
+  history.pushState(null, null);
+  window.addEventListener('popstate', function onBack(){
+    var m = document.getElementById('bemdic-paywall');
+    if(m) m.parentNode.removeChild(m);
+    window.removeEventListener('popstate', onBack);
+  });
+}
+
+// --- UPDATE FREE BAR IN REAL TIME ---
+function updateFreeBar(){
+  var bar = document.getElementById('bemdic-free-bar');
+  if(!bar) return;
+  var u = resetIfNewDay(getUsage());
+  var wLeft = Math.max(0, FREE_WORD_LIMIT - u.words);
+  var qLeft = Math.max(0, FREE_QUIZ_LIMIT - u.quizzes);
+  var upgradeBtn = document.getElementById('bemdic-upgrade-bar');
+  var upgradeBtnHTML = upgradeBtn ? upgradeBtn.outerHTML : '';
+  bar.innerHTML = 'Free: <b>'+wLeft+'</b> words & <b>'+qLeft+'</b> quiz left today '+upgradeBtnHTML;
+  var newBtn = document.getElementById('bemdic-upgrade-bar');
+  if(newBtn) newBtn.addEventListener('click', function(){ showPaywall('words'); });
+}
+
+// --- INTERCEPT WORD VIEWS ---
+var _original_load_dictionary = window.load_dictionary;
+window.load_dictionary = function(){
+  if(!isSubscribed()){
+    var count = incrementWords();
+    updateFreeBar();
+    if(count > FREE_WORD_LIMIT){
+      showPaywall('words');
+      return;
+    }
+  }
+  _original_load_dictionary();
+};
+
+// Intercept search suggestion clicks
+var searchSuggestions = document.getElementById('search-suggesstions');
+if(searchSuggestions){
+  searchSuggestions.addEventListener('click', function(e){
+    if(e.target.tagName === 'LI'){
+      if(!isSubscribed()){
+        var count = incrementWords();
+        updateFreeBar();
+        if(count > FREE_WORD_LIMIT){
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          showPaywall('words');
+          return false;
+        }
+      }
+    }
+  }, true);
+}
+
+// --- INTERCEPT QUIZ START ---
+var quizStartBtns = document.querySelectorAll('#start-quiz');
+for(var q = 0; q < quizStartBtns.length; q++){
+  (function(btn){
+    var originalOnclick = btn.getAttribute('onclick');
+    if(originalOnclick && originalOnclick.indexOf('load_question') > -1){
+      btn.removeAttribute('onclick');
+      btn.addEventListener('click', function(){
+        if(!isSubscribed()){
+          var count = incrementQuizzes();
+          updateFreeBar();
+          if(count > FREE_QUIZ_LIMIT){
+            showPaywall('quizzes');
+            return;
+          }
+        }
+        eval(originalOnclick);
+      });
+    }
+  })(quizStartBtns[q]);
+}
+
+// --- SHOW SUBSCRIPTION STATUS IN "MORE" MENU ---
+var moreLinks = document.getElementById('more-links-wrapper');
+if(moreLinks){
+  var subItem = document.createElement('li');
+  if(isSubscribed()){
+    var days_left_text='days left'
+    if(getSubDaysLeft() < 2){
+      days_left_text='day left'
+    }
+    subItem.innerHTML = '<span>&#11088;</span> Premium (' + getSubDaysLeft() + days_left_text + ')';
+    subItem.style.color = '#084';
+    subItem.style.fontWeight = 'bold';
+  } else {
+    subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access ('+PAYMENT_AMOUNT+'/month)';
+    subItem.style.color = 'aqua';
+    subItem.style.cursor = 'pointer';
+    subItem.addEventListener('click', function(){
+      showPaywall('words');
+    });
+  }
+  moreLinks.insertBefore(subItem, moreLinks.firstChild);
+}
+
+// --- ON LOAD: if already over limit, hide content and show paywall immediately ---
+if(!isSubscribed()){
+  var currentUsage = resetIfNewDay(getUsage());
+  if(currentUsage.words >= FREE_WORD_LIMIT){
+    // hide the word content that loaded before api.js
+    var appendList = document.getElementById('append_list');
+    if(appendList) appendList.innerHTML = '';
+    showPaywall('words');
+  }
+}
+
+// --- SHOW REMAINING FREE USES (for free users) ---
+if(!isSubscribed()){
+  var usage = resetIfNewDay(getUsage());
+  var wordsLeft = Math.max(0, FREE_WORD_LIMIT - usage.words);
+  var quizzesLeft = Math.max(0, FREE_QUIZ_LIMIT - usage.quizzes);
+
+  var freeBar = document.createElement('div');
+  freeBar.id = 'bemdic-free-bar';
+  freeBar.style.cssText = 'background:#fff3e0;color:#e65100;text-align:left;padding:6px 10px;font-size:13px;position:sticky;top:0;z-index:9999;border-bottom:1px solid #ffcc80;';
+  freeBar.innerHTML = 'Free: <b>'+wordsLeft+'</b> words & <b>'+quizzesLeft+'</b> quiz left today <span style="cursor:pointer;  font-siz:12px; background:#058; color: white; padding:5px; border-radius:4px;  border:1px solid white;" id="bemdic-upgrade-bar">Get Unlimited- '+PAYMENT_AMOUNT+'</span>';
+
+  document.body.insertBefore(freeBar, document.body.firstChild);
+
+  document.getElementById('bemdic-upgrade-bar').addEventListener('click', function(){
+    showPaywall('words');
+  });
+}
+
+// --- STORE CONFIG IN LOCALSTORAGE for persistence ---
+localStorage.setItem('bemdic_config', JSON.stringify({
+  secret: SUB_SECRET,
+  wordLimit: FREE_WORD_LIMIT,
+  quizLimit: FREE_QUIZ_LIMIT,
+  subDays: SUB_DAYS,
+  paymentNumber: PAYMENT_NUMBER,
+  paymentAmount: PAYMENT_AMOUNT
+}));
+
+})();
+
+
+// ============================================
+// OFFLINE STORAGE: Store subscription logic for offline use
+// ============================================
+// This runs even when the IIFE above is commented out,
+// but only stores meaningful code when it's uncommented.
+
+var _bemdic_offline_sub = function() {
+  if (window.__bemdic_api_loaded) return;
+
+  var raw = localStorage.getItem('bemdic_config');
+  if (!raw) return;
+  var cfg;
+  try { cfg = JSON.parse(raw); } catch(e) { return; }
+
+  var SUB_SECRET = cfg.secret;
+  var FREE_WORD_LIMIT = cfg.wordLimit;
+  var FREE_QUIZ_LIMIT = cfg.quizLimit;
+  var SUB_DAYS = cfg.subDays;
+  var PAYMENT_NUMBER = cfg.paymentNumber;
+  var PAYMENT_AMOUNT = cfg.paymentAmount;
+
+  function getToday() {
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+  }
+
+  function daysSinceEpoch(date) {
+    if (!date) date = new Date();
+    return Math.floor(date.getTime() / 86400000);
+  }
+
+  function generateChecksum(str) {
+    var sum = 0;
+    for (var i = 0; i < str.length; i++) {
+      sum = ((sum << 5) - sum + str.charCodeAt(i)) & 0xFFFF;
+    }
+    var hex = sum.toString(16).toUpperCase();
+    while (hex.length < 4) hex = '0' + hex;
+    return hex;
+  }
+
+  function validateCode(code) {
+    code = code.replace(/[\s\-]/g, '').toUpperCase();
+    if (code.length < 6) return false;
+    var payload = code.substring(0, code.length - 4);
+    var checksum = code.substring(code.length - 4);
+    if (generateChecksum(payload) !== checksum) return false;
+    var encoded = parseInt(payload, 16);
+    if (isNaN(encoded)) return false;
+    var expiryDay = encoded ^ SUB_SECRET;
+    var today = daysSinceEpoch();
+    if (expiryDay > today) return expiryDay;
+    return false;
+  }
+
+  function getUsage() {
+    var r = localStorage.getItem('bemdic_usage');
+    if (r) { try { return JSON.parse(r); } catch(e) {} }
+    return { date: getToday(), words: 0, quizzes: 0 };
+  }
+
+  function saveUsage(usage) {
+    localStorage.setItem('bemdic_usage', JSON.stringify(usage));
+  }
+
+  function resetIfNewDay(usage) {
+    if (usage.date !== getToday()) {
+      usage.date = getToday();
+      usage.words = 0;
+      usage.quizzes = 0;
+    }
+    return usage;
+  }
+
+  function incrementWords() {
+    var usage = resetIfNewDay(getUsage());
+    usage.words++;
+    saveUsage(usage);
+    return usage.words;
+  }
+
+  function incrementQuizzes() {
+    var usage = resetIfNewDay(getUsage());
+    usage.quizzes++;
+    saveUsage(usage);
+    return usage.quizzes;
+  }
+
+  function getSubscription() {
+    var r = localStorage.getItem('bemdic_sub');
+    if (r) { try { return JSON.parse(r); } catch(e) {} }
+    return null;
+  }
+
+  function isSubscribed() {
+    var sub = getSubscription();
+    if (!sub) return false;
+    return sub.expiryDay > daysSinceEpoch();
+  }
+
+  function getSubDaysLeft() {
+    var sub = getSubscription();
+    if (!sub) return 0;
+    var left = sub.expiryDay - daysSinceEpoch();
+    return left > 0 ? left : 0;
+  }
+
+  function activateSubscription(code) {
+    var expiryDay = validateCode(code);
+    if (expiryDay) {
+      localStorage.setItem('bemdic_sub', JSON.stringify({
+        code: code.replace(/[\s\-]/g, '').toUpperCase(),
+        expiryDay: expiryDay,
+        activatedOn: getToday()
+      }));
+      return true;
+    }
+    return false;
+  }
+
+  function showPaywall(reason) {
+    if (document.getElementById('bemdic-paywall')) return;
+
+    var reasonText = '';
+    if (reason === 'words') {
+      var u = resetIfNewDay(getUsage());
+      if (u.words >= FREE_WORD_LIMIT) reasonText = 'You have used your <b>' + FREE_WORD_LIMIT + ' free word translations</b> for today. Come back tomorrow or subscribe for unlimited access.';
+    } else if (reason === 'quizzes') {
+      var u = resetIfNewDay(getUsage());
+      if (u.quizzes >= FREE_QUIZ_LIMIT) reasonText = 'You have used your <b>' + FREE_QUIZ_LIMIT + ' free quiz session</b> for today. Come back tomorrow or subscribe for unlimited access.';
+    }
+
+    var modalHTML = localStorage.getItem('subscription_modal');
+    if (!modalHTML) return;
+
+    var modal = document.createElement('div');
+    modal.id = 'bemdic-paywall';
+    modal.innerHTML = modalHTML;
+    document.body.appendChild(modal);
+
+    var reasonEl = document.getElementById('bemdic-pw-reason');
+    if (reasonEl) reasonEl.innerHTML = reasonText;
+
+    document.getElementById('bemdic-activate-btn').addEventListener('click', function() {
+      var code = document.getElementById('bemdic-sub-code').value.trim();
+      var errEl = document.getElementById('bemdic-pw-error');
+      if (!code) { errEl.textContent = 'Please enter your subscription code'; return; }
+      if (activateSubscription(code)) {
+        errEl.style.color = '#084';
+        errEl.textContent = 'Activated! Enjoy ' + SUB_DAYS + ' days of unlimited access!';
+        setTimeout(function() {
+          document.body.removeChild(modal);
+          var freeBar = document.getElementById('bemdic-free-bar');
+          if (freeBar) freeBar.parentNode.removeChild(freeBar);
+          var wl = document.getElementById('words-loader');
+          var pb = document.getElementById('pagination-btns-wrapper');
+          if (wl) wl.style.display = 'block';
+          if (pb) pb.style.display = 'block';
+          if (typeof window.load_dictionary === 'function') window.load_dictionary();
+        }, 1500);
+      } else {
+        errEl.style.color = 'crimson';
+        errEl.textContent = 'Invalid or expired code. Please check and try again.';
+      }
+    });
+
+    document.getElementById('bemdic-close-btn').addEventListener('click', function() {
+      document.body.removeChild(modal);
+    });
+
+    history.pushState(null, null);
+    window.addEventListener('popstate', function onBack() {
+      var m = document.getElementById('bemdic-paywall');
+      if (m) m.parentNode.removeChild(m);
+      window.removeEventListener('popstate', onBack);
+    });
+  }
+
+  function updateFreeBar() {
+    var bar = document.getElementById('bemdic-free-bar');
+    if (!bar) return;
+    var u = resetIfNewDay(getUsage());
+    var wLeft = Math.max(0, FREE_WORD_LIMIT - u.words);
+    var qLeft = Math.max(0, FREE_QUIZ_LIMIT - u.quizzes);
+    var upgradeBtn = document.getElementById('bemdic-upgrade-bar');
+    var upgradeBtnHTML = upgradeBtn ? upgradeBtn.outerHTML : '';
+    bar.innerHTML = 'Free: <b>' + wLeft + '</b> words & <b>' + qLeft + '</b> quiz left today ' + upgradeBtnHTML;
+    var newBtn = document.getElementById('bemdic-upgrade-bar');
+    if (newBtn) newBtn.addEventListener('click', function() { showPaywall('words'); });
+  }
+
+  // Intercept word views
+  var _orig_load = window.load_dictionary;
+  if (typeof _orig_load === 'function') {
+    window.load_dictionary = function() {
+      if (!isSubscribed()) {
+        var count = incrementWords();
+        updateFreeBar();
+        if (count > FREE_WORD_LIMIT) { showPaywall('words'); return; }
+      }
+      _orig_load();
+    };
+  }
+
+  // Intercept search suggestion clicks
+  var searchSugg = document.getElementById('search-suggesstions');
+  if (searchSugg) {
+    searchSugg.addEventListener('click', function(e) {
+      if (e.target.tagName === 'LI') {
+        if (!isSubscribed()) {
+          var count = incrementWords();
+          updateFreeBar();
+          if (count > FREE_WORD_LIMIT) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            showPaywall('words');
+            return false;
+          }
+        }
+      }
+    }, true);
+  }
+
+  // Intercept quiz start
+  var quizBtns = document.querySelectorAll('#start-quiz');
+  for (var q = 0; q < quizBtns.length; q++) {
+    (function(btn) {
+      var origClick = btn.getAttribute('onclick');
+      if (origClick && origClick.indexOf('load_question') > -1) {
+        btn.removeAttribute('onclick');
+        btn.addEventListener('click', function() {
+          if (!isSubscribed()) {
+            var count = incrementQuizzes();
+            updateFreeBar();
+            if (count > FREE_QUIZ_LIMIT) { showPaywall('quizzes'); return; }
+          }
+          eval(origClick);
+        });
+      }
+    })(quizBtns[q]);
+  }
+
+  // Show subscription status in More menu
+  var moreLinks = document.getElementById('more-links-wrapper');
+  if (moreLinks) {
+    var subItem = document.createElement('li');
+    if (isSubscribed()) {
+      var days_left_text = getSubDaysLeft() < 2 ? 'day left' : 'days left';
+      subItem.innerHTML = '<span>&#11088;</span> Premium (' + getSubDaysLeft() + ' ' + days_left_text + ')';
+      subItem.style.color = '#084';
+      subItem.style.fontWeight = 'bold';
+    } else {
+      subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access (' + PAYMENT_AMOUNT + '/month)';
+      subItem.style.color = 'aqua';
+      subItem.style.cursor = 'pointer';
+      subItem.addEventListener('click', function() { showPaywall('words'); });
+    }
+    moreLinks.insertBefore(subItem, moreLinks.firstChild);
+  }
+
+  // On load: if over limit, show paywall
+  if (!isSubscribed()) {
+    var currentUsage = resetIfNewDay(getUsage());
+    if (currentUsage.words >= FREE_WORD_LIMIT) {
+      var appendList = document.getElementById('append_list');
+      if (appendList) appendList.innerHTML = '';
+      showPaywall('words');
+    }
+  }
+
+  // Show remaining free uses
+  if (!isSubscribed()) {
+    var usage = resetIfNewDay(getUsage());
+    var wordsLeft = Math.max(0, FREE_WORD_LIMIT - usage.words);
+    var quizzesLeft = Math.max(0, FREE_QUIZ_LIMIT - usage.quizzes);
+    var freeBar = document.createElement('div');
+    freeBar.id = 'bemdic-free-bar';
+    freeBar.style.cssText = 'background:#fff3e0;color:#e65100;text-align:left;padding:6px 10px;font-size:13px;position:sticky;top:0;z-index:9999;border-bottom:1px solid #ffcc80;';
+    freeBar.innerHTML = 'Free: <b>' + wordsLeft + '</b> words & <b>' + quizzesLeft + '</b> quiz left today <span style="cursor:pointer;font-size:12px;background:#058;color:white;padding:5px;border-radius:4px;border:1px solid white;" id="bemdic-upgrade-bar">Get Unlimited- ' + PAYMENT_AMOUNT + '</span>';
+    document.body.insertBefore(freeBar, document.body.firstChild);
+    document.getElementById('bemdic-upgrade-bar').addEventListener('click', function() { showPaywall('words'); });
+  }
+};
+
+// Store the offline function as executable code in localStorage
+localStorage.setItem('bemdic_offline_js', '(' + _bemdic_offline_sub.toString() + ')()');
+
+// Mark that api.js loaded
+window.__bemdic_api_loaded = true;
