@@ -241,10 +241,13 @@ ss.textContent = ''
   + '.dot-on{background:#4caf50;}'
   + '.dot-off{background:#bbb;}'
   // Leaderboard
-  + '.lb-row{display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f0f0f0;}'
-  + '.lb-rank{width:30px;font-weight:bold;color:#666;font-size:14px;}'
-  + '.lb-name{flex:1;font-size:14px;color:#222;}'
-  + '.lb-pts{font-weight:bold;color:#058;font-size:13px;}'
+  + '.lb-row{display:flex;align-items:center;padding:6px 8px;border-bottom:1px solid #f0f0f0;gap:8px;}'
+  + '.lb-rank{width:28px;font-weight:bold;color:#666;font-size:14px;flex-shrink:0;}'
+  + '.lb-pic{flex-shrink:0;}'
+  + '.lb-info{flex:1;min-width:0;}'
+  + '.lb-name{font-size:14px;color:#222;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+  + '.lb-level{font-size:11px;color:#888;}'
+  + '.lb-pts{font-weight:bold;color:#058;font-size:13px;flex-shrink:0;}'
   + '.lb-me{background:#e3f2fd;border-radius:6px;}'
   // Notifications
   + '.notif-row{display:flex;align-items:flex-start;padding:10px;border-bottom:1px solid #f0f0f0;cursor:pointer;gap:8px;}'
@@ -312,13 +315,8 @@ if (dicWrapper) {
     + '</div></section>'
     // LEADERBOARD
     + '<section id="leaderboard-section"><div id="leaderboard-wrapper">'
-    + '<h2>Leaderboard</h2>'
-    + '<div class="social-tabs" id="lb-tabs">'
-    + '<span class="social-tab active-tab" id="tab-lb-global">Global</span>'
-    + '<span class="social-tab" id="tab-lb-friends">Friends</span>'
-    + '</div>'
-    + '<div id="lb-global-panel"><div id="lb-global-list" class="s-loading">Loading...</div></div>'
-    + '<div id="lb-friends-panel" style="display:none;"><div id="lb-friends-list"></div></div>'
+    + '<h2 style="margin:4px 0 8px;">Leaderboard</h2>'
+    + '<div id="lb-global-list" class="s-loading">Loading...</div>'
     + '</div></section>'
     // NOTIFICATIONS
     + '<section id="notifications-section"><div id="notifications-wrapper">'
@@ -966,14 +964,6 @@ function loadGlobalLB() {
     renderLB(el, resp.leaders, null);
   });
 }
-function loadFriendsLB() {
-  var el = document.getElementById('lb-friends-list');
-  if (el) el.innerHTML = '<div class="s-loading">Loading...</div>';
-  apiCall('/leaderboard/friends', { device_id: getDeviceId() }, function(resp) {
-    if (!resp.ok) { if (el) el.innerHTML = '<div class="s-empty">Could not load</div>'; return; }
-    renderLB(el, resp.leaders, resp.my_code);
-  });
-}
 function renderLB(el, leaders, myCode) {
   if (!el || !leaders.length) { if (el) el.innerHTML = '<div class="s-empty">No data yet</div>'; return; }
   var html = '';
@@ -983,31 +973,23 @@ function renderLB(el, leaders, myCode) {
     var isMe = myCode && l.friend_code === myCode;
     html += '<div class="lb-row' + (isMe ? ' lb-me' : '') + '">'
       + '<span class="lb-rank">' + (i < 3 ? medals[i] : '#' + (i + 1)) + '</span>'
-      + '<span class="lb-name">' + escapeHtml(l.name) + '</span>'
+      + '<span class="lb-pic">' + profilePicHtml(l.picture, 34, true) + '</span>'
+      + '<div class="lb-info"><div class="lb-name">' + escapeHtml(l.name) + '</div>'
+      + '<div class="lb-level">' + getLevelName(l.points) + '</div></div>'
       + '<span class="lb-pts">' + l.points + 'pts</span></div>';
   }
   el.innerHTML = html;
+
+  // Clickable profile pictures
+  var pics = el.querySelectorAll('.clickable-pic');
+  for (var p = 0; p < pics.length; p++) {
+    pics[p].addEventListener('click', function(e) {
+      e.stopPropagation();
+      showPicOverlay(this.src);
+    });
+  }
 }
 
-// LB tab switching
-var tabLBGlobal = document.getElementById('tab-lb-global');
-var tabLBFriends = document.getElementById('tab-lb-friends');
-if (tabLBGlobal) {
-  tabLBGlobal.addEventListener('click', function() {
-    tabLBGlobal.className = 'social-tab active-tab'; tabLBFriends.className = 'social-tab';
-    document.getElementById('lb-global-panel').style.display = 'block';
-    document.getElementById('lb-friends-panel').style.display = 'none';
-    loadGlobalLB();
-  });
-}
-if (tabLBFriends) {
-  tabLBFriends.addEventListener('click', function() {
-    tabLBFriends.className = 'social-tab active-tab'; tabLBGlobal.className = 'social-tab';
-    document.getElementById('lb-friends-panel').style.display = 'block';
-    document.getElementById('lb-global-panel').style.display = 'none';
-    loadFriendsLB();
-  });
-}
 
 // ---- NOTIFICATIONS ----
 function startPolling() {
