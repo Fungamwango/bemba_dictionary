@@ -988,8 +988,6 @@ function pollNow() {
   apiCall('/users/online', { device_id: getDeviceId() }, function(resp) {
     if (resp.ok) updateOnlineCount((resp.users || []).length);
   });
-  // Sync points every poll cycle
-  syncPoints();
 }
 function updateBadge(count) {
   var badge = document.getElementById('notif-badge');
