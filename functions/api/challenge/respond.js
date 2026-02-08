@@ -15,19 +15,25 @@ export async function onRequestPost(context) {
   if (ch.status !== 'pending') return Response.json({ ok: false, error: 'Challenge already completed' }, { status: 400 });
 
   // Calculate winner and points
+  // Win=10, Loss=0, Draw=5 each (0:0 draw = 0 points)
   var senderBonus = 0, receiverBonus = 0, winner;
   if (ch.sender_score > receiver_score) {
     winner = 'sender';
-    senderBonus = 20;
-    receiverBonus = 5;
+    senderBonus = 10;
+    receiverBonus = 0;
   } else if (receiver_score > ch.sender_score) {
     winner = 'receiver';
-    senderBonus = 5;
-    receiverBonus = 20;
+    senderBonus = 0;
+    receiverBonus = 10;
   } else {
     winner = 'draw';
-    senderBonus = 10;
-    receiverBonus = 10;
+    if (ch.sender_score === 0 && receiver_score === 0) {
+      senderBonus = 0;
+      receiverBonus = 0;
+    } else {
+      senderBonus = 5;
+      receiverBonus = 5;
+    }
   }
 
   // Update challenge

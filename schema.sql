@@ -18,6 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_users_device_id ON users(device_id);
 CREATE INDEX IF NOT EXISTS idx_users_friend_code ON users(friend_code);
 CREATE INDEX IF NOT EXISTS idx_users_name ON users(name);
 CREATE INDEX IF NOT EXISTS idx_users_points ON users(points DESC);
+CREATE INDEX IF NOT EXISTS idx_users_last_seen ON users(last_seen DESC);
 
 CREATE TABLE IF NOT EXISTS friends (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,6 +40,7 @@ CREATE TABLE IF NOT EXISTS challenges (
   sender_score INTEGER DEFAULT NULL,
   receiver_score INTEGER DEFAULT NULL,
   questions TEXT NOT NULL,
+  message TEXT DEFAULT '',
   status TEXT DEFAULT 'pending' CHECK(status IN ('pending','completed','expired')),
   sender_points_awarded INTEGER DEFAULT 0,
   receiver_points_awarded INTEGER DEFAULT 0,

@@ -74,7 +74,7 @@ document.body.insertAdjacentHTML('beforeend',`<div id='api_app_data'>
  </div>
 `);
 
-document.querySelector('#quiz-link').insertAdjacentHTML("afterend",'<li class="link" id="friends-link"><span style="filter:grayscale(30%);">👨‍👩‍👧‍👦</span><sup style="color:greenyellow;font-size:11px;" id="notif-badge">(Friends)</sup></li>');
+document.querySelector('#quiz-link').insertAdjacentHTML("afterend",'<li class="link" id="friends-link"><span style="filter:grayscale(30%);">👨‍👩‍👧‍👦</span><sup style="color:greenyellow;font-size:11px;" id="notif-badge"></sup></li>');
 
 //evalute the intext js codes
 var innerjs=document.querySelectorAll('#api_app_data script');
@@ -146,15 +146,19 @@ function getLevelName(pts) {
   if (pts >= 20) return 'Amateur';
   return 'Beginner';
 }
-function isOnline(lastSeen) {
-  if (!lastSeen) return false;
-  var d = new Date(lastSeen + (lastSeen.indexOf('Z') === -1 ? 'Z' : ''));
-  return (new Date() - d) < 60000;
-}
-function profilePicHtml(pic, size) {
+function profilePicHtml(pic, size, clickable) {
   size = size || 36;
-  if (pic) return '<img src="' + pic + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;">';
-  return '<span style="display:inline-flex;align-items:center;justify-content:center;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:#e0e0e0;font-size:' + Math.round(size * 0.5) + 'px;">👤</span>';
+  var cls = clickable ? ' class="clickable-pic"' : '';
+  if (pic) return '<img src="' + pic + '"' + cls + ' style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;cursor:' + (clickable ? 'pointer' : 'default') + ';">';
+  return '<span' + cls + ' style="display:inline-flex;align-items:center;justify-content:center;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:#e0e0e0;font-size:' + Math.round(size * 0.5) + 'px;">👤</span>';
+}
+function showPicOverlay(src) {
+  if (!src) return;
+  var overlay = document.createElement('div');
+  overlay.className = 'pic-overlay';
+  overlay.innerHTML = '<img src="' + src + '" style="max-width:80vw;max-height:80vh;border-radius:12px;object-fit:contain;border:3px solid #fff;">';
+  overlay.addEventListener('click', function() { document.body.removeChild(overlay); });
+  document.body.appendChild(overlay);
 }
 function resizeAndUploadPicture(file, callback) {
   var reader = new FileReader();
@@ -169,24 +173,20 @@ function resizeAndUploadPicture(file, callback) {
       canvas.width = w; canvas.height = h;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
-      // Try WebP at decreasing quality until under 64KB
       var quality = 0.8;
       var dataUrl;
       for (var q = quality; q >= 0.1; q -= 0.1) {
         dataUrl = canvas.toDataURL('image/webp', q);
-        // base64 data URL: "data:image/webp;base64,..." — measure decoded size
         var base64Part = dataUrl.split(',')[1];
         var byteSize = Math.round(base64Part.length * 3 / 4);
         if (byteSize <= 65536) break;
       }
-      // If still too big, shrink dimensions
       if (dataUrl.split(',')[1].length * 3 / 4 > 65536) {
         canvas.width = Math.round(w * 0.5); canvas.height = Math.round(h * 0.5);
         ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         dataUrl = canvas.toDataURL('image/webp', 0.5);
       }
-      // Upload
       apiCall('/user/picture', { device_id: getDeviceId(), picture: dataUrl }, function(resp) {
         if (resp.ok) {
           var ud = getUserData() || {};
@@ -228,17 +228,18 @@ ss.textContent = ''
   + '.stat-box{background:#f5f5f5;border-radius:8px;padding:12px 6px;text-align:center;}'
   + '.stat-val{font-size:20px;font-weight:bold;color:#058;}'
   + '.stat-lbl{font-size:11px;color:#888;margin-top:2px;}'
-  // Friends
-  + '.friend-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-bottom:1px solid #f0f0f0;gap:10px;}'
-  + '.friend-pic{flex-shrink:0;position:relative;}'
-  + '.friend-pic .friend-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border:2px solid #fff;}'
-  + '.friend-info{flex:1;min-width:0;}'
-  + '.friend-name{font-weight:bold;font-size:14px;color:#222;}'
-  + '.friend-meta{font-size:11px;color:#888;}'
-  + '.friend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}'
+  // Online users table
+  + '#online-search-input{width:92%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin:6px 0;outline:none;}'
+  + '.online-table{width:100%;border-collapse:collapse;}'
+  + '.online-table th{text-align:left;padding:8px 6px;font-size:12px;color:#888;border-bottom:2px solid #e0e0e0;}'
+  + '.online-table td{padding:8px 6px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}'
+  + '.online-table .pic-cell{width:46px;}'
+  + '.online-table .name-cell{font-weight:bold;font-size:14px;color:#222;}'
+  + '.online-table .name-meta{font-size:11px;color:#888;font-weight:normal;}'
+  + '.online-table .action-cell{text-align:right;width:80px;}'
+  + '.friend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;}'
   + '.dot-on{background:#4caf50;}'
   + '.dot-off{background:#bbb;}'
-  + '#friend-search-input{width:90%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin:6px 0;outline:none;}'
   // Leaderboard
   + '.lb-row{display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f0f0f0;}'
   + '.lb-rank{width:30px;font-weight:bold;color:#666;font-size:14px;}'
@@ -255,6 +256,7 @@ ss.textContent = ''
   // Challenge
   + '#challenge-info{text-align:center;padding:20px;}'
   + '#challenge-info h2{color:#333;margin:0 0 8px;}'
+  + '.ch-msg{background:#fff8e1;border-radius:8px;padding:10px;margin:10px 0;font-style:italic;color:#555;font-size:14px;}'
   + '.ch-comparison{display:flex;justify-content:center;align-items:center;gap:16px;margin:20px 0;}'
   + '.ch-player{text-align:center;}'
   + '.ch-player-name{font-size:14px;color:#666;margin-bottom:4px;}'
@@ -269,11 +271,17 @@ ss.textContent = ''
   + '.ch-option.ch-correct{background:#e8f5e9;border-color:#4caf50;color:#2e7d32;}'
   + '.ch-option.ch-wrong{background:#ffebee;border-color:#e53935;color:#c62828;}'
   + '#ch-timer-bar{text-align:center;color:#e65100;font-size:13px;margin:6px 0;}'
+  // Modals
   + '.name-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100000;display:flex;align-items:center;justify-content:center;}'
   + '.name-modal{background:#fff;border-radius:10px;padding:24px;max-width:300px;width:90%;text-align:center;}'
   + '.name-modal h3{margin:0 0 8px;color:#333;}'
   + '.name-modal p{color:#666;font-size:13px;margin:0 0 12px;}'
-  + '.name-modal input{width:80%;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:15px;text-align:center;outline:none;}'
+  + '.name-modal input{width:80%;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:15px;text-align:center;outline:none;margin-bottom:8px;}'
+  + '.name-modal textarea{width:80%;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:13px;outline:none;resize:none;margin-bottom:8px;}'
+  // Picture overlay
+  + '.pic-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100001;display:flex;align-items:center;justify-content:center;cursor:pointer;}'
+  // Notification badge
+  + '#notif-badge{font-size:10px;background:#ff4444;color:#fff;border-radius:8px;padding:1px 5px;position:relative;top:-6px;display:none;}'
   ;
 document.head.appendChild(ss);
 
@@ -295,19 +303,11 @@ if (dicWrapper) {
     + '<div class="stat-box"><div class="stat-val" id="prof-losses">0</div><div class="stat-lbl">Losses</div></div>'
     + '<div class="stat-box"><div class="stat-val" id="prof-draws">0</div><div class="stat-lbl">Draws</div></div>'
     + '</div></div></section>'
-    // FRIENDS
+    // ONLINE USERS (replaces old Friends section)
     + '<section id="friends-section"><div id="friends-wrapper">'
-    + '<div class="social-tabs" id="friends-tabs">'
-    + '<span class="social-tab active-tab" id="tab-friends-list">Friends</span>'
-    + '<span class="social-tab" id="tab-requests">Requests</span>'
-    + '<span class="social-tab" id="tab-search">Add</span>'
-    + '</div>'
-    + '<div id="friends-list-panel"><div id="friends-list-content" class="s-loading">Loading...</div></div>'
-    + '<div id="friends-requests-panel" style="display:none;"><div id="friends-requests-content"></div></div>'
-    + '<div id="friends-search-panel" style="display:none;">'
-    + '<input id="friend-search-input" placeholder="Enter name or friend code...">'
-    + '<button class="s-btn s-btn-p" id="friend-search-btn" style="margin:4px 0;">Search</button>'
-    + '<div id="friend-search-results"></div></div>'
+    + '<h2 style="margin:0 0 8px;">Online Users</h2>'
+    + '<input id="online-search-input" placeholder="Search by name...">'
+    + '<div id="online-users-content" class="s-loading">Loading...</div>'
     + '</div></section>'
     // LEADERBOARD
     + '<section id="leaderboard-section"><div id="leaderboard-wrapper">'
@@ -327,6 +327,7 @@ if (dicWrapper) {
     // CHALLENGE
     + '<section id="challenge-section">'
     + '<div id="challenge-info"><h2>Challenge from <span id="ch-opponent-name"></span></h2>'
+    + '<div id="ch-challenge-msg"></div>'
     + '<p>They scored <b id="ch-opponent-score"></b>/10. Can you beat them?</p>'
     + '<button class="s-btn s-btn-g" id="start-challenge-btn" style="padding:12px 30px;font-size:15px;">Accept Challenge</button></div>'
     + '<div id="ch-quiz-wrapper" style="display:none;">'
@@ -341,7 +342,7 @@ if (dicWrapper) {
     + '<div class="ch-player"><div class="ch-player-name" id="ch-opp-label">-</div><div class="ch-player-score" id="ch-opp-score-final">0</div></div></div>'
     + '<div class="ch-verdict" id="ch-verdict"></div>'
     + '<div class="ch-bonus" id="ch-bonus"></div>'
-    + '<button class="s-btn s-btn-p" id="ch-back-btn" style="margin-top:12px;padding:10px 24px;">Back to Friends</button>'
+    + '<button class="s-btn s-btn-p" id="ch-back-btn" style="margin-top:12px;padding:10px 24px;">Back</button>'
     + '</div></section>'
   );
 }
@@ -356,12 +357,12 @@ function navTo(sectionId) {
   history.pushState({ social: sectionId }, null);
 }
 
-// Friends link → Friends section
+// Friends/Online Users link
 var friendsLink = document.getElementById('friends-link');
 if (friendsLink) {
   friendsLink.addEventListener('click', function() {
     navTo('friends-section');
-    loadFriends();
+    loadOnlineUsers();
     adjustPolling();
   });
 }
@@ -384,7 +385,6 @@ if (moreLinks) {
   notifItem.style.cursor = 'pointer';
   notifItem.addEventListener('click', function() { navTo('notifications-section'); showNotifications(); adjustPolling(); });
 
-  // Insert after first child (subscription item may be there)
   var firstMore = moreLinks.children[0];
   moreLinks.insertBefore(notifItem, firstMore);
   moreLinks.insertBefore(lbItem, notifItem);
@@ -429,7 +429,6 @@ function checkAndRegisterUser() {
     return;
   }
   if (!navigator.onLine) return;
-  // Check if we have a name stored
   var name = localStorage.getItem('bemdic_user_name');
   if (name) {
     registerUser(deviceId, name);
@@ -463,7 +462,6 @@ function showProfile() {
 }
 function renderProfile(u) {
   var el = function(id) { return document.getElementById(id); };
-  // Profile picture
   var picEl = el('profile-pic-display');
   if (picEl) {
     if (u.picture) picEl.innerHTML = '<img src="' + u.picture + '">';
@@ -527,154 +525,111 @@ if (copyBtn) {
   });
 }
 
-// ---- FRIENDS ----
-function loadFriends() {
-  var listEl = document.getElementById('friends-list-content');
+// ---- ONLINE USERS ----
+function loadOnlineUsers(query) {
+  var listEl = document.getElementById('online-users-content');
   if (listEl) listEl.innerHTML = '<div class="s-loading">Loading...</div>';
-
-  apiCall('/friends/list', { device_id: getDeviceId() }, function(resp) {
-    if (!resp.ok) { if (listEl) listEl.innerHTML = '<div class="s-empty">Could not load friends</div>'; return; }
-    renderFriendsList(resp.friends || []);
-    renderRequests(resp.requests || []);
-    // Update requests tab badge
-    var reqTab = document.getElementById('tab-requests');
-    if (reqTab) {
-      var rc = (resp.requests || []).length;
-      reqTab.textContent = 'Requests' + (rc > 0 ? ' (' + rc + ')' : '');
-    }
+  var data = { device_id: getDeviceId() };
+  if (query) data.query = query;
+  apiCall('/users/online', data, function(resp) {
+    if (!resp.ok) { if (listEl) listEl.innerHTML = '<div class="s-empty">Could not load users</div>'; return; }
+    renderOnlineUsers(resp.users || []);
   });
 }
 
-function renderFriendsList(friends) {
-  var el = document.getElementById('friends-list-content');
+function renderOnlineUsers(users) {
+  var el = document.getElementById('online-users-content');
   if (!el) return;
-  if (!friends.length) { el.innerHTML = '<div class="s-empty">No friends yet. Tap "Add" to find people!</div>'; return; }
-  var html = '';
-  for (var i = 0; i < friends.length; i++) {
-    var f = friends[i];
-    var on = isOnline(f.last_seen);
-    html += '<div class="friend-row">'
-      + '<div class="friend-pic">' + profilePicHtml(f.picture, 40) + '<span class="friend-dot ' + (on ? 'dot-on' : 'dot-off') + '"></span></div>'
-      + '<div class="friend-info"><div class="friend-name">' + escapeHtml(f.name) + '</div>'
-      + '<div class="friend-meta">' + getLevelName(f.points) + ' · ' + f.points + 'pts</div></div>'
-      + '<button class="s-btn s-btn-g" data-fid="' + f.user_id + '" data-fname="' + escapeHtml(f.name) + '">Challenge</button>'
-      + '</div>';
+  if (!users.length) {
+    el.innerHTML = '<div class="s-empty">No users online right now. Try again later!</div>';
+    return;
   }
+  var html = '<table class="online-table"><thead><tr><th class="pic-cell"></th><th>Name</th><th class="action-cell">Action</th></tr></thead><tbody>';
+  for (var i = 0; i < users.length; i++) {
+    var u = users[i];
+    html += '<tr>'
+      + '<td class="pic-cell">' + profilePicHtml(u.picture, 40, true) + '</td>'
+      + '<td class="name-cell">' + escapeHtml(u.name) + '<br><span class="name-meta"><span class="friend-dot dot-on"></span>' + getLevelName(u.points) + ' · ' + u.points + 'pts</span></td>'
+      + '<td class="action-cell"><button class="s-btn s-btn-g" data-uid="' + u.id + '" data-uname="' + escapeHtml(u.name) + '">Challenge</button></td>'
+      + '</tr>';
+  }
+  html += '</tbody></table>';
   el.innerHTML = html;
-  // Attach challenge handlers
+
+  // Challenge button handlers
   var btns = el.querySelectorAll('.s-btn-g');
   for (var b = 0; b < btns.length; b++) {
     btns[b].addEventListener('click', function() {
-      startChallenge(parseInt(this.getAttribute('data-fid')), this.getAttribute('data-fname'));
+      var uid = parseInt(this.getAttribute('data-uid'));
+      var uname = this.getAttribute('data-uname');
+      showChallengeMessagePrompt(uid, uname);
+    });
+  }
+
+  // Clickable profile pictures
+  var pics = el.querySelectorAll('.clickable-pic');
+  for (var p = 0; p < pics.length; p++) {
+    pics[p].addEventListener('click', function(e) {
+      e.stopPropagation();
+      showPicOverlay(this.src);
     });
   }
 }
 
-function renderRequests(requests) {
-  var el = document.getElementById('friends-requests-content');
-  if (!el) return;
-  if (!requests.length) { el.innerHTML = '<div class="s-empty">No pending requests</div>'; return; }
-  var html = '';
-  for (var i = 0; i < requests.length; i++) {
-    var r = requests[i];
-    html += '<div class="friend-row">'
-      + '<div class="friend-pic">' + profilePicHtml(r.picture, 40) + '</div>'
-      + '<div class="friend-info"><div class="friend-name">' + escapeHtml(r.name) + '</div>'
-      + '<div class="friend-meta">' + r.points + 'pts · ' + r.friend_code + '</div></div>'
-      + '<button class="s-btn s-btn-g" data-rid="' + r.request_id + '" data-action="accept" style="margin-right:4px;">Accept</button>'
-      + '<button class="s-btn s-btn-d" data-rid="' + r.request_id + '" data-action="reject">Reject</button>'
-      + '</div>';
-  }
-  el.innerHTML = html;
-  var btns = el.querySelectorAll('.s-btn');
-  for (var b = 0; b < btns.length; b++) {
-    btns[b].addEventListener('click', function() {
-      var rid = parseInt(this.getAttribute('data-rid'));
-      var act = this.getAttribute('data-action');
-      if (!act) return;
-      apiCall('/friends/respond', { device_id: getDeviceId(), request_id: rid, action: act }, function() {
-        loadFriends();
-      });
-    });
-  }
-}
-
-// Friends tab switching
-var tabFriends = document.getElementById('tab-friends-list');
-var tabReqs = document.getElementById('tab-requests');
-var tabSearch = document.getElementById('tab-search');
-function switchFriendsTab(active) {
-  var tabs = [tabFriends, tabReqs, tabSearch];
-  var panels = ['friends-list-panel', 'friends-requests-panel', 'friends-search-panel'];
-  for (var i = 0; i < tabs.length; i++) {
-    if (tabs[i]) { tabs[i].className = 'social-tab' + (i === active ? ' active-tab' : ''); }
-    var p = document.getElementById(panels[i]);
-    if (p) p.style.display = (i === active ? 'block' : 'none');
-  }
-}
-if (tabFriends) tabFriends.addEventListener('click', function() { switchFriendsTab(0); });
-if (tabReqs) tabReqs.addEventListener('click', function() { switchFriendsTab(1); });
-if (tabSearch) tabSearch.addEventListener('click', function() { switchFriendsTab(2); });
-
-// Search friends
-var searchBtn = document.getElementById('friend-search-btn');
-if (searchBtn) {
-  searchBtn.addEventListener('click', function() {
-    var q = document.getElementById('friend-search-input').value.trim();
-    if (!q) return;
-    var res = document.getElementById('friend-search-results');
-    if (res) res.innerHTML = '<div class="s-loading">Searching...</div>';
-    apiCall('/friends/search', { device_id: getDeviceId(), query: q }, function(resp) {
-      if (!resp.ok || !resp.results) { if (res) res.innerHTML = '<div class="s-empty">No results</div>'; return; }
-      if (!resp.results.length) { if (res) res.innerHTML = '<div class="s-empty">No users found</div>'; return; }
-      var html = '';
-      for (var i = 0; i < resp.results.length; i++) {
-        var u = resp.results[i];
-        html += '<div class="friend-row">'
-          + '<div class="friend-pic">' + profilePicHtml(u.picture, 36) + '</div>'
-          + '<div class="friend-info"><div class="friend-name">' + escapeHtml(u.name) + '</div>'
-          + '<div class="friend-meta">' + u.friend_code + ' · ' + u.points + 'pts</div></div>'
-          + '<button class="s-btn s-btn-p" data-uid="' + u.id + '">Add Friend</button></div>';
-      }
-      if (res) res.innerHTML = html;
-      var btns = res.querySelectorAll('.s-btn-p');
-      for (var b = 0; b < btns.length; b++) {
-        btns[b].addEventListener('click', function() {
-          var uid = parseInt(this.getAttribute('data-uid'));
-          var btn = this;
-          apiCall('/friends/request', { device_id: getDeviceId(), target_user_id: uid }, function(resp) {
-            if (resp.ok) {
-              btn.textContent = resp.auto_accepted ? 'Friends!' : 'Sent!';
-              btn.disabled = true;
-              btn.className = 's-btn s-btn-s';
-            } else {
-              btn.textContent = resp.error || 'Error';
-              btn.className = 's-btn s-btn-s';
-            }
-          });
-        });
-      }
-    });
+// Search filter for online users
+var onlineSearchInput = document.getElementById('online-search-input');
+var _searchTimeout = null;
+if (onlineSearchInput) {
+  onlineSearchInput.addEventListener('input', function() {
+    clearTimeout(_searchTimeout);
+    var q = this.value.trim();
+    _searchTimeout = setTimeout(function() {
+      loadOnlineUsers(q || undefined);
+    }, 400);
   });
 }
 
 // ---- CHALLENGE SYSTEM ----
+
+// Challenge message prompt before starting
+function showChallengeMessagePrompt(userId, userName) {
+  var overlay = document.createElement('div');
+  overlay.className = 'name-modal-overlay';
+  overlay.innerHTML = '<div class="name-modal">'
+    + '<h3>Challenge ' + escapeHtml(userName) + '</h3>'
+    + '<p>Add an optional message to your challenge</p>'
+    + '<textarea id="challenge-msg-input" placeholder="e.g. Let\'s see who knows more Bemba!" maxlength="200" rows="3"></textarea>'
+    + '<div style="margin-top:4px;">'
+    + '<button class="s-btn s-btn-g" id="challenge-msg-start" style="padding:10px 24px;margin-right:8px;">Start Quiz</button>'
+    + '<button class="s-btn s-btn-s" id="challenge-msg-cancel" style="padding:10px 24px;">Cancel</button>'
+    + '</div></div>';
+  document.body.appendChild(overlay);
+
+  document.getElementById('challenge-msg-start').addEventListener('click', function() {
+    var msg = document.getElementById('challenge-msg-input').value.trim();
+    document.body.removeChild(overlay);
+    startChallenge(userId, userName, msg);
+  });
+  document.getElementById('challenge-msg-cancel').addEventListener('click', function() {
+    document.body.removeChild(overlay);
+  });
+}
+
 // -- Sender flow --
-function startChallenge(friendId, friendName) {
+function startChallenge(userId, userName, message) {
   window.__bemdic_challenge_mode = true;
-  window.__bemdic_challenge_target = { id: friendId, name: friendName };
+  window.__bemdic_challenge_target = { id: userId, name: userName, message: message || '' };
   // Navigate to quiz section (normal quiz flow)
   hide('section, #pagination-btns-wrapper, #more-links-wrapper');
   show('#quiz-section');
   removeClass('.link', 'active_link');
   addClass('#quiz-link', 'active_link');
-  // Reset quiz state for a fresh quiz
+  // Reset quiz state
   question_number = 0;
   scored_marks = 0;
   gen_random_question = [];
-  // Show instructions with challenge context
   var instrHeader = document.getElementById('instructions-header');
-  if (instrHeader) instrHeader.innerHTML = 'Challenge <b>' + escapeHtml(friendName) + '</b>!<br><small style="color:#666;">Play the quiz. Your score will be sent as a challenge.</small>';
+  if (instrHeader) instrHeader.innerHTML = 'Challenge <b>' + escapeHtml(userName) + '</b>!<br><small style="color:#666;">Play the quiz. Your score will be sent as a challenge.</small>';
 }
 
 // MutationObserver on quiz results to detect challenge quiz completion
@@ -693,7 +648,6 @@ if (qrw) {
     var target = window.__bemdic_challenge_target;
     var score = scored_marks;
 
-    // Add "sending challenge" message
     var epw = document.getElementById('earned-points-wrapper');
     if (epw) epw.insertAdjacentHTML('afterend', '<div id="ch-sending-msg" style="text-align:center;color:#058;margin:10px 0;font-size:14px;">Sending challenge to <b>' + escapeHtml(target.name) + '</b>...</div>');
 
@@ -701,7 +655,8 @@ if (qrw) {
       device_id: getDeviceId(),
       receiver_id: target.id,
       sender_score: score,
-      questions: questions
+      questions: questions,
+      message: target.message || ''
     }, function(resp) {
       var msg = document.getElementById('ch-sending-msg');
       if (resp.ok) {
@@ -714,7 +669,6 @@ if (qrw) {
       syncPoints();
     });
     qrwObs.disconnect();
-    // Re-observe for next time
     setTimeout(function() { qrwObs.observe(qrw, { attributes: true, attributeFilter: ['style'] }); }, 2000);
   });
   qrwObs.observe(qrw, { attributes: true, attributeFilter: ['style'] });
@@ -755,8 +709,17 @@ function openReceivedChallenge(challengeId) {
 
     var oppName = document.getElementById('ch-opponent-name');
     var oppScore = document.getElementById('ch-opponent-score');
+    var chMsg = document.getElementById('ch-challenge-msg');
     if (oppName) oppName.textContent = resp.challenge.opponent_name;
     if (oppScore) oppScore.textContent = resp.challenge.sender_score;
+    // Show challenge message if present
+    if (chMsg) {
+      if (resp.challenge.message) {
+        chMsg.innerHTML = '<div class="ch-msg">"' + escapeHtml(resp.challenge.message) + '"</div>';
+      } else {
+        chMsg.innerHTML = '';
+      }
+    }
   });
 }
 
@@ -776,10 +739,8 @@ if (startChBtn) {
 function loadChallengeQuestion() {
   _chQuestionNum++;
   if (_chQuestionNum > 10) {
-    // Challenge quiz finished
     clearInterval(_chTimerInterval);
     document.getElementById('ch-quiz-wrapper').style.display = 'none';
-    // Submit response
     apiCall('/challenge/respond', {
       device_id: getDeviceId(),
       challenge_id: _challengeData.id,
@@ -806,7 +767,6 @@ function loadChallengeQuestion() {
   var qNumEl = document.getElementById('ch-q-num');
   if (qNumEl) qNumEl.textContent = _chQuestionNum;
 
-  // Determine question direction (1-5: eng->bem, 6-10: bem->eng)
   var askEng = _chQuestionNum <= 5;
   var questionWord = askEng ? q.eng : q.bem;
   var correctAnswer = askEng ? q.bem : q.eng;
@@ -815,7 +775,6 @@ function loadChallengeQuestion() {
   var qWordEl = document.getElementById('ch-question-word');
   if (qWordEl) qWordEl.textContent = questionWord;
 
-  // Generate 3 wrong options
   var wrongAnswers = [];
   while (wrongAnswers.length < 3) {
     var ri = Math.floor(Math.random() * english_bemba_array.length);
@@ -826,7 +785,6 @@ function loadChallengeQuestion() {
     }
   }
 
-  // Build options array with correct answer randomly placed
   var options = wrongAnswers.slice();
   var correctPos = Math.floor(Math.random() * 4);
   options.splice(correctPos, 0, correctAnswer);
@@ -839,7 +797,6 @@ function loadChallengeQuestion() {
   }
   optEl.innerHTML = html;
 
-  // Click handlers
   var opts = optEl.querySelectorAll('.ch-option');
   var answered = false;
   for (var o = 0; o < opts.length; o++) {
@@ -853,18 +810,15 @@ function loadChallengeQuestion() {
         _chScore++;
       } else {
         this.classList.add('ch-wrong');
-        // Highlight correct
         for (var x = 0; x < opts.length; x++) {
           if (opts[x].getAttribute('data-ans') === correctAnswer) opts[x].classList.add('ch-correct');
         }
       }
-      // Disable all
       for (var x = 0; x < opts.length; x++) opts[x].style.pointerEvents = 'none';
       setTimeout(loadChallengeQuestion, 1500);
     });
   }
 
-  // Timer (15 seconds per question)
   var timeLeft = 15;
   var timerBar = document.getElementById('ch-timer-bar');
   if (timerBar) timerBar.textContent = '00:' + (timeLeft < 10 ? '0' : '') + timeLeft;
@@ -923,10 +877,13 @@ function showChallengeResult(data) {
 
   if (verdict) {
     if (isDraw) { verdict.textContent = "It's a Draw!"; verdict.style.color = '#058'; }
-    else if (iWon) { verdict.textContent = 'You Win!'; verdict.style.color = '#084'; }
+    else if (iWon) { verdict.textContent = 'You Win! +10pts'; verdict.style.color = '#084'; }
     else { verdict.textContent = 'You Lost!'; verdict.style.color = 'crimson'; }
   }
-  if (bonus && youBonus) bonus.textContent = '+' + youBonus + ' bonus points earned';
+  if (bonus) {
+    if (youBonus > 0) bonus.textContent = '+' + youBonus + ' points earned';
+    else bonus.textContent = isDraw && youScore === 0 ? 'No points for 0:0 draw' : '';
+  }
 }
 
 // Back from challenge results
@@ -934,7 +891,7 @@ var chBackBtn = document.getElementById('ch-back-btn');
 if (chBackBtn) {
   chBackBtn.addEventListener('click', function() {
     navTo('friends-section');
-    loadFriends();
+    loadOnlineUsers();
   });
 }
 
@@ -1021,11 +978,10 @@ function updateBadge(count) {
   var badge = document.getElementById('notif-badge');
   if (!badge) return;
   if (count > 0) {
-    badge.textContent = '(' + count + ')';
-    badge.style.color = '#ff4444';
+    badge.textContent = count;
+    badge.style.display = 'inline';
   } else {
-    badge.textContent = '(Friends)';
-    badge.style.color = 'greenyellow';
+    badge.style.display = 'none';
   }
 }
 function showNotifications() {
@@ -1041,7 +997,10 @@ function showNotifications() {
     var n = notifs[i];
     var data = typeof n.data === 'string' ? JSON.parse(n.data) : n.data;
     var text = '';
-    if (n.type === 'challenge_received') text = '<b>' + escapeHtml(data.from_name) + '</b> challenged you! (scored ' + data.sender_score + '/10)';
+    if (n.type === 'challenge_received') {
+      text = '<b>' + escapeHtml(data.from_name) + '</b> challenged you! (scored ' + data.sender_score + '/10)';
+      if (data.message) text += '<br><i style="color:#888;">"' + escapeHtml(data.message) + '"</i>';
+    }
     else if (n.type === 'challenge_result') {
       var w = data.winner;
       if (w === 'draw') text = 'Draw with <b>' + escapeHtml(data.from_name) + '</b>! (' + data.sender_score + '-' + data.receiver_score + ')';
@@ -1070,8 +1029,6 @@ function showNotifications() {
       var data = JSON.parse(this.getAttribute('data-ndata'));
       if (type === 'challenge_received' && data.challenge_id) openReceivedChallenge(data.challenge_id);
       else if (type === 'challenge_result' && data.challenge_id) openReceivedChallenge(data.challenge_id);
-      else if (type === 'friend_request') { navTo('friends-section'); switchFriendsTab(1); loadFriends(); }
-      else if (type === 'friend_accepted') { navTo('friends-section'); loadFriends(); }
     });
   }
 }
