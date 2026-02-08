@@ -37,9 +37,10 @@ export async function onRequestPost(context) {
   }
 
   // Update challenge
+  var nowUtc = new Date().toISOString().replace('T', ' ').substring(0, 19);
   await db.prepare(
-    'UPDATE challenges SET receiver_score = ?, status = ?, sender_points_awarded = ?, receiver_points_awarded = ?, completed_at = datetime(?) WHERE id = ?'
-  ).bind(receiver_score, 'completed', senderBonus, receiverBonus, 'now', ch.id).run();
+    'UPDATE challenges SET receiver_score = ?, status = ?, sender_points_awarded = ?, receiver_points_awarded = ?, completed_at = ? WHERE id = ?'
+  ).bind(receiver_score, 'completed', senderBonus, receiverBonus, nowUtc, ch.id).run();
 
   // Update sender stats
   var senderWinCol = winner === 'sender' ? 'challenges_won' : (winner === 'draw' ? 'challenges_drawn' : 'challenges_lost');

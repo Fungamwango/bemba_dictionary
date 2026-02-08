@@ -7,7 +7,8 @@ export async function onRequestPost(context) {
   if (!me) return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
 
   // Update last_seen (heartbeat)
-  await db.prepare('UPDATE users SET last_seen = datetime(?) WHERE id = ?').bind('now', me.id).run();
+  var nowUtc = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  await db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').bind(nowUtc, me.id).run();
 
   // Get recent notifications
   var notifs = await db.prepare(
