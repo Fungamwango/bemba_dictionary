@@ -1,6 +1,7 @@
 // POST /api/challenge/respond - submit receiver score and calculate winner
 export async function onRequestPost(context) {
-  var { device_id, challenge_id, receiver_score } = await context.request.json();
+  var { device_id, challenge_id, receiver_score, reply_message } = await context.request.json();
+  var replyMsg = (reply_message && typeof reply_message === 'string') ? reply_message.trim().substring(0, 200) : '';
   if (!device_id || !challenge_id || receiver_score === undefined) {
     return Response.json({ ok: false, error: 'device_id, challenge_id, and receiver_score required' }, { status: 400 });
   }
@@ -67,7 +68,8 @@ export async function onRequestPost(context) {
     sender_score: ch.sender_score,
     receiver_score: receiver_score,
     winner: winner,
-    bonus: senderBonus
+    bonus: senderBonus,
+    reply_message: replyMsg
   })).run();
 
   return Response.json({

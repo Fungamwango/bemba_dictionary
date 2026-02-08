@@ -343,6 +343,11 @@ if (dicWrapper) {
     + '<div class="ch-player"><div class="ch-player-name" id="ch-opp-label">-</div><div class="ch-player-score" id="ch-opp-score-final">0</div></div></div>'
     + '<div class="ch-verdict" id="ch-verdict"></div>'
     + '<div class="ch-bonus" id="ch-bonus"></div>'
+    + '<div id="ch-reply-section" style="display:none;margin:14px 0;">'
+    + '<div id="ch-original-msg" style="margin-bottom:6px;"></div>'
+    + '<textarea id="ch-reply-input" placeholder="Write a reply..." maxlength="200" rows="2" style="width:90%;padding:8px;border:2px solid #ddd;border-radius:8px;font-size:13px;outline:none;resize:none;"></textarea>'
+    + '<div style="margin-top:6px;"><button class="s-btn s-btn-p" id="ch-reply-send" style="padding:8px 18px;">Send Reply</button></div>'
+    + '</div>'
     + '<button class="s-btn s-btn-p" id="ch-back-btn" style="margin-top:12px;padding:10px 24px;">Back</button>'
     + '</div></section>'
   );
@@ -766,7 +771,9 @@ function loadChallengeQuestion() {
           is_sender: false,
           sender_bonus: resp.result.sender_bonus,
           receiver_bonus: resp.result.receiver_bonus,
-          winner: resp.result.winner
+          winner: resp.result.winner,
+          challenge_message: _challengeData.message || '',
+          challenge_id: _challengeData.id
         });
         syncPoints();
       }
@@ -895,6 +902,47 @@ function showChallengeResult(data) {
     if (youBonus > 0) bonus.textContent = '+' + youBonus + ' points earned';
     else bonus.textContent = isDraw && youScore === 0 ? 'No points for 0:0 draw' : '';
   }
+
+  // Show reply section for receiver who just finished (has challenge message)
+  var replySection = document.getElementById('ch-reply-section');
+  var originalMsg = document.getElementById('ch-original-msg');
+  var replyInput = document.getElementById('ch-reply-input');
+  if (replySection) {
+    if (!data.is_sender && data.challenge_message) {
+      replySection.style.display = 'block';
+      if (originalMsg) originalMsg.innerHTML = '<div class="ch-msg">"' + escapeHtml(data.challenge_message) + '"</div>';
+      if (replyInput) replyInput.value = '';
+    } else {
+      replySection.style.display = 'none';
+    }
+  }
+}
+
+// Reply send button
+var chReplyBtn = document.getElementById('ch-reply-send');
+if (chReplyBtn) {
+  chReplyBtn.addEventListener('click', function() {
+    var input = document.getElementById('ch-reply-input');
+    var msg = input ? input.value.trim() : '';
+    if (!msg) return;
+    if (!_challengeData || !_challengeData.id) return;
+    chReplyBtn.disabled = true;
+    chReplyBtn.textContent = 'Sending...';
+    apiCall('/challenge/reply', {
+      device_id: getDeviceId(),
+      challenge_id: _challengeData.id,
+      reply_message: msg
+    }, function(resp) {
+      if (resp.ok) {
+        chReplyBtn.textContent = 'Sent!';
+        if (input) input.disabled = true;
+      } else {
+        chReplyBtn.disabled = false;
+        chReplyBtn.textContent = 'Send Reply';
+        alert(resp.error || 'Failed to send reply');
+      }
+    });
+  });
 }
 
 // Back from challenge results
@@ -1030,6 +1078,7 @@ function showNotifications() {
       var w = data.winner;
       if (w === 'draw') text = 'Draw with <b>' + escapeHtml(data.from_name) + '</b>! (' + data.sender_score + '-' + data.receiver_score + ')';
       else text = '<b>' + escapeHtml(data.from_name) + '</b> completed your challenge (' + data.sender_score + '-' + data.receiver_score + '). +' + data.bonus + 'pts';
+      if (data.reply_message) text += '<br><i style="color:#888;">Reply: "' + escapeHtml(data.reply_message) + '"</i>';
     }
     else if (n.type === 'friend_request') text = '<b>' + escapeHtml(data.from_name) + '</b> wants to be your friend';
     else if (n.type === 'friend_accepted') text = '<b>' + escapeHtml(data.from_name) + '</b> accepted your friend request';
@@ -1087,7 +1136,7 @@ var SUB_SECRET = 7391;  // secret number for code validation - CHANGE THIS to yo
 var FREE_WORD_LIMIT = 30;
 var FREE_QUIZ_LIMIT = 10;
 var SUB_DAYS = 30;
-var PAYMENT_NUMBER = '0763428450'; // your mobile money number
+var PAYMENT_NUMBER = '0962464552'; // your mobile money number
 var PAYMENT_AMOUNT = 'K5';
 
 // --- HELPER: get today as YYYY-MM-DD ---

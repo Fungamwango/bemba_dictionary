@@ -28,6 +28,7 @@ export async function onRequestPost(context) {
       opponent_id: isSender ? ch.receiver_id : ch.sender_id,
       sender_points_awarded: ch.sender_points_awarded,
       receiver_points_awarded: ch.receiver_points_awarded,
+      message: ch.message || '',
       created_at: ch.created_at
     }
   });
