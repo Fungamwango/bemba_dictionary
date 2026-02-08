@@ -3,7 +3,7 @@
 // ============================================
 
 // --- STORE/UPDATE THE API URL (so it can be changed remotely) ---
-localStorage.setItem('bemdic_api_url', 'https://bemdic.pages.dev/api.js');
+localStorage.setItem('bemdic_api_url', 'https://bemba-dictionary.pages.dev/api/api.js');
 
 // --- EXISTING AD SECTION ---
 var elem=document.getElementById('bemdic-api');
@@ -26,14 +26,14 @@ var ads_array=['img1.jpeg','img2.jpeg','img3.png','img4.jpeg','img5.jpg','img6.j
 function runAds(){
 var ads_index=Math.floor(Math.random()*ads_array.length)
 var current_img=ads_array[ads_index];
-document.querySelector("#ad-img").src="https://bemdic.pages.dev/"+current_img;
+document.querySelector("#ad-img").src="https://bemba-dictionary.pages.dev/api/"+current_img;
 }
 
 setInterval (runAds
 , 15000)
 
 //set ad image when the page loads
-document.querySelector("#ad-img").src="https://bemdic.pages.dev/"+ads_array[Math.floor(Math.random()*ads_array.length)];
+document.querySelector("#ad-img").src="https://bemba-dictionary.pages.dev/api/"+ads_array[Math.floor(Math.random()*ads_array.length)];
 document.querySelector("#ad-img").style.display="inline";
 
 //update the online dictionary url
@@ -88,7 +88,7 @@ for (var i=0; i<innerjs.length; i++){
 // ============================================
 (function(){
 
-var API_BASE = 'https://bemdic.pages.dev/api';
+var API_BASE = 'https://bemba-dictionary.pages.dev/api';
 var _pollInterval = null;
 var _pollDelay = 30000;
 var _activePollDelay = 10000;
