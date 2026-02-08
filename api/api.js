@@ -63,7 +63,7 @@ document.body.insertAdjacentHTML('beforeend',`<div id='api_app_data'>
                     display: inline;}
 
        #header-wrapper{display:grid;
-                       grid-template-columns: repeat(4, 1fr);
+                       grid-template-columns: repeat(5, 1fr);
                         }
 
        #payments-steps{padding-left:18px;}
@@ -74,7 +74,7 @@ document.body.insertAdjacentHTML('beforeend',`<div id='api_app_data'>
  </div>
 `);
 
-document.querySelector('#quiz-link').insertAdjacentHTML("afterend",'<li class="link" id="friends-link"><span style="filter:grayscale(30%);">👨‍👩‍👧‍👦</span><sup style="color:greenyellow;font-size:11px;" id="notif-badge"></sup></li>');
+document.querySelector('#quiz-link').insertAdjacentHTML("afterend",'<li class="link" id="notif-link"><span>🔔</span><sup style="font-size:10px;" id="notif-badge"></sup></li><li class="link" id="friends-link"><span style="filter:grayscale(30%);">👨‍👩‍👧‍👦</span><sup style="color:greenyellow;font-size:10px;" id="online-count-badge"></sup></li>');
 
 //evalute the intext js codes
 var innerjs=document.querySelectorAll('#api_app_data script');
@@ -282,6 +282,7 @@ ss.textContent = ''
   + '.pic-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100001;display:flex;align-items:center;justify-content:center;cursor:pointer;}'
   // Notification badge
   + '#notif-badge{font-size:10px;background:#ff4444;color:#fff;border-radius:8px;padding:1px 5px;position:relative;top:-6px;display:none;}'
+  + '#online-count-badge{font-size:10px;background:#4caf50;color:#fff;border-radius:8px;padding:1px 5px;position:relative;top:-6px;display:none;}'
   ;
 document.head.appendChild(ss);
 
@@ -355,6 +356,16 @@ function navTo(sectionId) {
   addClass('#friends-link', 'active_link');
   _currentSection = sectionId;
   history.pushState({ social: sectionId }, null);
+}
+
+// Notification icon → Notifications section
+var notifLink = document.getElementById('notif-link');
+if (notifLink) {
+  notifLink.addEventListener('click', function() {
+    navTo('notifications-section');
+    showNotifications();
+    adjustPolling();
+  });
 }
 
 // Friends/Online Users link
@@ -973,9 +984,25 @@ function pollNow() {
       localStorage.setItem('bemdic_notifications', JSON.stringify(resp.notifications));
     }
   });
+  // Update online users count badge
+  apiCall('/users/online', { device_id: getDeviceId() }, function(resp) {
+    if (resp.ok) updateOnlineCount((resp.users || []).length);
+  });
+  // Sync points every poll cycle
+  syncPoints();
 }
 function updateBadge(count) {
   var badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+function updateOnlineCount(count) {
+  var badge = document.getElementById('online-count-badge');
   if (!badge) return;
   if (count > 0) {
     badge.textContent = count;
