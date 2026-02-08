@@ -11,8 +11,8 @@ export async function onRequestPost(context) {
     return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
   }
 
-  // Calculate cutoff time (5 minutes ago) in JS for consistency
-  var cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
+  // Calculate cutoff time (3 minutes ago) in JS for consistency
+  var cutoff = new Date(Date.now() - 3 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
 
   var sql, params;
   if (query && query.trim().length > 0) {
