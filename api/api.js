@@ -160,6 +160,54 @@ function showPicOverlay(src) {
   overlay.addEventListener('click', function() { document.body.removeChild(overlay); });
   document.body.appendChild(overlay);
 }
+function showUserProfile(userId) {
+  var overlay = document.createElement('div');
+  overlay.className = 'user-profile-overlay';
+  overlay.innerHTML = '<div class="user-profile-modal"><button class="upm-close">&times;</button>'
+    + '<div class="s-loading" style="padding:30px;">Loading profile...</div></div>';
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) document.body.removeChild(overlay); });
+  overlay.querySelector('.upm-close').addEventListener('click', function() { document.body.removeChild(overlay); });
+  document.body.appendChild(overlay);
+
+  apiCall('/user/view', { device_id: getDeviceId(), user_id: userId }, function(resp) {
+    var modal = overlay.querySelector('.user-profile-modal');
+    if (!resp.ok || !resp.user) {
+      modal.innerHTML = '<button class="upm-close">&times;</button><div class="s-empty">Could not load profile</div>';
+      modal.querySelector('.upm-close').addEventListener('click', function() { document.body.removeChild(overlay); });
+      return;
+    }
+    var u = resp.user;
+    var picSrc = u.picture || '';
+    modal.innerHTML = '<button class="upm-close">&times;</button>'
+      + '<div class="upm-pic">' + (picSrc ? '<img src="' + picSrc + '">' : '<span style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:50%;background:#e0e0e0;font-size:40px;">👤</span>') + '</div>'
+      + '<div class="upm-name">' + escapeHtml(u.name) + '</div>'
+      + '<div class="upm-code">' + escapeHtml(u.friend_code) + '</div>'
+      + '<div class="upm-level">' + getLevelName(u.points || 0) + '</div>'
+      + '<div class="upm-stats">'
+      + '<div class="upm-stat"><div class="upm-stat-val">' + (u.points || 0) + '</div><div class="upm-stat-lbl">Points</div></div>'
+      + '<div class="upm-stat"><div class="upm-stat-val">' + (u.total_quizzes || 0) + '</div><div class="upm-stat-lbl">Quizzes</div></div>'
+      + '<div class="upm-stat"><div class="upm-stat-val">' + (u.challenges_won || 0) + '</div><div class="upm-stat-lbl">Wins</div></div>'
+      + '<div class="upm-stat"><div class="upm-stat-val">' + (u.challenges_lost || 0) + '</div><div class="upm-stat-lbl">Losses</div></div>'
+      + '<div class="upm-stat"><div class="upm-stat-val">' + (u.challenges_drawn || 0) + '</div><div class="upm-stat-lbl">Draws</div></div>'
+      + '<div class="upm-stat"><div class="upm-stat-val">' + timeAgo(u.created_at) + '</div><div class="upm-stat-lbl">Joined</div></div>'
+      + '</div>'
+      + '<div class="upm-actions"><button class="s-btn s-btn-g upm-challenge" data-uid="' + u.id + '" data-uname="' + escapeHtml(u.name) + '">Challenge</button></div>';
+
+    modal.querySelector('.upm-close').addEventListener('click', function() { document.body.removeChild(overlay); });
+    // Enlarge pic on click
+    var picImg = modal.querySelector('.upm-pic img');
+    if (picImg) picImg.addEventListener('click', function() { showPicOverlay(this.src); });
+    // Challenge button
+    var chBtn = modal.querySelector('.upm-challenge');
+    if (chBtn) {
+      chBtn.addEventListener('click', function() {
+        document.body.removeChild(overlay);
+        showChallengeMessagePrompt(parseInt(this.getAttribute('data-uid')), this.getAttribute('data-uname'));
+      });
+    }
+  });
+}
+
 function resizeAndUploadPicture(file, callback) {
   var reader = new FileReader();
   reader.onload = function(e) {
@@ -312,6 +360,20 @@ ss.textContent = ''
   + '.load-more-wrap{text-align:center;padding:10px 0;}'
   + '.load-more-btn{background:#f1f3f4;color:#1a73e8;border:1.5px solid #dadce0;border-radius:20px;padding:8px 24px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;}'
   + '.load-more-btn:hover{background:#e8f0fe;}'
+  // User profile modal
+  + '.user-profile-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:100000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}'
+  + '.user-profile-modal{background:#fff;border-radius:16px;padding:24px 20px;max-width:340px;width:92%;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.18);position:relative;max-height:85vh;overflow-y:auto;}'
+  + '.upm-close{position:absolute;top:10px;right:14px;font-size:20px;cursor:pointer;color:#80868b;background:none;border:none;padding:4px;}'
+  + '.upm-pic{margin:8px 0;}'
+  + '.upm-pic img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #1a73e8;box-shadow:0 2px 10px rgba(26,115,232,0.25);cursor:pointer;}'
+  + '.upm-name{font-size:18px;font-weight:700;color:#202124;margin:6px 0 2px;}'
+  + '.upm-code{font-size:12px;color:#80868b;margin:0 0 4px;}'
+  + '.upm-level{display:inline-block;background:#e8f0fe;color:#1a73e8;padding:3px 12px;border-radius:12px;font-size:12px;font-weight:600;margin:6px 0 10px;}'
+  + '.upm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0;}'
+  + '.upm-stat{background:#f8f9fa;border-radius:10px;padding:10px 4px;border:1px solid #e8e8e8;}'
+  + '.upm-stat-val{font-size:18px;font-weight:700;color:#1a73e8;}'
+  + '.upm-stat-lbl{font-size:10px;color:#80868b;margin-top:2px;font-weight:500;}'
+  + '.upm-actions{margin-top:12px;}'
   ;
 document.head.appendChild(ss);
 
@@ -550,7 +612,14 @@ if (editBtn) {
 var profAvatar = document.getElementById('profile-avatar');
 var picInput = document.getElementById('pic-file-input');
 if (profAvatar && picInput) {
-  profAvatar.addEventListener('click', function() { picInput.click(); });
+  // Click on the pic-edit-hint (camera icon) opens file picker
+  var picEditHint = profAvatar.querySelector('.pic-edit-hint');
+  if (picEditHint) picEditHint.addEventListener('click', function(e) { e.stopPropagation(); picInput.click(); });
+  // Click on the avatar image itself enlarges it
+  profAvatar.addEventListener('click', function() {
+    var img = this.querySelector('img');
+    if (img && img.src) showPicOverlay(img.src);
+  });
   picInput.addEventListener('change', function() {
     if (!this.files || !this.files[0]) return;
     var picDisplay = document.getElementById('profile-pic-display');
@@ -612,7 +681,10 @@ function renderOnlineUsers(users, hasMore, append) {
   for (var i = 0; i < users.length; i++) {
     var u = users[i];
     var tr = document.createElement('tr');
-    tr.innerHTML = '<td class="pic-cell">' + profilePicHtml(u.picture, 40, true) + '</td>'
+    var picEl = profilePicHtml(u.picture, 40, true);
+    // Add data-uid to the clickable pic
+    picEl = picEl.replace('class="clickable-pic"', 'class="clickable-pic" data-uid="' + u.id + '"');
+    tr.innerHTML = '<td class="pic-cell">' + picEl + '</td>'
       + '<td class="name-cell">' + escapeHtml(u.name) + '<br><span class="name-meta"><span class="friend-dot dot-on"></span>' + getLevelName(u.points) + ' · ' + u.points + 'pts</span></td>'
       + '<td class="action-cell"><button class="s-btn s-btn-g" data-uid="' + u.id + '" data-uname="' + escapeHtml(u.name) + '">Challenge</button></td>';
     tbody.appendChild(tr);
@@ -642,12 +714,13 @@ function wireOnlineUserHandlers(el) {
       showChallengeMessagePrompt(uid, uname);
     });
   }
-  var pics = el.querySelectorAll('.clickable-pic:not([data-wired])');
+  var pics = el.querySelectorAll('.clickable-pic[data-uid]:not([data-wired])');
   for (var p = 0; p < pics.length; p++) {
     pics[p].setAttribute('data-wired', '1');
     pics[p].addEventListener('click', function(e) {
       e.stopPropagation();
-      showPicOverlay(this.src);
+      var uid = parseInt(this.getAttribute('data-uid'));
+      if (uid) showUserProfile(uid);
     });
   }
 }
