@@ -204,7 +204,7 @@ function resizeAndUploadPicture(file, callback) {
 // ---- CSS INJECTION ----
 var ss = document.createElement('style');
 ss.textContent = ''
-  + '#profile-section,#friends-section,#leaderboard-section,#notifications-section,#challenge-section{display:none;padding:8px 10px;}'
+  + '#profile-section,#friends-section,#leaderboard-section,#notifications-section,#challenge-section{display:none;padding:4px 10px;}'
   + '.social-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin:8px 0;box-shadow:0 1px 4px rgba(0,0,0,0.06);}'
   + '.social-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:2px solid #e0e0e0;}'
   + '.social-tab{flex:1;text-align:center;padding:10px 4px;cursor:pointer;font-size:13px;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;}'
@@ -234,7 +234,7 @@ ss.textContent = ''
   + '#online-search-input:focus{border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,0.15);background:#fff;}'
   + '.online-table{width:100%;border-collapse:collapse;}'
   + '.online-table th{text-align:left;padding:8px 6px;font-size:11px;color:#80868b;border-bottom:2px solid #e8e8e8;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}'
-  + '.online-table td{padding:10px 6px;border-bottom:1px solid #f1f3f4;vertical-align:middle;}'
+  + '.online-table td{padding:10px 6px;border-bottom:1px solid #e0e0e0;vertical-align:middle;}'
   + '.online-table tr:last-child td{border-bottom:none;}'
   + '.online-table .pic-cell{width:46px;}'
   + '.online-table .name-cell{font-weight:600;font-size:14px;color:#202124;}'
@@ -254,7 +254,7 @@ ss.textContent = ''
   + '.lb-pts{font-weight:700;color:#1a73e8;font-size:13px;flex-shrink:0;}'
   + '.lb-me{background:linear-gradient(135deg,#e8f0fe,#d2e3fc);border-radius:8px;}'
   // Notifications
-  + '.notif-row{display:flex;align-items:flex-start;padding:12px 10px;border-bottom:1px solid #f1f3f4;cursor:pointer;gap:10px;transition:background .15s;border-radius:8px;margin:2px 0;}'
+  + '.notif-row{display:flex;align-items:flex-start;padding:12px 10px;border-bottom:1px solid #e0e0e0;cursor:pointer;gap:10px;transition:opacity .3s,max-height .3s,background .15s;margin:0;}'
   + '.notif-row:hover{background:#f8f9fa;}'
   + '.notif-row:last-child{border-bottom:none;}'
   + '.notif-row.unread{background:linear-gradient(135deg,#fff8e1,#fff3cd);}'
@@ -306,8 +306,12 @@ ss.textContent = ''
   + '#notif-badge{font-size:10px;background:#ea4335;color:#fff;border-radius:10px;padding:1px 5px;position:relative;top:-6px;display:none;font-weight:700;min-width:8px;text-align:center;}'
   + '#online-count-badge{font-size:10px;background:#34a853;color:#fff;border-radius:10px;padding:1px 5px;position:relative;top:-6px;display:none;font-weight:700;min-width:8px;text-align:center;}'
   // Section headings
-  + '.section-heading{margin:4px 0 10px;font-size:17px;font-weight:700;color:#202124;display:flex;align-items:center;gap:8px;}'
+  + '.section-heading{margin:2px 0 8px;font-size:17px;font-weight:700;color:#202124;display:flex;align-items:center;gap:8px;}'
   + '.section-heading-icon{font-size:20px;}'
+  // Load more
+  + '.load-more-wrap{text-align:center;padding:10px 0;}'
+  + '.load-more-btn{background:#f1f3f4;color:#1a73e8;border:1.5px solid #dadce0;border-radius:20px;padding:8px 24px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;}'
+  + '.load-more-btn:hover{background:#e8f0fe;}'
   ;
 document.head.appendChild(ss);
 
@@ -571,49 +575,76 @@ if (copyBtn) {
 }
 
 // ---- ONLINE USERS ----
-function loadOnlineUsers(query) {
+var _onlineOffset = 0;
+var _onlineQuery = '';
+
+function loadOnlineUsers(query, append) {
+  if (!append) { _onlineOffset = 0; _onlineQuery = query || ''; }
   var listEl = document.getElementById('online-users-content');
-  if (listEl) listEl.innerHTML = '<div class="s-loading">Loading...</div>';
-  var data = { device_id: getDeviceId() };
-  if (query) data.query = query;
+  if (!append && listEl) listEl.innerHTML = '<div class="s-loading">Loading...</div>';
+  var data = { device_id: getDeviceId(), offset: _onlineOffset };
+  if (_onlineQuery) data.query = _onlineQuery;
   apiCall('/users/online', data, function(resp) {
-    if (!resp.ok) { if (listEl) listEl.innerHTML = '<div class="s-empty">Could not load users</div>'; return; }
-    renderOnlineUsers(resp.users || []);
+    if (!resp.ok) { if (listEl && !append) listEl.innerHTML = '<div class="s-empty">Could not load users</div>'; return; }
+    renderOnlineUsers(resp.users || [], resp.has_more, append);
   });
 }
 
-function renderOnlineUsers(users) {
+function renderOnlineUsers(users, hasMore, append) {
   var el = document.getElementById('online-users-content');
   if (!el) return;
-  if (!users.length) {
+  if (!append && !users.length) {
     el.innerHTML = '<div class="s-empty">No users online right now. Try again later!</div>';
     return;
   }
-  var html = '<table class="online-table"><thead><tr><th class="pic-cell"></th><th>Name</th><th class="action-cell">Action</th></tr></thead><tbody>';
+
+  var tbody;
+  if (append) {
+    tbody = el.querySelector('tbody');
+    var oldBtn = el.querySelector('.load-more-wrap');
+    if (oldBtn) oldBtn.remove();
+  } else {
+    var html = '<table class="online-table"><thead><tr><th class="pic-cell"></th><th>Name</th><th class="action-cell">Action</th></tr></thead><tbody></tbody></table>';
+    el.innerHTML = html;
+    tbody = el.querySelector('tbody');
+  }
+
   for (var i = 0; i < users.length; i++) {
     var u = users[i];
-    html += '<tr>'
-      + '<td class="pic-cell">' + profilePicHtml(u.picture, 40, true) + '</td>'
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="pic-cell">' + profilePicHtml(u.picture, 40, true) + '</td>'
       + '<td class="name-cell">' + escapeHtml(u.name) + '<br><span class="name-meta"><span class="friend-dot dot-on"></span>' + getLevelName(u.points) + ' · ' + u.points + 'pts</span></td>'
-      + '<td class="action-cell"><button class="s-btn s-btn-g" data-uid="' + u.id + '" data-uname="' + escapeHtml(u.name) + '">Challenge</button></td>'
-      + '</tr>';
+      + '<td class="action-cell"><button class="s-btn s-btn-g" data-uid="' + u.id + '" data-uname="' + escapeHtml(u.name) + '">Challenge</button></td>';
+    tbody.appendChild(tr);
   }
-  html += '</tbody></table>';
-  el.innerHTML = html;
 
-  // Challenge button handlers
-  var btns = el.querySelectorAll('.s-btn-g');
+  if (hasMore) {
+    var wrap = document.createElement('div');
+    wrap.className = 'load-more-wrap';
+    wrap.innerHTML = '<button class="load-more-btn">Load More</button>';
+    el.appendChild(wrap);
+    wrap.querySelector('.load-more-btn').addEventListener('click', function() {
+      _onlineOffset += 20;
+      loadOnlineUsers(null, true);
+    });
+  }
+
+  wireOnlineUserHandlers(el);
+}
+
+function wireOnlineUserHandlers(el) {
+  var btns = el.querySelectorAll('.s-btn-g:not([data-wired])');
   for (var b = 0; b < btns.length; b++) {
+    btns[b].setAttribute('data-wired', '1');
     btns[b].addEventListener('click', function() {
       var uid = parseInt(this.getAttribute('data-uid'));
       var uname = this.getAttribute('data-uname');
       showChallengeMessagePrompt(uid, uname);
     });
   }
-
-  // Clickable profile pictures
-  var pics = el.querySelectorAll('.clickable-pic');
+  var pics = el.querySelectorAll('.clickable-pic:not([data-wired])');
   for (var p = 0; p < pics.length; p++) {
+    pics[p].setAttribute('data-wired', '1');
     pics[p].addEventListener('click', function(e) {
       e.stopPropagation();
       showPicOverlay(this.src);
@@ -1048,7 +1079,6 @@ function pollNow() {
   apiCall('/notifications/poll', { device_id: getDeviceId() }, function(resp) {
     if (resp.ok) {
       updateBadge(resp.unread_count);
-      localStorage.setItem('bemdic_notifications', JSON.stringify(resp.notifications));
     }
   });
   // Update online users count badge
@@ -1076,14 +1106,31 @@ function updateOnlineCount(count) {
     badge.style.display = 'none';
   }
 }
-function showNotifications() {
-  var el = document.getElementById('notifications-list');
-  var raw = localStorage.getItem('bemdic_notifications');
-  var notifs = [];
-  if (raw) try { notifs = JSON.parse(raw); } catch(e) {}
-  if (!notifs.length) { if (el) el.innerHTML = '<div class="s-empty">No notifications</div>'; return; }
+var _notifOffset = 0;
 
-  var html = '';
+function showNotifications(append) {
+  var el = document.getElementById('notifications-list');
+  if (!append) { _notifOffset = 0; if (el) el.innerHTML = '<div class="s-loading">Loading...</div>'; }
+  apiCall('/notifications/poll', { device_id: getDeviceId(), offset: _notifOffset }, function(resp) {
+    if (!resp.ok) { if (el && !append) el.innerHTML = '<div class="s-empty">Could not load notifications</div>'; return; }
+    var notifs = resp.notifications || [];
+    if (!append) updateBadge(resp.unread_count);
+    renderNotifications(el, notifs, resp.has_more, append);
+    // Mark all as read
+    apiCall('/notifications/mark-read', { device_id: getDeviceId(), notification_ids: 'all' }, function() {
+      updateBadge(0);
+    });
+  });
+}
+
+function renderNotifications(el, notifs, hasMore, append) {
+  if (!el) return;
+  if (!append && !notifs.length) { el.innerHTML = '<div class="s-empty">No notifications</div>'; return; }
+  if (!append) el.innerHTML = '';
+
+  var oldBtn = el.querySelector('.load-more-wrap');
+  if (oldBtn) oldBtn.remove();
+
   var typeBadges = { challenge_received: ['Challenge', 'notif-type-challenge'], challenge_result: ['Result', 'notif-type-result'] };
   for (var i = 0; i < notifs.length; i++) {
     var n = notifs[i];
@@ -1105,26 +1152,41 @@ function showNotifications() {
     else if (n.type === 'friend_accepted') text += '<b>' + escapeHtml(data.from_name) + '</b> accepted your friend request';
 
     var picHtml = profilePicHtml(data.from_picture || '', 38, false);
-    html += '<div class="notif-row' + (n.read ? '' : ' unread') + '" data-ntype="' + n.type + '" data-ndata=\'' + escapeHtml(JSON.stringify(data)) + '\' data-nid="' + n.id + '">'
-      + '<span class="notif-pic">' + picHtml + '</span>'
+    var row = document.createElement('div');
+    row.className = 'notif-row' + (n.read ? '' : ' unread');
+    row.setAttribute('data-ntype', n.type);
+    row.setAttribute('data-ndata', JSON.stringify(data));
+    row.setAttribute('data-nid', n.id);
+    row.innerHTML = '<span class="notif-pic">' + picHtml + '</span>'
       + '<div class="notif-body"><div class="notif-text">' + text + '</div>'
-      + '<div class="notif-time">' + timeAgo(n.created_at) + '</div></div></div>';
+      + '<div class="notif-time">' + timeAgo(n.created_at) + '</div></div>';
+
+    row.addEventListener('click', (function(ntype, ndata, nid, rowEl) {
+      return function() {
+        // Navigate to challenge
+        if (ntype === 'challenge_received' && ndata.challenge_id) openReceivedChallenge(ndata.challenge_id);
+        else if (ntype === 'challenge_result' && ndata.challenge_id) openReceivedChallenge(ndata.challenge_id);
+        // Delete notification
+        rowEl.style.transition = 'opacity .3s, max-height .3s';
+        rowEl.style.opacity = '0';
+        rowEl.style.maxHeight = '0';
+        rowEl.style.overflow = 'hidden';
+        setTimeout(function() { rowEl.remove(); }, 300);
+        apiCall('/notifications/delete', { device_id: getDeviceId(), notification_id: nid }, function() {});
+      };
+    })(n.type, data, n.id, row));
+
+    el.appendChild(row);
   }
-  if (el) el.innerHTML = html;
 
-  // Mark all as read
-  apiCall('/notifications/mark-read', { device_id: getDeviceId(), notification_ids: 'all' }, function() {
-    updateBadge(0);
-  });
-
-  // Click handlers
-  var rows = el.querySelectorAll('.notif-row');
-  for (var r = 0; r < rows.length; r++) {
-    rows[r].addEventListener('click', function() {
-      var type = this.getAttribute('data-ntype');
-      var data = JSON.parse(this.getAttribute('data-ndata'));
-      if (type === 'challenge_received' && data.challenge_id) openReceivedChallenge(data.challenge_id);
-      else if (type === 'challenge_result' && data.challenge_id) openReceivedChallenge(data.challenge_id);
+  if (hasMore) {
+    var wrap = document.createElement('div');
+    wrap.className = 'load-more-wrap';
+    wrap.innerHTML = '<button class="load-more-btn">Load More</button>';
+    el.appendChild(wrap);
+    wrap.querySelector('.load-more-btn').addEventListener('click', function() {
+      _notifOffset += 20;
+      showNotifications(true);
     });
   }
 }
