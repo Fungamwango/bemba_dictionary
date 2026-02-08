@@ -6,7 +6,7 @@ export async function onRequestPost(context) {
   }
   var challengeMsg = (message && typeof message === 'string') ? message.trim().substring(0, 200) : '';
   var db = context.env.DB;
-  var me = await db.prepare('SELECT id, name FROM users WHERE device_id = ?').bind(device_id).first();
+  var me = await db.prepare('SELECT id, name, picture FROM users WHERE device_id = ?').bind(device_id).first();
   if (!me) return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
 
   var receiver = await db.prepare('SELECT id, name FROM users WHERE id = ?').bind(receiver_id).first();
@@ -30,7 +30,8 @@ export async function onRequestPost(context) {
     from_name: me.name,
     from_id: me.id,
     sender_score: sender_score,
-    message: challengeMsg
+    message: challengeMsg,
+    from_picture: me.picture || ''
   })).run();
 
   return Response.json({ ok: true, challenge_id: challenge.id });

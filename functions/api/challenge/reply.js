@@ -6,7 +6,7 @@ export async function onRequestPost(context) {
   }
   var msg = reply_message.trim().substring(0, 200);
   var db = context.env.DB;
-  var me = await db.prepare('SELECT id, name FROM users WHERE device_id = ?').bind(device_id).first();
+  var me = await db.prepare('SELECT id, name, picture FROM users WHERE device_id = ?').bind(device_id).first();
   if (!me) return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
 
   var ch = await db.prepare(
@@ -25,7 +25,8 @@ export async function onRequestPost(context) {
     receiver_score: ch.receiver_score,
     winner: ch.sender_score > ch.receiver_score ? 'sender' : (ch.receiver_score > ch.sender_score ? 'receiver' : 'draw'),
     bonus: ch.sender_points_awarded,
-    reply_message: msg
+    reply_message: msg,
+    from_picture: me.picture || ''
   })).run();
 
   return Response.json({ ok: true });

@@ -6,7 +6,7 @@ export async function onRequestPost(context) {
     return Response.json({ ok: false, error: 'device_id, challenge_id, and receiver_score required' }, { status: 400 });
   }
   var db = context.env.DB;
-  var me = await db.prepare('SELECT id, name FROM users WHERE device_id = ?').bind(device_id).first();
+  var me = await db.prepare('SELECT id, name, picture FROM users WHERE device_id = ?').bind(device_id).first();
   if (!me) return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
 
   var ch = await db.prepare(
@@ -69,7 +69,8 @@ export async function onRequestPost(context) {
     receiver_score: receiver_score,
     winner: winner,
     bonus: senderBonus,
-    reply_message: replyMsg
+    reply_message: replyMsg,
+    from_picture: me.picture || ''
   })).run();
 
   return Response.json({

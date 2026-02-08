@@ -204,88 +204,110 @@ function resizeAndUploadPicture(file, callback) {
 // ---- CSS INJECTION ----
 var ss = document.createElement('style');
 ss.textContent = ''
-  + '#profile-section,#friends-section,#leaderboard-section,#notifications-section,#challenge-section{display:none;padding:10px 6px;}'
-  + '.social-card{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin:8px 0;}'
+  + '#profile-section,#friends-section,#leaderboard-section,#notifications-section,#challenge-section{display:none;padding:8px 10px;}'
+  + '.social-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin:8px 0;box-shadow:0 1px 4px rgba(0,0,0,0.06);}'
   + '.social-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:2px solid #e0e0e0;}'
-  + '.social-tab{flex:1;text-align:center;padding:10px 4px;cursor:pointer;font-size:13px;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;}'
-  + '.social-tab.active-tab{color:#058;border-bottom-color:#058;font-weight:bold;}'
-  + '.s-btn{padding:7px 14px;border:none;border-radius:6px;font-size:12px;cursor:pointer;}'
-  + '.s-btn-p{background:#058;color:#fff;}'
-  + '.s-btn-g{background:#084;color:#fff;}'
-  + '.s-btn-d{background:crimson;color:#fff;}'
-  + '.s-btn-s{background:#eee;color:#333;}'
+  + '.social-tab{flex:1;text-align:center;padding:10px 4px;cursor:pointer;font-size:13px;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;}'
+  + '.social-tab.active-tab{color:#1a73e8;border-bottom-color:#1a73e8;font-weight:600;}'
+  + '.s-btn{padding:8px 16px;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .15s;letter-spacing:0.3px;}'
+  + '.s-btn:active{transform:scale(0.96);}'
+  + '.s-btn-p{background:linear-gradient(135deg,#1a73e8,#1557b0);color:#fff;box-shadow:0 2px 6px rgba(26,115,232,0.3);}'
+  + '.s-btn-g{background:linear-gradient(135deg,#34a853,#2d8f47);color:#fff;box-shadow:0 2px 6px rgba(52,168,83,0.3);}'
+  + '.s-btn-d{background:linear-gradient(135deg,#ea4335,#c5221f);color:#fff;box-shadow:0 2px 6px rgba(234,67,53,0.3);}'
+  + '.s-btn-s{background:#f1f3f4;color:#444;}'
   + '.s-empty{text-align:center;color:#999;padding:24px 10px;font-size:13px;}'
   + '.s-loading{text-align:center;color:#888;padding:16px;font-size:13px;}'
   // Profile
   + '#profile-wrapper{text-align:center;}'
   + '#profile-avatar{font-size:48px;margin:10px 0;cursor:pointer;position:relative;display:inline-block;}'
-  + '#profile-avatar img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #058;}'
-  + '#profile-avatar .pic-edit-hint{position:absolute;bottom:0;right:0;background:#058;color:#fff;border-radius:50%;width:24px;height:24px;font-size:12px;display:flex;align-items:center;justify-content:center;}'
+  + '#profile-avatar img{width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #1a73e8;box-shadow:0 2px 10px rgba(26,115,232,0.25);}'
+  + '#profile-avatar .pic-edit-hint{position:absolute;bottom:2px;right:2px;background:#1a73e8;color:#fff;border-radius:50%;width:26px;height:26px;font-size:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);}'
   + '#pic-file-input{display:none;}'
-  + '#profile-name-display{font-size:18px;font-weight:bold;color:#222;margin:6px 0;}'
-  + '#profile-friend-code{color:#666;font-size:13px;margin:4px 0 12px;}'
+  + '#profile-name-display{font-size:18px;font-weight:700;color:#202124;margin:8px 0 2px;}'
+  + '#profile-friend-code{color:#5f6368;font-size:13px;margin:2px 0 14px;}'
   + '.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;}'
-  + '.stat-box{background:#f5f5f5;border-radius:8px;padding:12px 6px;text-align:center;}'
-  + '.stat-val{font-size:20px;font-weight:bold;color:#058;}'
-  + '.stat-lbl{font-size:11px;color:#888;margin-top:2px;}'
+  + '.stat-box{background:linear-gradient(135deg,#f8f9fa,#fff);border-radius:12px;padding:14px 6px;text-align:center;border:1px solid #e8e8e8;}'
+  + '.stat-val{font-size:20px;font-weight:700;color:#1a73e8;}'
+  + '.stat-lbl{font-size:11px;color:#80868b;margin-top:3px;font-weight:500;}'
   // Online users table
-  + '#online-search-input{width:92%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin:6px 0;outline:none;}'
+  + '#online-search-input{width:92%;padding:10px 14px;border:1.5px solid #dadce0;border-radius:24px;font-size:14px;margin:6px 0;outline:none;transition:border-color .2s,box-shadow .2s;background:#f8f9fa;}'
+  + '#online-search-input:focus{border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,0.15);background:#fff;}'
   + '.online-table{width:100%;border-collapse:collapse;}'
-  + '.online-table th{text-align:left;padding:8px 6px;font-size:12px;color:#888;border-bottom:2px solid #e0e0e0;}'
-  + '.online-table td{padding:8px 6px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}'
+  + '.online-table th{text-align:left;padding:8px 6px;font-size:11px;color:#80868b;border-bottom:2px solid #e8e8e8;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}'
+  + '.online-table td{padding:10px 6px;border-bottom:1px solid #f1f3f4;vertical-align:middle;}'
+  + '.online-table tr:last-child td{border-bottom:none;}'
   + '.online-table .pic-cell{width:46px;}'
-  + '.online-table .name-cell{font-weight:bold;font-size:14px;color:#222;}'
-  + '.online-table .name-meta{font-size:11px;color:#888;font-weight:normal;}'
-  + '.online-table .action-cell{text-align:right;width:80px;}'
+  + '.online-table .name-cell{font-weight:600;font-size:14px;color:#202124;}'
+  + '.online-table .name-meta{font-size:11px;color:#80868b;font-weight:normal;}'
+  + '.online-table .action-cell{text-align:right;width:90px;}'
   + '.friend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;}'
-  + '.dot-on{background:#4caf50;}'
+  + '.dot-on{background:#34a853;box-shadow:0 0 4px rgba(52,168,83,0.5);}'
   + '.dot-off{background:#bbb;}'
   // Leaderboard
-  + '.lb-row{display:flex;align-items:center;padding:6px 8px;border-bottom:1px solid #f0f0f0;gap:8px;}'
-  + '.lb-rank{width:28px;font-weight:bold;color:#666;font-size:14px;flex-shrink:0;}'
+  + '.lb-row{display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f1f3f4;gap:10px;transition:background .15s;}'
+  + '.lb-row:last-child{border-bottom:none;}'
+  + '.lb-rank{width:28px;font-weight:700;color:#5f6368;font-size:14px;flex-shrink:0;text-align:center;}'
   + '.lb-pic{flex-shrink:0;}'
   + '.lb-info{flex:1;min-width:0;}'
-  + '.lb-name{font-size:14px;color:#222;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
-  + '.lb-level{font-size:11px;color:#888;}'
-  + '.lb-pts{font-weight:bold;color:#058;font-size:13px;flex-shrink:0;}'
-  + '.lb-me{background:#e3f2fd;border-radius:6px;}'
+  + '.lb-name{font-size:14px;color:#202124;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+  + '.lb-level{font-size:11px;color:#80868b;font-weight:500;}'
+  + '.lb-pts{font-weight:700;color:#1a73e8;font-size:13px;flex-shrink:0;}'
+  + '.lb-me{background:linear-gradient(135deg,#e8f0fe,#d2e3fc);border-radius:8px;}'
   // Notifications
-  + '.notif-row{display:flex;align-items:flex-start;padding:10px;border-bottom:1px solid #f0f0f0;cursor:pointer;gap:8px;}'
-  + '.notif-row.unread{background:#fff8e1;}'
-  + '.notif-icon{font-size:20px;flex-shrink:0;}'
-  + '.notif-body{flex:1;}'
-  + '.notif-text{font-size:13px;color:#333;}'
-  + '.notif-time{font-size:11px;color:#999;}'
+  + '.notif-row{display:flex;align-items:flex-start;padding:12px 10px;border-bottom:1px solid #f1f3f4;cursor:pointer;gap:10px;transition:background .15s;border-radius:8px;margin:2px 0;}'
+  + '.notif-row:hover{background:#f8f9fa;}'
+  + '.notif-row:last-child{border-bottom:none;}'
+  + '.notif-row.unread{background:linear-gradient(135deg,#fff8e1,#fff3cd);}'
+  + '.notif-pic{flex-shrink:0;}'
+  + '.notif-body{flex:1;min-width:0;}'
+  + '.notif-text{font-size:13px;color:#202124;line-height:1.4;}'
+  + '.notif-time{font-size:11px;color:#80868b;margin-top:3px;}'
+  + '.notif-type-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:600;margin-bottom:3px;}'
+  + '.notif-type-challenge{background:#e8f0fe;color:#1a73e8;}'
+  + '.notif-type-result{background:#fef7e0;color:#e37400;}'
   // Challenge
-  + '#challenge-info{text-align:center;padding:20px;}'
-  + '#challenge-info h2{color:#333;margin:0 0 8px;}'
-  + '.ch-msg{background:#fff8e1;border-radius:8px;padding:10px;margin:10px 0;font-style:italic;color:#555;font-size:14px;}'
-  + '.ch-comparison{display:flex;justify-content:center;align-items:center;gap:16px;margin:20px 0;}'
-  + '.ch-player{text-align:center;}'
-  + '.ch-player-name{font-size:14px;color:#666;margin-bottom:4px;}'
-  + '.ch-player-score{font-size:36px;font-weight:bold;}'
-  + '.ch-vs{font-size:18px;color:#999;font-weight:bold;}'
-  + '.ch-verdict{text-align:center;font-size:18px;font-weight:bold;margin:10px 0;}'
-  + '.ch-bonus{text-align:center;color:#084;font-size:14px;margin:6px 0;}'
+  + '#challenge-info{text-align:center;padding:16px 12px;}'
+  + '#challenge-info h2{color:#202124;margin:0 0 6px;font-size:18px;}'
+  + '.ch-msg{background:linear-gradient(135deg,#fff8e1,#fff3cd);border-radius:12px;padding:12px 14px;margin:12px 0;font-style:italic;color:#555;font-size:14px;border-left:3px solid #fbbc04;}'
+  + '.ch-accept-card{background:linear-gradient(135deg,#f8f9fa,#fff);border:1.5px solid #e8e8e8;border-radius:16px;padding:20px;margin:12px 0;}'
+  + '.ch-opponent-pic{margin:10px 0;}'
+  + '.ch-score-preview{font-size:32px;font-weight:700;color:#ea4335;margin:6px 0;}'
+  + '.ch-score-label{font-size:13px;color:#5f6368;}'
+  + '.ch-comparison{display:flex;justify-content:center;align-items:center;gap:20px;margin:20px 0;}'
+  + '.ch-player{text-align:center;min-width:80px;}'
+  + '.ch-player-name{font-size:13px;color:#5f6368;margin-bottom:4px;font-weight:500;}'
+  + '.ch-player-score{font-size:38px;font-weight:800;}'
+  + '.ch-vs{font-size:16px;color:#bbb;font-weight:700;background:#f1f3f4;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;}'
+  + '.ch-verdict{text-align:center;font-size:20px;font-weight:700;margin:12px 0;}'
+  + '.ch-bonus{text-align:center;color:#34a853;font-size:14px;margin:6px 0;font-weight:600;}'
   + '#ch-quiz-wrapper{padding:8px;}'
-  + '#ch-question-title{font-size:13px;color:#666;margin-bottom:8px;}'
-  + '#ch-question-wrapper{background:#f5f5f5;border-radius:8px;padding:14px;margin:10px 0;text-align:center;font-size:16px;}'
-  + '.ch-option{background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;margin:6px 0;cursor:pointer;font-size:14px;}'
-  + '.ch-option.ch-correct{background:#e8f5e9;border-color:#4caf50;color:#2e7d32;}'
-  + '.ch-option.ch-wrong{background:#ffebee;border-color:#e53935;color:#c62828;}'
-  + '#ch-timer-bar{text-align:center;color:#e65100;font-size:13px;margin:6px 0;}'
+  + '#ch-timer-bar{text-align:center;color:#ea4335;font-size:14px;font-weight:600;margin:8px 0;padding:6px;background:#fce8e6;border-radius:8px;}'
+  + '#ch-question-title{font-size:13px;color:#5f6368;margin-bottom:8px;font-weight:500;}'
+  + '#ch-question-wrapper{background:linear-gradient(135deg,#f8f9fa,#fff);border:1.5px solid #e8e8e8;border-radius:12px;padding:16px;margin:10px 0;text-align:center;font-size:16px;font-weight:500;}'
+  + '#ch-progress-bar{height:4px;background:#e8e8e8;border-radius:2px;margin:0 0 10px;overflow:hidden;}'
+  + '#ch-progress-fill{height:100%;background:linear-gradient(90deg,#1a73e8,#34a853);border-radius:2px;transition:width .3s;}'
+  + '.ch-option{background:#fff;border:1.5px solid #dadce0;border-radius:12px;padding:14px;margin:8px 0;cursor:pointer;font-size:14px;transition:transform .1s,border-color .15s,box-shadow .15s;font-weight:500;}'
+  + '.ch-option:hover{border-color:#1a73e8;box-shadow:0 1px 6px rgba(26,115,232,0.15);}'
+  + '.ch-option:active{transform:scale(0.98);}'
+  + '.ch-option.ch-correct{background:#e6f4ea;border-color:#34a853;color:#137333;}'
+  + '.ch-option.ch-wrong{background:#fce8e6;border-color:#ea4335;color:#c5221f;}'
   // Modals
-  + '.name-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100000;display:flex;align-items:center;justify-content:center;}'
-  + '.name-modal{background:#fff;border-radius:10px;padding:24px;max-width:300px;width:90%;text-align:center;}'
-  + '.name-modal h3{margin:0 0 8px;color:#333;}'
-  + '.name-modal p{color:#666;font-size:13px;margin:0 0 12px;}'
-  + '.name-modal input{width:80%;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:15px;text-align:center;outline:none;margin-bottom:8px;}'
-  + '.name-modal textarea{width:80%;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:13px;outline:none;resize:none;margin-bottom:8px;}'
+  + '.name-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:100000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}'
+  + '.name-modal{background:#fff;border-radius:16px;padding:28px 24px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.15);}'
+  + '.name-modal h3{margin:0 0 6px;color:#202124;font-size:18px;}'
+  + '.name-modal p{color:#5f6368;font-size:13px;margin:0 0 14px;}'
+  + '.name-modal input{width:80%;padding:10px 14px;border:1.5px solid #dadce0;border-radius:24px;font-size:15px;text-align:center;outline:none;margin-bottom:10px;transition:border-color .2s;}'
+  + '.name-modal input:focus{border-color:#1a73e8;}'
+  + '.name-modal textarea{width:80%;padding:10px 14px;border:1.5px solid #dadce0;border-radius:12px;font-size:13px;outline:none;resize:none;margin-bottom:10px;transition:border-color .2s;}'
+  + '.name-modal textarea:focus{border-color:#1a73e8;}'
   // Picture overlay
-  + '.pic-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100001;display:flex;align-items:center;justify-content:center;cursor:pointer;}'
+  + '.pic-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100001;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);}'
   // Notification badge
-  + '#notif-badge{font-size:10px;background:#ff4444;color:#fff;border-radius:8px;padding:1px 5px;position:relative;top:-6px;display:none;}'
-  + '#online-count-badge{font-size:10px;background:#4caf50;color:#fff;border-radius:8px;padding:1px 5px;position:relative;top:-6px;display:none;}'
+  + '#notif-badge{font-size:10px;background:#ea4335;color:#fff;border-radius:10px;padding:1px 5px;position:relative;top:-6px;display:none;font-weight:700;min-width:8px;text-align:center;}'
+  + '#online-count-badge{font-size:10px;background:#34a853;color:#fff;border-radius:10px;padding:1px 5px;position:relative;top:-6px;display:none;font-weight:700;min-width:8px;text-align:center;}'
+  // Section headings
+  + '.section-heading{margin:4px 0 10px;font-size:17px;font-weight:700;color:#202124;display:flex;align-items:center;gap:8px;}'
+  + '.section-heading-icon{font-size:20px;}'
   ;
 document.head.appendChild(ss);
 
@@ -295,7 +317,7 @@ if (dicWrapper) {
   dicWrapper.insertAdjacentHTML('afterend', ''
     // PROFILE
     + '<section id="profile-section"><div id="profile-wrapper">'
-    + '<h2>My Profile</h2><div id="profile-avatar"><span id="profile-pic-display">👤</span><span class="pic-edit-hint">📷</span></div>'
+    + '<div class="section-heading"><span class="section-heading-icon">👤</span> My Profile</div><div id="profile-avatar"><span id="profile-pic-display">👤</span><span class="pic-edit-hint">📷</span></div>'
     + '<input type="file" id="pic-file-input" accept="image/*">'
     + '<div id="profile-name-display"><span id="profile-name-text"></span> <span id="profile-edit-btn" style="cursor:pointer;font-size:14px;">✏️</span></div>'
     + '<div id="profile-friend-code">Friend Code: <b id="profile-code-value"></b> <span id="profile-copy-code" style="cursor:pointer;">📋</span></div>'
@@ -309,45 +331,54 @@ if (dicWrapper) {
     + '</div></div></section>'
     // ONLINE USERS (replaces old Friends section)
     + '<section id="friends-section"><div id="friends-wrapper">'
-    + '<h2 style="margin:0 0 8px;">Online Users</h2>'
+    + '<div class="section-heading"><span class="section-heading-icon">🌐</span> Online Users</div>'
     + '<input id="online-search-input" placeholder="Search by name...">'
     + '<div id="online-users-content" class="s-loading">Loading...</div>'
     + '</div></section>'
     // LEADERBOARD
     + '<section id="leaderboard-section"><div id="leaderboard-wrapper">'
-    + '<h2 style="margin:4px 0 8px;">Leaderboard</h2>'
+    + '<div class="section-heading"><span class="section-heading-icon">🏅</span> Leaderboard</div>'
     + '<div id="lb-global-list" class="s-loading">Loading...</div>'
     + '</div></section>'
     // NOTIFICATIONS
     + '<section id="notifications-section"><div id="notifications-wrapper">'
-    + '<h2>Notifications</h2>'
+    + '<div class="section-heading"><span class="section-heading-icon">🔔</span> Notifications</div>'
     + '<div id="notifications-list" class="s-empty">No notifications</div>'
     + '</div></section>'
     // CHALLENGE
     + '<section id="challenge-section">'
-    + '<div id="challenge-info"><h2>Challenge from <span id="ch-opponent-name"></span></h2>'
+    + '<div id="challenge-info">'
+    + '<div class="ch-accept-card">'
+    + '<div class="section-heading" style="justify-content:center;"><span class="section-heading-icon">🎯</span> Challenge!</div>'
+    + '<div class="ch-opponent-pic" id="ch-opponent-pic"></div>'
+    + '<div style="font-size:15px;font-weight:600;color:#202124;" id="ch-opponent-name"></div>'
     + '<div id="ch-challenge-msg"></div>'
-    + '<p>They scored <b id="ch-opponent-score"></b>/10. Can you beat them?</p>'
-    + '<button class="s-btn s-btn-g" id="start-challenge-btn" style="padding:12px 30px;font-size:15px;">Accept Challenge</button></div>'
+    + '<div class="ch-score-label">Their score</div>'
+    + '<div class="ch-score-preview"><span id="ch-opponent-score"></span>/10</div>'
+    + '<div style="color:#5f6368;font-size:13px;margin:8px 0 16px;">Can you beat them?</div>'
+    + '<button class="s-btn s-btn-g" id="start-challenge-btn" style="padding:14px 36px;font-size:15px;">Accept Challenge</button>'
+    + '</div></div>'
     + '<div id="ch-quiz-wrapper" style="display:none;">'
+    + '<div id="ch-progress-bar"><div id="ch-progress-fill" style="width:0%"></div></div>'
     + '<div id="ch-timer-bar">00:00</div>'
-    + '<div id="ch-question-title">Question: <span id="ch-q-num">1</span> / 10</div>'
+    + '<div id="ch-question-title">Question <span id="ch-q-num">1</span> / 10</div>'
     + '<div id="ch-question-wrapper"><span id="ch-query-text">What is the translation of </span><b id="ch-question-word"></b>?</div>'
     + '<div id="ch-options"></div></div>'
     + '<div id="challenge-results" style="display:none;">'
-    + '<h2>Challenge Complete!</h2>'
+    + '<div class="ch-accept-card">'
+    + '<div class="section-heading" style="justify-content:center;"><span class="section-heading-icon">🏆</span> Results</div>'
     + '<div class="ch-comparison"><div class="ch-player"><div class="ch-player-name" id="ch-you-label">You</div><div class="ch-player-score" id="ch-you-score">0</div></div>'
     + '<div class="ch-vs">VS</div>'
     + '<div class="ch-player"><div class="ch-player-name" id="ch-opp-label">-</div><div class="ch-player-score" id="ch-opp-score-final">0</div></div></div>'
     + '<div class="ch-verdict" id="ch-verdict"></div>'
     + '<div class="ch-bonus" id="ch-bonus"></div>'
-    + '<div id="ch-reply-section" style="display:none;margin:14px 0;">'
-    + '<div id="ch-original-msg" style="margin-bottom:6px;"></div>'
-    + '<textarea id="ch-reply-input" placeholder="Write a reply..." maxlength="200" rows="2" style="width:90%;padding:8px;border:2px solid #ddd;border-radius:8px;font-size:13px;outline:none;resize:none;"></textarea>'
-    + '<div style="margin-top:6px;"><button class="s-btn s-btn-p" id="ch-reply-send" style="padding:8px 18px;">Send Reply</button></div>'
+    + '<div id="ch-reply-section" style="display:none;margin:16px 0 0;">'
+    + '<div id="ch-original-msg" style="margin-bottom:8px;"></div>'
+    + '<textarea id="ch-reply-input" placeholder="Write a reply..." maxlength="200" rows="2" style="width:90%;padding:10px 14px;border:1.5px solid #dadce0;border-radius:12px;font-size:13px;outline:none;resize:none;transition:border-color .2s;"></textarea>'
+    + '<div style="margin-top:8px;"><button class="s-btn s-btn-p" id="ch-reply-send" style="padding:10px 22px;">Send Reply</button></div>'
     + '</div>'
-    + '<button class="s-btn s-btn-p" id="ch-back-btn" style="margin-top:12px;padding:10px 24px;">Back</button>'
-    + '</div></section>'
+    + '<button class="s-btn s-btn-s" id="ch-back-btn" style="margin-top:14px;padding:10px 28px;">Back</button>'
+    + '</div></div></section>'
   );
 }
 
@@ -724,9 +755,10 @@ function openReceivedChallenge(challengeId) {
     var oppName = document.getElementById('ch-opponent-name');
     var oppScore = document.getElementById('ch-opponent-score');
     var chMsg = document.getElementById('ch-challenge-msg');
+    var oppPic = document.getElementById('ch-opponent-pic');
+    if (oppPic) oppPic.innerHTML = profilePicHtml(resp.challenge.opponent_picture, 56, true);
     if (oppName) oppName.textContent = resp.challenge.opponent_name;
     if (oppScore) oppScore.textContent = resp.challenge.sender_score;
-    // Show challenge message if present
     if (chMsg) {
       if (resp.challenge.message) {
         chMsg.innerHTML = '<div class="ch-msg">"' + escapeHtml(resp.challenge.message) + '"</div>';
@@ -734,6 +766,9 @@ function openReceivedChallenge(challengeId) {
         chMsg.innerHTML = '';
       }
     }
+    // Clickable opponent pic
+    var cpic = oppPic ? oppPic.querySelector('.clickable-pic') : null;
+    if (cpic) cpic.addEventListener('click', function(e) { e.stopPropagation(); showPicOverlay(this.src); });
   });
 }
 
@@ -782,6 +817,8 @@ function loadChallengeQuestion() {
   var q = _challengeData.parsedQuestions[_chQuestionNum - 1];
   var qNumEl = document.getElementById('ch-q-num');
   if (qNumEl) qNumEl.textContent = _chQuestionNum;
+  var progFill = document.getElementById('ch-progress-fill');
+  if (progFill) progFill.style.width = ((_chQuestionNum - 1) * 10) + '%';
 
   var askEng = _chQuestionNum <= 5;
   var questionWord = askEng ? q.eng : q.bem;
@@ -1047,26 +1084,29 @@ function showNotifications() {
   if (!notifs.length) { if (el) el.innerHTML = '<div class="s-empty">No notifications</div>'; return; }
 
   var html = '';
-  var icons = { challenge_received: '🎯', challenge_result: '🏆', friend_request: '👤', friend_accepted: '🤝' };
+  var typeBadges = { challenge_received: ['Challenge', 'notif-type-challenge'], challenge_result: ['Result', 'notif-type-result'] };
   for (var i = 0; i < notifs.length; i++) {
     var n = notifs[i];
     var data = typeof n.data === 'string' ? JSON.parse(n.data) : n.data;
     var text = '';
+    var badge = typeBadges[n.type];
+    if (badge) text += '<span class="notif-type-badge ' + badge[1] + '">' + badge[0] + '</span><br>';
     if (n.type === 'challenge_received') {
-      text = '<b>' + escapeHtml(data.from_name) + '</b> challenged you! (scored ' + data.sender_score + '/10)';
-      if (data.message) text += '<br><i style="color:#888;">"' + escapeHtml(data.message) + '"</i>';
+      text += '<b>' + escapeHtml(data.from_name) + '</b> challenged you! (scored ' + data.sender_score + '/10)';
+      if (data.message) text += '<br><i style="color:#80868b;">"' + escapeHtml(data.message) + '"</i>';
     }
     else if (n.type === 'challenge_result') {
       var w = data.winner;
-      if (w === 'draw') text = 'Draw with <b>' + escapeHtml(data.from_name) + '</b>! (' + data.sender_score + '-' + data.receiver_score + ')';
-      else text = '<b>' + escapeHtml(data.from_name) + '</b> completed your challenge (' + data.sender_score + '-' + data.receiver_score + '). +' + data.bonus + 'pts';
-      if (data.reply_message) text += '<br><i style="color:#888;">Reply: "' + escapeHtml(data.reply_message) + '"</i>';
+      if (w === 'draw') text += 'Draw with <b>' + escapeHtml(data.from_name) + '</b>! (' + data.sender_score + '-' + data.receiver_score + ')';
+      else text += '<b>' + escapeHtml(data.from_name) + '</b> completed your challenge (' + data.sender_score + '-' + data.receiver_score + '). +' + data.bonus + 'pts';
+      if (data.reply_message) text += '<br><i style="color:#80868b;">Reply: "' + escapeHtml(data.reply_message) + '"</i>';
     }
-    else if (n.type === 'friend_request') text = '<b>' + escapeHtml(data.from_name) + '</b> wants to be your friend';
-    else if (n.type === 'friend_accepted') text = '<b>' + escapeHtml(data.from_name) + '</b> accepted your friend request';
+    else if (n.type === 'friend_request') text += '<b>' + escapeHtml(data.from_name) + '</b> wants to be your friend';
+    else if (n.type === 'friend_accepted') text += '<b>' + escapeHtml(data.from_name) + '</b> accepted your friend request';
 
+    var picHtml = profilePicHtml(data.from_picture || '', 38, false);
     html += '<div class="notif-row' + (n.read ? '' : ' unread') + '" data-ntype="' + n.type + '" data-ndata=\'' + escapeHtml(JSON.stringify(data)) + '\' data-nid="' + n.id + '">'
-      + '<span class="notif-icon">' + (icons[n.type] || '🔔') + '</span>'
+      + '<span class="notif-pic">' + picHtml + '</span>'
       + '<div class="notif-body"><div class="notif-text">' + text + '</div>'
       + '<div class="notif-time">' + timeAgo(n.created_at) + '</div></div></div>';
   }

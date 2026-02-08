@@ -9,7 +9,7 @@ export async function onRequestPost(context) {
   if (!me) return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
 
   var ch = await db.prepare(
-    'SELECT c.*, u1.name as sender_name, u2.name as receiver_name FROM challenges c JOIN users u1 ON c.sender_id = u1.id JOIN users u2 ON c.receiver_id = u2.id WHERE c.id = ? AND (c.sender_id = ? OR c.receiver_id = ?)'
+    'SELECT c.*, u1.name as sender_name, u1.picture as sender_picture, u2.name as receiver_name, u2.picture as receiver_picture FROM challenges c JOIN users u1 ON c.sender_id = u1.id JOIN users u2 ON c.receiver_id = u2.id WHERE c.id = ? AND (c.sender_id = ? OR c.receiver_id = ?)'
   ).bind(challenge_id, me.id, me.id).first();
 
   if (!ch) return Response.json({ ok: false, error: 'Challenge not found' }, { status: 404 });
@@ -26,6 +26,7 @@ export async function onRequestPost(context) {
       is_sender: isSender,
       opponent_name: isSender ? ch.receiver_name : ch.sender_name,
       opponent_id: isSender ? ch.receiver_id : ch.sender_id,
+      opponent_picture: isSender ? (ch.receiver_picture || '') : (ch.sender_picture || ''),
       sender_points_awarded: ch.sender_points_awarded,
       receiver_points_awarded: ch.receiver_points_awarded,
       message: ch.message || '',
