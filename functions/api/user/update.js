@@ -5,6 +5,9 @@ export async function onRequestPost(context) {
     return Response.json({ ok: false, error: 'device_id and name required' }, { status: 400 });
   }
   name = name.trim().substring(0, 50);
+  if (name.length < 3) {
+    return Response.json({ ok: false, error: 'Name must be at least 3 characters' }, { status: 400 });
+  }
   var db = context.env.DB;
 
   var user = await db.prepare('SELECT id FROM users WHERE device_id = ?').bind(device_id).first();

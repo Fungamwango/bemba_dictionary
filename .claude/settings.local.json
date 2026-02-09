@@ -1,7 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:sageteche.com)"
+      "WebFetch(domain:sageteche.com)",
+      "Bash(dir:*)",
+      "WebFetch(domain:bemba-dictionary.pages.dev)",
+      "WebFetch(domain:bemdic.pages.dev)",
+      "Bash(npx wrangler d1 execute:*)",
+      "Bash(npx wrangler pages deploy:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:moneyunify.one)",
+      "WebFetch(domain:apidog.com)",
+      "WebFetch(domain:share.apidog.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(npx wrangler pages secret put:*)",
+      "Bash(find:*)",
+      "Bash(python -c:*)",
+      "Bash(python3 -c \"from PIL import Image; img=Image.open\\(r''c:\\\\others\\\\programming_files\\\\1page_dictionary\\\\apps\\\\apps\\\\icon.png''\\); print\\(img.size\\)\")",
+      "Bash(curl:*)"
     ]
   }
 }

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Panel - Bemba Dictionary</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;color:#202124;}
+.container{max-width:800px;margin:0 auto;padding:16px;}
+h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
+
+/* Login */
+#login-section{max-width:360px;margin:80px auto;background:#fff;padding:32px 24px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+#login-section h2{text-align:center;margin-bottom:20px;font-size:22px;}
+#login-section input{width:100%;padding:12px;margin-bottom:12px;border:1.5px solid #dadce0;border-radius:8px;font-size:14px;outline:none;}
+#login-section input:focus{border-color:#1a73e8;}
+#login-section button{width:100%;padding:12px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;}
+#login-section button:hover{background:#1558b0;}
+#login-error{color:#ea4335;font-size:13px;margin-top:8px;display:none;text-align:center;}
+
+/* Admin panel */
+#admin-panel{display:none;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.top-bar .stats{font-size:13px;color:#5f6368;}
+#logout-btn{padding:6px 14px;background:#ea4335;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;}
+
+/* Search */
+#search-input{width:100%;padding:10px 14px;border:1.5px solid #dadce0;border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;}
+#search-input:focus{border-color:#1a73e8;}
+
+/* Table */
+.users-table{width:100%;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.08);overflow:hidden;}
+.user-row{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid #e8e8e8;gap:10px;}
+.user-row:last-child{border-bottom:none;}
+.user-rank{width:30px;font-size:13px;color:#5f6368;font-weight:600;text-align:center;flex-shrink:0;}
+.user-info{flex:1;min-width:0;}
+.user-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-meta{font-size:11px;color:#80868b;margin-top:2px;}
+.user-points{font-size:14px;font-weight:600;color:#1a73e8;width:60px;text-align:right;flex-shrink:0;}
+.user-actions{display:flex;gap:6px;flex-shrink:0;}
+.btn-edit,.btn-del{padding:5px 10px;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500;}
+.btn-edit{background:#e8f0fe;color:#1a73e8;}
+.btn-edit:hover{background:#d2e3fc;}
+.btn-del{background:#fce8e6;color:#ea4335;}
+.btn-del:hover{background:#f8d7da;}
+
+/* Load more */
+#load-more-wrap{text-align:center;margin:16px 0;}
+#load-more-btn{padding:10px 24px;background:#fff;border:1.5px solid #dadce0;border-radius:8px;font-size:14px;cursor:pointer;color:#1a73e8;font-weight:500;}
+#load-more-btn:hover{background:#f8f9fa;}
+
+/* Edit modal */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;}
+.modal{background:#fff;border-radius:12px;padding:24px;max-width:360px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,0.2);}
+.modal h3{margin-bottom:16px;font-size:18px;}
+.modal label{font-size:13px;color:#5f6368;display:block;margin-bottom:4px;margin-top:12px;}
+.modal input{width:100%;padding:10px;border:1.5px solid #dadce0;border-radius:8px;font-size:14px;outline:none;}
+.modal input:focus{border-color:#1a73e8;}
+.modal-btns{display:flex;gap:8px;margin-top:20px;justify-content:flex-end;}
+.modal-btns button{padding:8px 18px;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:500;}
+.btn-save{background:#1a73e8;color:#fff;}
+.btn-cancel{background:#f1f3f4;color:#5f6368;}
+
+.loading{text-align:center;padding:20px;color:#80868b;}
+.msg{text-align:center;padding:12px;margin:8px 0;border-radius:8px;font-size:13px;display:none;}
+.msg-ok{background:#e6f4ea;color:#137333;}
+.msg-err{background:#fce8e6;color:#ea4335;}
+</style>
+</head>
+<body>
+
+<div id="login-section">
+  <h2>Admin Login</h2>
+  <input type="tel" id="login-phone" placeholder="Phone number">
+  <input type="password" id="login-pass" placeholder="Password">
+  <button id="login-btn">Login</button>
+  <div id="login-error"></div>
+</div>
+
+<div id="admin-panel" class="container">
+  <div class="top-bar">
+    <h1>Admin Panel</h1>
+    <div>
+      <span class="stats" id="total-users"></span>
+      <button id="logout-btn">Logout</button>
+    </div>
+  </div>
+  <div id="msg" class="msg"></div>
+  <input type="text" id="search-input" placeholder="Search users by name or code...">
+  <div class="users-table" id="users-list"></div>
+  <div id="load-more-wrap" style="display:none;">
+    <button id="load-more-btn">Load More</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  var API = '/api/admin';
+  var token = sessionStorage.getItem('admin_token') || '';
+  var offset = 0;
+  var currentSearch = '';
+
+  // Elements
+  var loginSection = document.getElementById('login-section');
+  var adminPanel = document.getElementById('admin-panel');
+  var loginBtn = document.getElementById('login-btn');
+  var logoutBtn = document.getElementById('logout-btn');
+  var searchInput = document.getElementById('search-input');
+  var usersList = document.getElementById('users-list');
+  var loadMoreWrap = document.getElementById('load-more-wrap');
+  var loadMoreBtn = document.getElementById('load-more-btn');
+  var msgEl = document.getElementById('msg');
+  var totalEl = document.getElementById('total-users');
+
+  function api(endpoint, data, cb) {
+    data.token = token;
+    fetch(API + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(function(r) { return r.json(); }).then(cb).catch(function(e) {
+      cb({ ok: false, error: e.message });
+    });
+  }
+
+  function showMsg(text, isError) {
+    msgEl.textContent = text;
+    msgEl.className = 'msg ' + (isError ? 'msg-err' : 'msg-ok');
+    msgEl.style.display = 'block';
+    setTimeout(function() { msgEl.style.display = 'none'; }, 3000);
+  }
+
+  function timeAgo(ts) {
+    if (!ts) return 'never';
+    var d = new Date(ts + 'Z');
+    var diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  }
+
+  // Login
+  loginBtn.addEventListener('click', function() {
+    var phone = document.getElementById('login-phone').value.trim();
+    var pass = document.getElementById('login-pass').value;
+    if (!phone || !pass) return;
+    loginBtn.textContent = 'Logging in...';
+    loginBtn.disabled = true;
+
+    fetch(API + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phone, password: pass })
+    }).then(function(r) { return r.json(); }).then(function(resp) {
+      loginBtn.textContent = 'Login';
+      loginBtn.disabled = false;
+      if (resp.ok) {
+        token = resp.token;
+        sessionStorage.setItem('admin_token', token);
+        showPanel();
+      } else {
+        var errEl = document.getElementById('login-error');
+        errEl.textContent = resp.error || 'Login failed';
+        errEl.style.display = 'block';
+        setTimeout(function() { errEl.style.display = 'none'; }, 3000);
+      }
+    }).catch(function() {
+      loginBtn.textContent = 'Login';
+      loginBtn.disabled = false;
+    });
+  });
+
+  // Logout
+  logoutBtn.addEventListener('click', function() {
+    sessionStorage.removeItem('admin_token');
+    token = '';
+    adminPanel.style.display = 'none';
+    loginSection.style.display = 'block';
+  });
+
+  // Show panel
+  function showPanel() {
+    loginSection.style.display = 'none';
+    adminPanel.style.display = 'block';
+    offset = 0;
+    currentSearch = '';
+    searchInput.value = '';
+    loadUsers(false);
+  }
+
+  // Load users
+  function loadUsers(append) {
+    if (!append) {
+      usersList.innerHTML = '<div class="loading">Loading...</div>';
+      offset = 0;
+    }
+    api('/users', { offset: offset, search: currentSearch }, function(resp) {
+      if (!resp.ok) {
+        if (resp.error === 'Token expired' || resp.error === 'Invalid token') {
+          sessionStorage.removeItem('admin_token');
+          token = '';
+          adminPanel.style.display = 'none';
+          loginSection.style.display = 'block';
+          return;
+        }
+        usersList.innerHTML = '<div class="loading">Error: ' + (resp.error || 'unknown') + '</div>';
+        return;
+      }
+
+      totalEl.textContent = 'Total: ' + resp.total + ' users';
+
+      if (!append) usersList.innerHTML = '';
+
+      var users = resp.users;
+      for (var i = 0; i < users.length; i++) {
+        var u = users[i];
+        var row = document.createElement('div');
+        row.className = 'user-row';
+        row.setAttribute('data-uid', u.id);
+        row.innerHTML = '<span class="user-rank">' + (offset + i + 1) + '</span>'
+          + '<div class="user-info">'
+          + '<div class="user-name">' + escapeHtml(u.name) + '</div>'
+          + '<div class="user-meta">' + escapeHtml(u.friend_code) + ' &middot; W:' + u.challenges_won + ' L:' + u.challenges_lost + ' D:' + u.challenges_drawn + ' &middot; ' + timeAgo(u.last_seen) + '</div>'
+          + '</div>'
+          + '<span class="user-points">' + u.points + 'pts</span>'
+          + '<div class="user-actions">'
+          + '<button class="btn-edit" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '" data-pts="' + u.points + '">Edit</button>'
+          + '<button class="btn-del" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">Del</button>'
+          + '</div>';
+        usersList.appendChild(row);
+      }
+
+      // Bind edit/delete
+      var editBtns = usersList.querySelectorAll('.btn-edit');
+      for (var e = 0; e < editBtns.length; e++) {
+        editBtns[e].onclick = function() { openEdit(this); };
+      }
+      var delBtns = usersList.querySelectorAll('.btn-del');
+      for (var d = 0; d < delBtns.length; d++) {
+        delBtns[d].onclick = function() { deleteUser(this); };
+      }
+
+      loadMoreWrap.style.display = resp.has_more ? 'block' : 'none';
+      offset += users.length;
+    });
+  }
+
+  // Search (debounced)
+  var searchTimer;
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function() {
+      currentSearch = searchInput.value.trim();
+      offset = 0;
+      loadUsers(false);
+    }, 400);
+  });
+
+  // Load more
+  loadMoreBtn.addEventListener('click', function() {
+    loadUsers(true);
+  });
+
+  // Edit modal
+  function openEdit(btn) {
+    var uid = btn.getAttribute('data-id');
+    var name = btn.getAttribute('data-name');
+    var pts = btn.getAttribute('data-pts');
+
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = '<div class="modal">'
+      + '<h3>Edit User</h3>'
+      + '<label>Name</label><input type="text" id="edit-name" value="' + escapeHtml(name) + '" maxlength="50">'
+      + '<label>Points</label><input type="number" id="edit-pts" value="' + pts + '">'
+      + '<div class="modal-btns"><button class="btn-cancel" id="edit-cancel">Cancel</button><button class="btn-save" id="edit-save">Save</button></div>'
+      + '</div>';
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) document.body.removeChild(overlay); });
+    document.getElementById('edit-cancel').addEventListener('click', function() { document.body.removeChild(overlay); });
+    document.getElementById('edit-save').addEventListener('click', function() {
+      var newName = document.getElementById('edit-name').value.trim();
+      var newPts = parseInt(document.getElementById('edit-pts').value) || 0;
+      if (!newName) return;
+
+      api('/user-edit', { user_id: parseInt(uid), name: newName, points: newPts }, function(resp) {
+        document.body.removeChild(overlay);
+        if (resp.ok) {
+          showMsg('User updated');
+          offset = 0;
+          loadUsers(false);
+        } else {
+          showMsg(resp.error || 'Update failed', true);
+        }
+      });
+    });
+  }
+
+  // Delete user
+  function deleteUser(btn) {
+    var uid = btn.getAttribute('data-id');
+    var name = btn.getAttribute('data-name');
+    if (!confirm('Delete "' + name + '" and all their data? This cannot be undone.')) return;
+
+    api('/user-delete', { user_id: parseInt(uid) }, function(resp) {
+      if (resp.ok) {
+        showMsg('Deleted: ' + resp.deleted);
+        // Remove row
+        var row = btn.closest('.user-row');
+        if (row) { row.style.transition = 'opacity .3s'; row.style.opacity = '0'; setTimeout(function() { row.remove(); }, 300); }
+      } else {
+        showMsg(resp.error || 'Delete failed', true);
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Auto-login if token exists
+  if (token) {
+    showPanel();
+  }
+})();
+</script>
+</body>
+</html>

@@ -55,10 +55,32 @@ CREATE INDEX IF NOT EXISTS idx_challenges_sender ON challenges(sender_id);
 CREATE TABLE IF NOT EXISTS notifications (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
-  type TEXT NOT NULL CHECK(type IN ('challenge_received','challenge_result','friend_request','friend_accepted')),
+  type TEXT NOT NULL CHECK(type IN ('challenge_received','challenge_result','friend_request','friend_accepted','weekly_reward')),
   data TEXT NOT NULL,
   read INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tx_ref TEXT UNIQUE NOT NULL,
+  phone TEXT NOT NULL,
+  amount REAL NOT NULL,
+  currency TEXT DEFAULT 'ZMW',
+  status TEXT DEFAULT 'pending' CHECK(status IN ('pending','successful','failed')),
+  provider_ref TEXT,
+  device_id TEXT,
+  sub_days INTEGER DEFAULT 30,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_payments_tx_ref ON payments(tx_ref);
+CREATE INDEX IF NOT EXISTS idx_payments_device_id ON payments(device_id, status);
+
+CREATE TABLE IF NOT EXISTS weekly_awards (
+  week_key TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  sub_code TEXT NOT NULL,
+  awarded_at TEXT DEFAULT (datetime('now'))
+);

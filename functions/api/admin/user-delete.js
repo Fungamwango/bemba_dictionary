@@ -1,22 +1,22 @@
-// POST /api/cleanup - purge users inactive for 90+ days (admin only)
+// POST /api/admin/user-delete - delete user and all their data
 export async function onRequestPost(context) {
   var authErr = await verifyAdmin(context);
   if (authErr) return authErr;
 
+  var { user_id } = await context.request.json();
+  if (!user_id) return Response.json({ ok: false, error: 'user_id required' }, { status: 400 });
+
   var db = context.env.DB;
-  var cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
+  var user = await db.prepare('SELECT id, name FROM users WHERE id = ?').bind(user_id).first();
+  if (!user) return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
 
-  var inactive = await db.prepare('SELECT id FROM users WHERE last_seen < ?').bind(cutoff).all();
-  var ids = (inactive.results || []).map(function(u) { return u.id; });
-  if (!ids.length) return Response.json({ ok: true, purged: 0 });
+  // Cascade delete
+  await db.prepare('DELETE FROM notifications WHERE user_id = ?').bind(user_id).run();
+  await db.prepare('DELETE FROM challenges WHERE sender_id = ? OR receiver_id = ?').bind(user_id, user_id).run();
+  await db.prepare('DELETE FROM friends WHERE requester_id = ? OR addressee_id = ?').bind(user_id, user_id).run();
+  await db.prepare('DELETE FROM users WHERE id = ?').bind(user_id).run();
 
-  var ph = ids.map(function() { return '?'; }).join(',');
-  await db.prepare('DELETE FROM notifications WHERE user_id IN (' + ph + ')').bind(...ids).run();
-  await db.prepare('DELETE FROM challenges WHERE sender_id IN (' + ph + ') OR receiver_id IN (' + ph + ')').bind(...ids, ...ids).run();
-  await db.prepare('DELETE FROM friends WHERE requester_id IN (' + ph + ') OR addressee_id IN (' + ph + ')').bind(...ids, ...ids).run();
-  await db.prepare('DELETE FROM users WHERE id IN (' + ph + ')').bind(...ids).run();
-
-  return Response.json({ ok: true, purged: ids.length });
+  return Response.json({ ok: true, deleted: user.name });
 }
 
 async function verifyAdmin(context) {

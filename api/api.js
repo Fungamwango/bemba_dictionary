@@ -4,6 +4,7 @@
 
 // --- STORE/UPDATE THE API URL (so it can be changed remotely) ---
 localStorage.setItem('bemdic_api_url', 'https://bemba-dictionary.pages.dev/api/api.js');
+localStorage.setItem('bemdic_dict_url', 'https://bemba-dictionary.pages.dev/dictionary/dictionary.js');
 
 // --- EXISTING AD SECTION ---
 var elem=document.getElementById('bemdic-api');
@@ -74,7 +75,7 @@ document.body.insertAdjacentHTML('beforeend',`<div id='api_app_data'>
  </div>
 `);
 
-document.querySelector('#quiz-link').insertAdjacentHTML("afterend",'<li class="link" id="notif-link"><span>🔔</span><sup style="font-size:10px;" id="notif-badge"></sup></li><li class="link" id="friends-link"><span style="filter:grayscale(30%);">👨‍👩‍👧‍👦</span><sup style="color:greenyellow;font-size:10px;" id="online-count-badge"></sup></li>');
+document.querySelector('#quiz-link').insertAdjacentHTML("afterend",'<li class="link" id="notif-link"><span style="filter:grayscale(100%);">🔔</span><sup style="font-size:10px;" id="notif-badge"></sup></li><li class="link" id="friends-link"><span style="filter:grayscale(30%);">👨‍👩‍👧‍👦</span><sup style="color:greenyellow;font-size:10px;" id="online-count-badge"></sup></li>');
 
 //evalute the intext js codes
 var innerjs=document.querySelectorAll('#api_app_data script');
@@ -105,6 +106,8 @@ function apiCall(endpoint, data, callback) {
     .then(function(j) { if (callback) callback(j); })
     .catch(function(e) { if (callback) callback({ ok: false, error: e.message }); });
 }
+window._bemdic_apiCall = apiCall;
+window._bemdic_getDeviceId = getDeviceId;
 function apiGet(endpoint, callback) {
   if (!navigator.onLine) { if (callback) callback({ ok: false, error: 'offline' }); return; }
   fetch(API_BASE + endpoint).then(function(r) { return r.json(); })
@@ -313,6 +316,7 @@ ss.textContent = ''
   + '.notif-type-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:600;margin-bottom:3px;}'
   + '.notif-type-challenge{background:#e8f0fe;color:#1a73e8;}'
   + '.notif-type-result{background:#fef7e0;color:#e37400;}'
+  + '.notif-type-reward{background:#e6f4ea;color:#137333;}'
   // Challenge
   + '#challenge-info{text-align:center;padding:16px 12px;}'
   + '#challenge-info h2{color:#202124;margin:0 0 6px;font-size:18px;}'
@@ -352,7 +356,7 @@ ss.textContent = ''
   + '.pic-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100001;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);}'
   // Notification badge
   + '#notif-badge{font-size:10px;background:#ea4335;color:#fff;border-radius:10px;padding:1px 5px;position:relative;top:-6px;display:none;font-weight:700;min-width:8px;text-align:center;}'
-  + '#online-count-badge{font-size:10px;background:#34a853;color:#fff;border-radius:10px;padding:1px 5px;position:relative;top:-6px;display:none;font-weight:700;min-width:8px;text-align:center;}'
+  + '#online-count-badge{font-size:13px;color:aqua;position:relative;top:-6px;display:none;font-weight:700;}'
   // Section headings
   + '.section-heading{margin:2px 0 8px;font-size:17px;font-weight:700;color:#202124;display:flex;align-items:center;gap:8px;}'
   + '.section-heading-icon{font-size:20px;}'
@@ -404,6 +408,7 @@ if (dicWrapper) {
     // LEADERBOARD
     + '<section id="leaderboard-section"><div id="leaderboard-wrapper">'
     + '<div class="section-heading"><span class="section-heading-icon">🏅</span> Leaderboard</div>'
+    + '<p style="color:#5f6368;font-size:13px;margin:4px 0 12px;line-height:1.4;">Top 30 users. The leader of the week gets a free 1 week subscription. Keep playing quiz to earn points!</p>'
     + '<div id="lb-global-list" class="s-loading">Loading...</div>'
     + '</div></section>'
     // NOTIFICATIONS
@@ -518,13 +523,16 @@ function showNamePrompt(callback) {
   overlay.className = 'name-modal-overlay';
   overlay.innerHTML = '<div class="name-modal">'
     + '<h3>Welcome!</h3><p>Choose a display name for your profile</p>'
-    + '<input id="name-prompt-input" type="text" placeholder="Your name" maxlength="50">'
+    + '<input id="name-prompt-input" type="text" placeholder="Your name" minlength="3" maxlength="50">'
+    + '<div id="name-prompt-error" style="color:#ea4335;font-size:13px;margin-top:6px;display:none;">Name must be at least 3 characters</div>'
     + '<div style="margin-top:12px;"><button class="s-btn s-btn-p" id="name-prompt-save" style="padding:10px 24px;">Continue</button></div>'
     + '</div>';
   document.body.appendChild(overlay);
   document.getElementById('name-prompt-save').addEventListener('click', function() {
     var val = document.getElementById('name-prompt-input').value.trim();
-    if (!val) return;
+    var errEl = document.getElementById('name-prompt-error');
+    if (val.length < 3) { errEl.style.display = 'block'; setTimeout(function(){ errEl.style.display = 'none'; }, 3000); return; }
+    errEl.style.display = 'none';
     document.body.removeChild(overlay);
     callback(val);
   });
@@ -594,7 +602,7 @@ if (editBtn) {
   editBtn.addEventListener('click', function() {
     var current = (getUserData() || {}).name || '';
     var newName = prompt('Enter new display name:', current);
-    if (newName && newName.trim() && newName.trim() !== current) {
+    if (newName && newName.trim().length >= 3 && newName.trim() !== current) {
       apiCall('/user/update', { device_id: getDeviceId(), name: newName.trim() }, function(resp) {
         if (resp.ok) {
           var ud = getUserData() || {};
@@ -1112,7 +1120,7 @@ function renderLB(el, leaders, myCode) {
   for (var i = 0; i < leaders.length; i++) {
     var l = leaders[i];
     var isMe = myCode && l.friend_code === myCode;
-    html += '<div class="lb-row' + (isMe ? ' lb-me' : '') + '">'
+    html += '<div class="lb-row' + (isMe ? ' lb-me' : '') + '" data-uid="' + (l.id || '') + '" style="border-bottom:1px solid #e0e0e0;cursor:pointer;">'
       + '<span class="lb-rank">' + (i < 3 ? medals[i] : '#' + (i + 1)) + '</span>'
       + '<span class="lb-pic">' + profilePicHtml(l.picture, 34, true) + '</span>'
       + '<div class="lb-info"><div class="lb-name">' + escapeHtml(l.name) + '</div>'
@@ -1121,12 +1129,12 @@ function renderLB(el, leaders, myCode) {
   }
   el.innerHTML = html;
 
-  // Clickable profile pictures
-  var pics = el.querySelectorAll('.clickable-pic');
-  for (var p = 0; p < pics.length; p++) {
-    pics[p].addEventListener('click', function(e) {
-      e.stopPropagation();
-      showPicOverlay(this.src);
+  // Click row to view profile
+  var rows = el.querySelectorAll('.lb-row');
+  for (var r = 0; r < rows.length; r++) {
+    rows[r].addEventListener('click', function() {
+      var uid = this.getAttribute('data-uid');
+      if (uid) showUserProfile(parseInt(uid));
     });
   }
 }
@@ -1173,7 +1181,7 @@ function updateOnlineCount(count) {
   var badge = document.getElementById('online-count-badge');
   if (!badge) return;
   if (count > 0) {
-    badge.textContent = count;
+    badge.textContent = '(' + count + ')';
     badge.style.display = 'inline';
   } else {
     badge.style.display = 'none';
@@ -1204,7 +1212,7 @@ function renderNotifications(el, notifs, hasMore, append) {
   var oldBtn = el.querySelector('.load-more-wrap');
   if (oldBtn) oldBtn.remove();
 
-  var typeBadges = { challenge_received: ['Challenge', 'notif-type-challenge'], challenge_result: ['Result', 'notif-type-result'] };
+  var typeBadges = { challenge_received: ['Challenge', 'notif-type-challenge'], challenge_result: ['Result', 'notif-type-result'], weekly_reward: ['🏆 Weekly Leader', 'notif-type-reward'] };
   for (var i = 0; i < notifs.length; i++) {
     var n = notifs[i];
     var data = typeof n.data === 'string' ? JSON.parse(n.data) : n.data;
@@ -1223,8 +1231,11 @@ function renderNotifications(el, notifs, hasMore, append) {
     }
     else if (n.type === 'friend_request') text += '<b>' + escapeHtml(data.from_name) + '</b> wants to be your friend';
     else if (n.type === 'friend_accepted') text += '<b>' + escapeHtml(data.from_name) + '</b> accepted your friend request';
+    else if (n.type === 'weekly_reward') {
+      text += 'Congratulations! You are the <b>#1 leader</b> this week with <b>' + (data.points || 0) + '</b> points! Tap to claim your <b>free 1-week subscription</b>.';
+    }
 
-    var picHtml = profilePicHtml(data.from_picture || '', 38, false);
+    var picHtml = n.type === 'weekly_reward' ? '<span style="font-size:30px;">🏆</span>' : profilePicHtml(data.from_picture || '', 38, false);
     var row = document.createElement('div');
     row.className = 'notif-row' + (n.read ? '' : ' unread');
     row.setAttribute('data-ntype', n.type);
@@ -1237,7 +1248,11 @@ function renderNotifications(el, notifs, hasMore, append) {
     row.addEventListener('click', (function(ntype, ndata, nid, rowEl) {
       return function() {
         // Navigate to challenge
-        if (ntype === 'challenge_received' && ndata.challenge_id) openReceivedChallenge(ndata.challenge_id);
+        if (ntype === 'weekly_reward' && ndata.sub_code) {
+          // Auto-activate the free subscription
+          if (window._bemdic_activateCode) window._bemdic_activateCode(ndata.sub_code);
+        }
+        else if (ntype === 'challenge_received' && ndata.challenge_id) openReceivedChallenge(ndata.challenge_id);
         else if (ntype === 'challenge_result' && ndata.challenge_id) openReceivedChallenge(ndata.challenge_id);
         // Delete notification
         rowEl.style.transition = 'opacity .3s, max-height .3s';
@@ -1290,9 +1305,9 @@ checkAndRegisterUser();
 
 // --- CONFIG (change these as needed) ---
 var SUB_SECRET = 7391;  // secret number for code validation - CHANGE THIS to your own number
-var FREE_WORD_LIMIT = 30;
-var FREE_QUIZ_LIMIT = 10;
-var SUB_DAYS = 30;
+var FREE_WORD_LIMIT = 10;
+var FREE_QUIZ_LIMIT = 3;
+var SUB_DAYS = 7;
 var PAYMENT_NUMBER = '0962464552'; // your mobile money number
 var PAYMENT_AMOUNT = 'K5';
 
@@ -1399,23 +1414,36 @@ function activateSubscription(code){
   }
   return false;
 }
+window._bemdic_activateCode = activateSubscription;
 
 // --- PAYWALL MODAL (stored in localStorage for persistence) ---
-var subscription_modal = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;">'
-  + '<div style="background:#fff;border-radius:12px;padding:24px 18px;max-width:340px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.3);">'
-  + '<h2 style="margin:0 0 8px;color:#222;font-size:20px;">Get Unlimited dictionary</h2>'
+var subscription_modal = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;overflow-y:auto;">'
+  + '<div style="background:#fff;border-radius:12px;padding:24px 18px;max-width:360px;width:92%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.3);margin:16px auto;">'
+  + '<h2 style="margin:0 0 8px;color:#222;font-size:20px;">Get Unlimited Dictionary</h2>'
   + '<p style="color:#444;font-size:14px;line-height:1.5;margin:8px 0;" id="bemdic-pw-reason"></p>'
-  + '<p style="color:#444;font-size:14px;"> for just <b>'+PAYMENT_AMOUNT+'</b>/month!</p>'
-  + '<div style="text-align:left;background:#f5f5f5;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13px;color:#333;">'
-  + '<div style="color:#084; margin-bottom:8px;">How to subscribe:</div>'
+  + '<p style="color:#444;font-size:14px;"> for just <b>'+PAYMENT_AMOUNT+'</b>/week!</p>'
+
+  // --- Mobile Money Pay Section ---
+  + '<div id="bemdic-momo-section" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:8px;padding:14px;margin:12px 0;border:1px solid #c8e6c9;">'
+  + '<div style="color:#2e7d32;font-weight:bold;font-size:14px;margin-bottom:8px;">Pay with Mobile Money</div>'
+  + '<input type="tel" id="bemdic-momo-phone" placeholder="e.g. 0962464552" maxlength="13" style="width:80%;padding:10px;border:2px solid #a5d6a7;border-radius:8px;font-size:16px;text-align:center;margin:6px 0;outline:none;">'
+  + '<div id="bemdic-momo-status" style="font-size:13px;min-height:18px;margin:4px 0;color:#555;"></div>'
+  + '<button id="bemdic-momo-btn" style="padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;background:#2e7d32;color:#fff;margin-top:4px;">Pay '+PAYMENT_AMOUNT+' Now</button>'
+  + '</div>'
+
+  // --- Divider ---
+  + '<div style="display:flex;align-items:center;margin:12px 0;"><div style="flex:1;height:1px;background:#ddd;"></div><span style="padding:0 10px;color:#999;font-size:12px;">OR enter code manually</span><div style="flex:1;height:1px;background:#ddd;"></div></div>'
+
+  // --- Manual Code Section ---
+  + '<div style="text-align:left;background:#f5f5f5;border-radius:8px;padding:12px 14px;margin:0 0 12px;font-size:13px;color:#333;">'
+  + '<div style="color:#084;margin-bottom:8px;">Manual payment:</div>'
   + '<ol id="payments-steps"><li>Send <b>'+PAYMENT_AMOUNT+'</b> to <b>'+PAYMENT_NUMBER+'</b> via Airtel/MTN/Zamtel Money</li>'
-  + '<li>WhatsApp your <b>transaction ID</b> or <b>Screenshot</b> to <b>'+PAYMENT_NUMBER+'</b></li>'
-  + '<li>You will receive a <b>subscription code</b> once verified</li>'
-  + '<li>Enter the code below to activate</li></ol>'
+  + '<li>WhatsApp your <b>transaction ID</b> to <b>'+PAYMENT_NUMBER+'</b></li>'
+  + '<li>Enter the code you receive below</li></ol>'
   + '</div>'
   + '<div><input type="text" id="bemdic-sub-code" placeholder="Enter code e.g. A3F2-B1C4" maxlength="20" style="width:80%;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:16px;text-align:center;letter-spacing:2px;margin:8px 0;outline:none;"></div>'
   + '<div id="bemdic-pw-error" style="color:crimson;font-size:13px;min-height:18px;margin:4px 0;"></div>'
-  + '<div><button id="bemdic-activate-btn" style="display:inline-block;padding:10px 28px;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin:6px 4px;background:#084;color:#fff;">Activate</button>'
+  + '<div><button id="bemdic-activate-btn" style="display:inline-block;padding:10px 28px;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin:6px 4px;background:#084;color:#fff;">Activate Code</button>'
   + '<button id="bemdic-close-btn" style="display:inline-block;padding:10px 28px;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin:6px 4px;background:#eee;color:#555;">Try Tomorrow</button></div>'
   + '</div></div>';
 
@@ -1474,6 +1502,86 @@ function showPaywall(reason){
       errEl.style.color = 'crimson';
       errEl.textContent = 'Invalid or expired code. Please check and try again.';
     }
+  });
+
+  // --- Mobile Money Pay button ---
+  var momoBtn = document.getElementById('bemdic-momo-btn');
+  if(momoBtn) momoBtn.addEventListener('click', function(){
+    var phone = document.getElementById('bemdic-momo-phone').value.trim();
+    var statusEl = document.getElementById('bemdic-momo-status');
+    if(!phone || phone.length < 10){
+      statusEl.style.color = 'crimson';
+      statusEl.textContent = 'Please enter a valid phone number';
+      return;
+    }
+    momoBtn.disabled = true;
+    momoBtn.textContent = 'Processing...';
+    statusEl.style.color = '#555';
+    statusEl.textContent = 'Initiating payment...';
+
+    var _api = window._bemdic_apiCall;
+    var _did = window._bemdic_getDeviceId;
+    if (!_api || !_did) { statusEl.style.color='crimson'; statusEl.textContent='Payment not available'; momoBtn.disabled=false; momoBtn.textContent='Pay '+PAYMENT_AMOUNT+' Now'; return; }
+
+    _api('/subscribe/pay', {
+      phone: phone,
+      device_id: _did()
+    }, function(resp){
+      if(resp.ok){
+        statusEl.style.color = '#2e7d32';
+        statusEl.textContent = resp.message || 'Check your phone for payment prompt!';
+        momoBtn.textContent = 'Waiting for confirmation...';
+        // Poll for payment verification
+        var txRef = resp.tx_ref;
+        var pollCount = 0;
+        var pollInterval = setInterval(function(){
+          pollCount++;
+          _api('/subscribe/verify', {
+            tx_ref: txRef,
+            device_id: _did()
+          }, function(vResp){
+            if(vResp.ok && vResp.status === 'successful' && vResp.subscription_code){
+              clearInterval(pollInterval);
+              if(activateSubscription(vResp.subscription_code)){
+                statusEl.style.color = '#2e7d32';
+                statusEl.innerHTML = '<b>Payment successful!</b> Enjoy ' + SUB_DAYS + ' days of unlimited access!';
+                momoBtn.style.display = 'none';
+                setTimeout(function(){
+                  document.body.removeChild(modal);
+                  var freeBar = document.getElementById('bemdic-free-bar');
+                  if(freeBar) freeBar.parentNode.removeChild(freeBar);
+                  var wl = document.getElementById('words-loader');
+                  var pb = document.getElementById('pagination-btns-wrapper');
+                  if(wl) wl.style.display = 'block';
+                  if(pb) pb.style.display = 'block';
+                  if(typeof _original_load_dictionary === 'function') _original_load_dictionary();
+                }, 2000);
+              }
+            } else if(vResp.ok && vResp.status === 'failed'){
+              clearInterval(pollInterval);
+              statusEl.style.color = 'crimson';
+              statusEl.textContent = 'Payment failed. Please try again.';
+              momoBtn.disabled = false;
+              momoBtn.textContent = 'Pay '+PAYMENT_AMOUNT+' Now';
+            }
+            // else still pending, keep polling
+          });
+          // Stop polling after 3 minutes
+          if(pollCount > 36){
+            clearInterval(pollInterval);
+            statusEl.style.color = '#e65100';
+            statusEl.textContent = 'Payment timed out. If you paid, contact '+PAYMENT_NUMBER;
+            momoBtn.disabled = false;
+            momoBtn.textContent = 'Try Again';
+          }
+        }, 5000); // poll every 5 seconds
+      } else {
+        statusEl.style.color = 'crimson';
+        statusEl.textContent = resp.error || 'Payment failed. Try again.';
+        momoBtn.disabled = false;
+        momoBtn.textContent = 'Pay '+PAYMENT_AMOUNT+' Now';
+      }
+    });
   });
 
   // close button
@@ -1564,15 +1672,13 @@ var moreLinks = document.getElementById('more-links-wrapper');
 if(moreLinks){
   var subItem = document.createElement('li');
   if(isSubscribed()){
-    var days_left_text='days left'
-    if(getSubDaysLeft() < 2){
-      days_left_text='day left'
-    }
-    subItem.innerHTML = '<span>&#11088;</span> Premium (' + getSubDaysLeft() + days_left_text + ')';
+    var daysLeft = getSubDaysLeft();
+    var daysText = daysLeft === 1 ? 'day' : 'days';
+    subItem.innerHTML = '<span>&#11088;</span> Premium <span style="background:#084;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;margin-left:4px;">' + daysLeft + ' ' + daysText + ' left</span>';
     subItem.style.color = '#084';
     subItem.style.fontWeight = 'bold';
   } else {
-    subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access ('+PAYMENT_AMOUNT+'/month)';
+    subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access ('+PAYMENT_AMOUNT+'/week)';
     subItem.style.color = 'aqua';
     subItem.style.cursor = 'pointer';
     subItem.addEventListener('click', function(){
@@ -1871,12 +1977,13 @@ var _bemdic_offline_sub = function() {
   if (moreLinks) {
     var subItem = document.createElement('li');
     if (isSubscribed()) {
-      var days_left_text = getSubDaysLeft() < 2 ? 'day left' : 'days left';
-      subItem.innerHTML = '<span>&#11088;</span> Premium (' + getSubDaysLeft() + ' ' + days_left_text + ')';
+      var daysLeft = getSubDaysLeft();
+      var daysText = daysLeft === 1 ? 'day' : 'days';
+      subItem.innerHTML = '<span>&#11088;</span> Premium <span style="background:#084;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;margin-left:4px;">' + daysLeft + ' ' + daysText + ' left</span>';
       subItem.style.color = '#084';
       subItem.style.fontWeight = 'bold';
     } else {
-      subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access (' + PAYMENT_AMOUNT + '/month)';
+      subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access (' + PAYMENT_AMOUNT + '/week)';
       subItem.style.color = 'aqua';
       subItem.style.cursor = 'pointer';
       subItem.addEventListener('click', function() { showPaywall('words'); });

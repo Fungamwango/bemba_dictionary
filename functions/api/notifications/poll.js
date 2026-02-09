@@ -44,6 +44,46 @@ export async function onRequestPost(context) {
       db.prepare('DELETE FROM friends WHERE requester_id IN (' + ph + ') OR addressee_id IN (' + ph + ')').bind(...ids, ...ids).run();
       db.prepare('DELETE FROM users WHERE id IN (' + ph + ')').bind(...ids).run();
     }).catch(function() {});
+
+    // Weekly leader reward: award #1 user a free 1-week subscription
+    (async function() {
+      try {
+        // Get current ISO week key (YYYY-WXX)
+        var now = new Date();
+        var jan1 = new Date(now.getFullYear(), 0, 1);
+        var weekNum = Math.ceil(((now - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+        var weekKey = now.getFullYear() + '-W' + (weekNum < 10 ? '0' : '') + weekNum;
+
+        // Check if already awarded this week
+        var existing = await db.prepare('SELECT week_key FROM weekly_awards WHERE week_key = ?').bind(weekKey).first();
+        if (existing) return;
+
+        // Get #1 user by points
+        var top = await db.prepare('SELECT id, name, points FROM users ORDER BY points DESC LIMIT 1').first();
+        if (!top || top.points <= 0) return;
+
+        // Generate subscription code (same as verify.js)
+        var SUB_SECRET = parseInt(context.env.SUB_SECRET || '7391');
+        var today = Math.floor(Date.now() / 86400000);
+        var expiryDay = today + 7;
+        var encoded = expiryDay ^ SUB_SECRET;
+        var payload = encoded.toString(16).toUpperCase();
+        var sum = 0;
+        for (var i = 0; i < payload.length; i++) {
+          sum = ((sum << 5) - sum + payload.charCodeAt(i)) & 0xFFFF;
+        }
+        var hex = sum.toString(16).toUpperCase();
+        while (hex.length < 4) hex = '0' + hex;
+        var subCode = payload + hex;
+
+        // Record award
+        await db.prepare('INSERT INTO weekly_awards (week_key, user_id, sub_code) VALUES (?, ?, ?)').bind(weekKey, top.id, subCode).run();
+
+        // Notify the winner
+        var data = JSON.stringify({ weekly_reward: true, sub_code: subCode, week: weekKey, points: top.points });
+        await db.prepare('INSERT INTO notifications (user_id, type, data) VALUES (?, ?, ?)').bind(top.id, 'weekly_reward', data).run();
+      } catch(e) {}
+    })();
   }
 
   return Response.json({

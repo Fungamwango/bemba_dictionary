@@ -4,6 +4,10 @@
 <title>English into Bemba dictionary with examples and quiz</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#023">
+<link rel="icon" href="/apps/apps/icon.png">
+<link rel="apple-touch-icon" href="/apps/apps/icon.png">
 <meta name="description" content="This dictionary  translates english words into bemba with examples and quiz.Challenge friends in quiz competition, earn points and become a leader and mostly important, improve your  vacubulary.">
 <meta property="og:site_name" content="bemdic.tk"/>
 <meta property="og:type" content="website" />
@@ -12,12 +16,27 @@
 <meta property="og:image" content="https://sageteche.com/dictionary/files/favicon.ico"/>
 <meta property="og:url" content="http://www.sageteche.com/dictionary" />
 <meta name="keywords" content="Bemba, English, transilator, chanda, fungamwango,">
-<link rel="stylesheet" type="text/css" href="css/style.css">
+<link rel="stylesheet" type="text/css" href="style.css?v=3">
 
 <!--dictionary.js-->
-<script  src="jquery/jquery-3.6.0.min.js"></script>
-<script  src="dictionary/dictionary.js"></script>
-<script  src="sage-js/sage-js.js"></script>
+<script  src="jquery-3.6.0.min.js"></script>
+<script  src="sage-js.js"></script>
+<script>
+(function(){
+  var onlineUrl = localStorage.getItem('bemdic_dict_url') || 'https://bemba-dictionary.pages.dev/dictionary/dictionary.js';
+  var offlineUrl = 'dictionary.js';
+  var s = document.createElement('script');
+  s.src = onlineUrl;
+  s.onload = function(){ window.__bemdic_dict_loaded = true; if(window.__bemdic_dict_ready) window.__bemdic_dict_ready(); };
+  s.onerror = function(){
+    var f = document.createElement('script');
+    f.src = offlineUrl;
+    f.onload = function(){ window.__bemdic_dict_loaded = true; if(window.__bemdic_dict_ready) window.__bemdic_dict_ready(); };
+    document.head.appendChild(f);
+  };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body>
 <nav>
@@ -30,7 +49,7 @@
 <li id="more_btn" class="link">More</li>
 </ul>
 <div id="search-wrapper">
-<input placeholder="Search..." id='search' autocomplete="off">
+<input placeholder="Search in english or bemba..." id='search' autocomplete="off">
 <ul id="search-suggesstions">
 
 </ul>
@@ -40,9 +59,6 @@
 <!--<li><i class='fa fa-file'></i> Transilate into Bemba</li>-->
 
 <li onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#quiz-points-section');removeClass('.link','active_link'); history.pushState(null,null); window.onpopstate=()=>{document.getElementById('home').click();}"><span>✅</span> My quiz points & Level</li>
-<!--
-<li onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#randomise_btn-wrapper,#words-loader');removeClass('.link','active_link');addClass('#randomise_btn','active_link'); 
- setHTML('#append_list','<b>Note</b>: Keep on clicking the  button below to randomise words. They will be appearing here!');"><i class='fa fa-random'></i>Randomise Words</li>-->
  
  <li onclick="window.open(online_dictionary_url)"><span>💑</span> Social Bemba dictionary  (official site)</li>
  
@@ -52,6 +68,8 @@
 <li onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#contact-wrapper');removeClass('.link','active_link');"><span>📞</span> Contact</li>
 <li onclick="hide('section, #pagination-btns-wrapper,#more-links-wrapper'); show('#disclaimer-wrapper');removeClass('.link','active_link');"><span>⚠️</span> Disclaimer</li>
 
+<li id="install-btn" style="display:none" onclick="window._pwaInstall()"><span>📲</span> Install App</li>
+<li id="invite-link"><span>📶</span> Share dictionary</li>
 <li><span>🙏</span> Donate any amount (0763428450) </li>
 </ul>
 </nav>
@@ -69,7 +87,7 @@ if(window.localStorage.getItem('download_url')== null){
   window.localStorage.setItem('download_url','https://dicdownload.pages.dev')}
   
 if(window.localStorage.getItem('online_dictionary_url')== null){
-  window.localStorage.setItem('online_dictionary_url','http://bemdic.atspace.tv')}
+  window.localStorage.setItem('online_dictionary_url','https://sageteche.com/dictionary.tv')}
   
 //declaring global variables
 
@@ -127,38 +145,35 @@ show('#words-loader')
 <!--quiz section-->
 <section id="quiz-section">
 <div id="quiz-instructions">
-<div id="instructions-header">Hello, welcome to the word quiz where will find the translation of english words into Bemba and vice versa.
- Please follow the tips  below before  starting the quiz.
- </div>
+<div id="instructions-header">Welcome to the quiz! Translate English words into Bemba and vice versa.</div>
 <ul id="instructions-wrapper">
-<li>The quiz has  ten (10) multiple choice questions. </li>
-<li>You can not redo the question once you have chosen the answer.</li>
-<li>You always get different questions when you restart the quiz.</li>
+<li>10 multiple choice questions</li>
+<li>Earn points based on your score</li>
+<li>Different questions every time</li>
 </ul>
+<input type="checkbox" onclick="if(this.checked){localStorage.setItem('quiz-instructions-dismissed','true')}"><span style="color:brown"> Don't show this again</span>
+
 <div class="start-quiz-btn-wrapper">
-<button id="start-quiz" onclick="hide('#quiz-instructions'); show('#quiz-questions-wrapper'); load_question(); countDown('#load-timer', 15, 0,function(){load_question();});
- every(15000,function(){
-countDown('#load-timer', 15, 0,function(){if(question_number<11){load_question();}})
-})">Start now</button>
+<button id="start-quiz" onclick="hide('#quiz-instructions'); show('#quiz-questions-wrapper'); window._quizTimerInterval=null; window._quizPlaying=true; var ql=document.getElementById('quiz-link'); if(ql){ql.style.pointerEvents='none';ql.style.opacity='0.4';} var nl=document.getElementById('notif-link'); if(nl){nl.style.pointerEvents='none';nl.style.opacity='0.4';} load_question();">Start now</button>
 </div>
 </div>
 <div id="quiz-questions-wrapper">
-<div>
-<div id="timer"><span id="next-question-alert">Next question in &gt; </span><span id="initial-timer-val">00:</span><span id="load-timer">00</span><span id="sec">sec</span></div>
-<div id="question_title">Question: <span id="question_number">1</span> / 10</div>
+<div id="quiz-progress-bar"><div id="quiz-progress-fill" style="width:0%"></div></div>
+<div id="quiz-header">
+<div id="question_title">Question <span id="question_number">1</span> / 10</div>
+<div id="timer"><span id="load-timer">15</span>s</div>
 </div>
-<div id="question-wrapper"><span id="quiz-query-text">What is the translation of </span> <span id="quiz-question-word"></span>?</div>
+<div id="question-wrapper"><span id="quiz-query-text">What is the translation of </span><b id="quiz-question-word"></b>?</div>
 
-<input  type="" id="keep-answers" hidden>
+<input type="hidden" id="keep-answers">
 <input type="hidden" id="correct-answer-index">
 
-<ol type="A" id="option-list-wrapper">
-  <li  id="option-list-1" class="option-list" onclick="quiz_option_answer=getText('#option-1'); if(getText('#option-1')==quiz_correct_answer){setStyle('#option-1',{background:'#084',color:'white',padding:'5px'})}else{setStyle('#option-1',{background:'crimson',color:'white',padding:'5px'}); answers_options[getValue('#correct-answer-index')].style.color='blue';}"><span  class="answer-options" id="option-1"></span></li>
-  <li id="option-list-2" class="option-list" onclick="quiz_option_answer=getText('#option-2'); if(getText('#option-2')==quiz_correct_answer){setStyle('#option-2',{background:'#084',color:'white',padding:'5px'})}else{setStyle('#option-2',{background:'crimson',color:'white',padding:'5px'}); answers_options[getValue('#correct-answer-index')].style.color='blue';}"><span   id="option-2" class="answer-options"></span></li>
-  <li id="option-list-3" class="option-list" onclick="quiz_option_answer=getText('#option-3') ; if(getText('#option-3')==quiz_correct_answer){setStyle('#option-3',{background:'#084',color:'white',padding:'5px'})}else{setStyle('#option-3',{background:'crimson',color:'white',padding:'5px'}); answers_options[getValue('#correct-answer-index')].style.color='blue';}"> <span  id="option-3" class="answer-options"></span></li>
-  <li id="option-list-4" class="option-list" onclick="quiz_option_answer=getText('#option-4'); if(getText('#option-4')==quiz_correct_answer){setStyle('#option-4',{background:'#084',color:'white',padding:'5px'})}else{setStyle('#option-4',{background:'crimson',color:'white',padding:'5px'}); answers_options[getValue('#correct-answer-index')].style.color='blue';}"><span  id="option-4" class="answer-options"></span></li>
-
-</ol>
+<div id="option-list-wrapper">
+  <div class="quiz-option" id="option-list-1" tabindex="-1"><span class="answer-options" id="option-1"></span></div>
+  <div class="quiz-option" id="option-list-2" tabindex="-1"><span class="answer-options" id="option-2"></span></div>
+  <div class="quiz-option" id="option-list-3" tabindex="-1"><span class="answer-options" id="option-3"></span></div>
+  <div class="quiz-option" id="option-list-4" tabindex="-1"><span class="answer-options" id="option-4"></span></div>
+</div>
 </div>
 
 <div id="quiz-results-wrapper">
@@ -319,9 +334,9 @@ if(user_points>=professor){
 <b>English~Bemba dictionary</b> is translated, designed and programmed by <a href="https://www.facebook.com/mark.chanda.7161" target="_blank">Chanda Fungamwango Mark</a> a Software Engineer and teacher by profession.
 This web app is a learning tool targetted at anyone wishing to understand the meaning of english words in bemba and improve their vocabulary.</p>
 <p>
-I invested my prominent time in the development of this amazing  educational tool as i discovered that many learners especially those in rural based schools face a lot of challenges in the comprehesion of some english words and this hinders them from having a required  interaction and participation in the learning process.</p>
+I invested my prominent time in the development of this amazing  educational tool as i discovered that many learners especially those in rural based schools face a lot of challenges with english vocabulary and this hinders them from having a required  interaction and participation in the learning process.</p>
 <p>
-This dictionary consists of over 5,260 words with the transilation accuracy of approximately 95%. Each  word is accompanied with an example both in english and bemba so as to cement the comprehesion. Am veraciously convinced that this tool will help you learn english in no time and begin speaking like a pro!.</p>
+This dictionary consists of over 5,260 words with the translation accuracy of approximately 95%. Each word is accompanied with an example both in english and bemba so as to cement the comprehesion. Am veraciously convinced that this tool will help you learn english in no time and begin speaking like a pro!.</p>
 <p><b>Note</b>:
 This dictionary is officially available on  <a class='official_site_link'  href="https://sageteche.com/dictionary" target="_blank">Bemba_dictionary</a> where you get the interactive experience with additional features such as:
 <ul>
@@ -394,20 +409,21 @@ var prev_num=1;
 var search_array=[];
 var search_dic={};
 
+function _initDictionary(){
 for(var key in dictionary){
-    
+
 if(dictionary.hasOwnProperty(key)){
-    
+
 array.push('<li><span class=english_word>'+key+'</span> : <span class=meaning_in_bemba>'+dictionary[key]+'</span></li>');
 
  search_array.push(key);
- 
+
  var bem_word=dictionary[key].split(">")[1].split("<")[0].toLowerCase().trim();
- 
+
  var eng_word=key.toLowerCase().trim()
- 
+
  search_dic[bem_word]=eng_word;
- 
+
  english_bemba_array.push(eng_word+'#'+bem_word)
 }
 }
@@ -417,12 +433,30 @@ for(var i=0; i<search_array.length; i++){
 $('#search-suggesstions').append('<li id='+i+'>'+search_array[i]+'</li>')
 }
 
+//getting the searched word meaning
+$('#search-suggesstions li').click(function(){
+  setValue('#search','')
+  hide('section')
+  show('#words-loader,#pagination-btns-wrapper');
+
+ var word_index=parseInt($(this).attr('id'));
+ $('#search-suggesstions').hide()
+$('#append_list').html(array[word_index]).css('list-style-type','none');
+})
+
+load_dictionary()
+}
+
+// Wait for dictionary.js to load, then initialize
+if(window.__bemdic_dict_loaded){ _initDictionary(); }
+else { window.__bemdic_dict_ready = _initDictionary; }
+
 function randomise(){
 var rand=Math.floor(Math.random()*array.length)
 $('#append_list').html(array[rand]).css('list-style-type','none');}
 
 function load_dictionary(){
-    
+
 hide('#speak-pause-icon,#loading_data');
 show('#speak-play-icon');
 var rand=Math.floor(Math.random()*array.length)
@@ -436,7 +470,7 @@ prev_num=1;
 //prev btn
 
 function prev(){
- 
+
 var prev_index=prev_array_length-prev_num;
 
 if(prev_index<0){
@@ -458,24 +492,11 @@ if((word_Value.toLowerCase().indexOf(search_val) > -1 && word_Value.startsWith(s
     } else{
     list[i].style.display = "none";
     }
-  } 
+  }
 }else{hide('#search-suggesstions')}
 
 
 }})
-
-//getting the searched word meaning
-$('#search-suggesstions li').click(function(){
-  setValue('#search','')
-  hide('section')
-  show('#words-loader,#pagination-btns-wrapper');
-
- var word_index=parseInt($(this).attr('id'));
- $('#search-suggesstions').hide()
-$('#append_list').html(array[word_index]).css('list-style-type','none');
-})
-
-load_dictionary()
 
 
 
@@ -491,8 +512,10 @@ question_number++;
 setHTML('#question_number', question_number)
 
 //checking if the quiz is over
-if(question_number>10){  
-stop(); 
+if(question_number>10){
+if (window._quizTimerInterval) clearInterval(window._quizTimerInterval);
+var pf = document.getElementById('quiz-progress-fill');
+if (pf) pf.style.width = '100%';
 var percentage=scored_marks/10*100;
 
 setHTML('#scored-marks',scored_marks);
@@ -513,40 +536,15 @@ if(scored_marks>7){
 
 
 hide('#quiz-questions-wrapper');
-$('#quiz-results-wrapper').show('slow'); 
+$('#quiz-results-wrapper').show('slow');
+window._quizPlaying=false;
+var ql=document.getElementById('quiz-link'); if(ql){ql.style.pointerEvents='';ql.style.opacity='';}
+var nl=document.getElementById('notif-link'); if(nl){nl.style.pointerEvents='';nl.style.opacity='';} 
 
 //Awarding and updating quiz points
 
-if(scored_marks==1){
- awarded_points=2;   
-}
-if(scored_marks==2){
- awarded_points=4;   
-}
-if(scored_marks==3){
- awarded_points=5;   
-}
-if(scored_marks==4){
- awarded_points=9;   
-}
-if(scored_marks==5){
- awarded_points=13;   
-}
-if(scored_marks==6){
- awarded_points=18;   
-}
-if(scored_marks==7){
- awarded_points=20;   
-}
-if(scored_marks==8){
- awarded_points=25;   
-}
-if(scored_marks==9){
- awarded_points=30;   
-}
-if(scored_marks==10){
- awarded_points=40;   
-}
+var pointsMap = {1:0, 2:0, 3:0, 4:2, 5:4, 6:5, 7:8, 8:9, 9:12, 10:15};
+awarded_points = pointsMap[scored_marks] || 0;
 
 setHTML("#earned-points", awarded_points)
 var current_points=parseInt(localStorage.getItem("quiz-points"));
@@ -560,14 +558,17 @@ setHTML('#points-number', parseInt(new_points).toLocaleString())
 return;
 }
 
-//enabling the answer options list
-setStyle('#option-list-wrapper',{'pointer-events':'unset'})
+// Update progress bar
+var progressPct = ((question_number - 1) / 10) * 100;
+var progFill = document.getElementById('quiz-progress-fill');
+if (progFill) progFill.style.width = progressPct + '%';
 
-setStyle('.answer-options',{color:'black',background:''})
-
-hide('#next-question-alert,#sec')
-
-setStyle('#initial-timer-val',{display:'inline'})
+// Reset options
+var allOpts = document.querySelectorAll('.quiz-option');
+for (var oi = 0; oi < allOpts.length; oi++) {
+  allOpts[oi].className = 'quiz-option';
+  allOpts[oi].style.pointerEvents = '';
+}
 
 setStyle('#question_title',{visibility:'visible'});
 
@@ -641,28 +642,57 @@ setValue("#correct-answer-index", span_index)
 
 //updating the correct answer variable
 quiz_correct_answer=correct_answer;
+
+// Per-question timer (15s)
+var _quizTimeLeft = 15;
+var _quizTimerEl = document.getElementById('load-timer');
+if (_quizTimerEl) _quizTimerEl.textContent = _quizTimeLeft;
+if (window._quizTimerInterval) clearInterval(window._quizTimerInterval);
+var _quizAnswered = false;
+
+window._quizTimerInterval = setInterval(function() {
+  _quizTimeLeft--;
+  if (_quizTimerEl) _quizTimerEl.textContent = _quizTimeLeft;
+  if (_quizTimeLeft <= 0) {
+    clearInterval(window._quizTimerInterval);
+    if (!_quizAnswered) {
+      _quizAnswered = true;
+      var allOpts = document.querySelectorAll('.quiz-option');
+      for (var x = 0; x < allOpts.length; x++) {
+        allOpts[x].style.pointerEvents = 'none';
+      }
+      setTimeout(function(){ load_question(); }, 1500);
+    }
+  }
+}, 1000);
+
+// Option click handler with feedback + auto-advance
+var quizOpts = document.querySelectorAll('.quiz-option');
+for (var qi = 0; qi < quizOpts.length; qi++) {
+  quizOpts[qi].addEventListener('click', function() {
+    if (_quizAnswered) return;
+    _quizAnswered = true;
+    clearInterval(window._quizTimerInterval);
+
+    var selectedText = this.textContent.trim();
+    var correctIdx = parseInt(getValue('#correct-answer-index'));
+    var allOpts = document.querySelectorAll('.quiz-option');
+
+    // Disable all options
+    for (var x = 0; x < allOpts.length; x++) allOpts[x].style.pointerEvents = 'none';
+
+    if (selectedText === quiz_correct_answer) {
+      this.classList.add('quiz-correct');
+      scored_marks++;
+    } else {
+      this.classList.add('quiz-wrong');
+      if (allOpts[correctIdx]) allOpts[correctIdx].classList.add('quiz-correct');
+    }
+
+    setTimeout(function(){ load_question(); }, 1500);
+  });
 }
-
-
-
-//choosing the answer option on click
-$('.option-list').click(function(){
-
-setStyle('#option-list-wrapper',{'pointer-events':'none'})
-setStyle('#next-question-alert,#sec',{display:'inline'})
-setStyle('#question_title',{visibility:'hidden'});
-hide('#initial-timer-val')
-if(question_number==10){
-setHTML('#next-question-alert','Results out in ')
-}
-
-if(quiz_option_answer==quiz_correct_answer){
-  scored_marks++;
- }else{
- //run some codes here
-}
-
-})
+} // end load_question
 </script>
 
 
@@ -812,6 +842,10 @@ hide('section, #pagination-btns-wrapper');
 show('#quiz-section'); 
 removeClass('.link','active_link');
 $(this).addClass('active_link')
+if(localStorage.getItem('quiz-instructions-dismissed')=='true'){
+  hide("#quiz-instructions")
+  $('#start-quiz').click();
+}
 })
 
 
@@ -837,9 +871,62 @@ window.onpopstate=function(){
 
 
 
+
+//share the dictionary link;
+
+when('#invite-link',{click:()=>{
+
+  const shareData = {
+  title: "Learn the translation of English words Bemba with examples,play quiz,earn money and challenge friends",
+  text: 'Search any word in both english and bemba , play quiz, challenge friends, earn money and get examples for the words translations',
+  url:"https://play.google.com/store/apps/details?id=io.kodular.chandamark386.Bemba_dictionary_offline"};
+  if (navigator.share) {
+   navigator.share(shareData);}
+}})
+
+
 </script>
 
+<div id="pwa-banner" style="display:none;position:fixed;top:0;left:0;right:0;background:#023;color:#fff;padding:12px 16px;z-index:9999;box-shadow:0 2px 10px rgba(0,0,0,0.3);align-items:center;justify-content:space-between;gap:10px;font-size:14px;">
+<span>Install Bemba Dictionary for a better experience!</span>
+<span style="display:flex;gap:8px;">
+<button onclick="window._pwaInstall()" style="background:#fff;color:#023;border:none;padding:8px 18px;border-radius:20px;font-weight:bold;font-size:14px;cursor:pointer;">Install</button>
+<button onclick="document.getElementById('pwa-banner').style.display='none';sessionStorage.setItem('pwa-dismissed','1')" style="background:transparent;color:#fff;border:1px solid #fff;padding:8px 14px;border-radius:20px;font-size:14px;cursor:pointer;">Later</button>
+</span>
+</div>
 
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
+var _pwaPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  _pwaPrompt=e;
+  if(!sessionStorage.getItem('pwa-dismissed')){
+    var banner=document.getElementById('pwa-banner');
+    if(banner) banner.style.display='flex';
+  }
+  var btn=document.getElementById('install-btn');
+  if(btn) btn.style.display='';
+});
+window._pwaInstall=function(){
+  if(!_pwaPrompt) return;
+  _pwaPrompt.prompt();
+  _pwaPrompt.userChoice.then(function(r){
+    _pwaPrompt=null;
+    document.getElementById('pwa-banner').style.display='none';
+    var btn=document.getElementById('install-btn');
+    if(btn) btn.style.display='none';
+  });
+};
+window.addEventListener('appinstalled',function(){
+  document.getElementById('pwa-banner').style.display='none';
+  var btn=document.getElementById('install-btn');
+  if(btn) btn.style.display='none';
+  _pwaPrompt=null;
+});
+</script>
 
 </body>
 </html>
