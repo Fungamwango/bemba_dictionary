@@ -1309,7 +1309,7 @@ var FREE_WORD_LIMIT = 10;
 var FREE_QUIZ_LIMIT = 3;
 var SUB_DAYS = 7;
 var PAYMENT_NUMBER = '0962464552'; // your mobile money number
-var PAYMENT_AMOUNT = 'K5';
+var PAYMENT_AMOUNT = 'K2';
 
 // --- HELPER: get today as YYYY-MM-DD ---
 function getToday(){

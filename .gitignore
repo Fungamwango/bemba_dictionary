@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Wrangler
+.wrangler/
+wrangler.toml.backup
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+wrangler-account.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build outputs
+dist/
+.cache/
