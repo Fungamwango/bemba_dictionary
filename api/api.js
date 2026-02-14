@@ -1421,7 +1421,7 @@ var subscription_modal = '<div style="position:fixed;top:0;left:0;width:100%;hei
   + '<div style="background:#fff;border-radius:12px;padding:24px 18px;max-width:360px;width:92%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.3);margin:16px auto;">'
   + '<h2 style="margin:0 0 8px;color:#222;font-size:20px;">Get Unlimited Dictionary</h2>'
   + '<p style="color:#444;font-size:14px;line-height:1.5;margin:8px 0;" id="bemdic-pw-reason"></p>'
-  + '<p style="color:#444;font-size:14px;"> for just <b>'+PAYMENT_AMOUNT+'</b>/4 days!</p>'
+  + '<p style="color:#444;font-size:14px;"> for just <b>'+PAYMENT_AMOUNT+'</b>/week!</p>'
 
   // --- Mobile Money Pay Section ---
   + '<div id="bemdic-momo-section" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:8px;padding:14px;margin:12px 0;border:1px solid #c8e6c9;">'
@@ -1695,7 +1695,16 @@ if(!isSubscribed()){
     // hide the word content that loaded before api.js
     var appendList = document.getElementById('append_list');
     if(appendList) appendList.innerHTML = '';
-    showPaywall('words');
+    // replace loading text with upgrade prompt
+    var loadingEl = document.getElementById('loading_data');
+    if(loadingEl){
+      loadingEl.innerHTML = '<div style="text-align:center;padding:30px 15px;">'
+        + '<p style="font-size:16px;color:#555;margin:0 0 8px;">You\'ve used all <b>'+FREE_WORD_LIMIT+'</b> free translations for today.</p>'
+        + '<p style="font-size:13px;color:#888;margin:0 0 14px;">Subscribe for unlimited access to all words and quizzes.</p>'
+        + '<button id="bemdic-limit-btn" style="padding:10px 22px;border:none;border-radius:8px;font-size:15px;cursor:pointer;background:#2e7d32;color:#fff;">Get Unlimited - '+PAYMENT_AMOUNT+'/4 days</button>'
+        + '</div>';
+      document.getElementById('bemdic-limit-btn').addEventListener('click', function(){ showPaywall('words'); });
+    }
   }
 }
 
