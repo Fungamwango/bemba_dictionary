@@ -1421,7 +1421,7 @@ var subscription_modal = '<div style="position:fixed;top:0;left:0;width:100%;hei
   + '<div style="background:#fff;border-radius:12px;padding:24px 18px;max-width:360px;width:92%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.3);margin:16px auto;">'
   + '<h2 style="margin:0 0 8px;color:#222;font-size:20px;">Get Unlimited Dictionary</h2>'
   + '<p style="color:#444;font-size:14px;line-height:1.5;margin:8px 0;" id="bemdic-pw-reason"></p>'
-  + '<p style="color:#444;font-size:14px;"> for just <b>'+PAYMENT_AMOUNT+'</b>/week!</p>'
+  + '<p style="color:#444;font-size:14px;"> for just <b>'+PAYMENT_AMOUNT+'</b>/4 days!</p>'
 
   // --- Mobile Money Pay Section ---
   + '<div id="bemdic-momo-section" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:8px;padding:14px;margin:12px 0;border:1px solid #c8e6c9;">'
