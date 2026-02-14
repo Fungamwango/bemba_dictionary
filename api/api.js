@@ -1305,11 +1305,11 @@ checkAndRegisterUser();
 
 // --- CONFIG (change these as needed) ---
 var SUB_SECRET = 7391;  // secret number for code validation - CHANGE THIS to your own number
-var FREE_WORD_LIMIT = 10;
-var FREE_QUIZ_LIMIT = 3;
-var SUB_DAYS = 7;
+var FREE_WORD_LIMIT = 5;
+var FREE_QUIZ_LIMIT = 1;
+var SUB_DAYS = 4;
 var PAYMENT_NUMBER = '0962464552'; // your mobile money number
-var PAYMENT_AMOUNT = 'K2';
+var PAYMENT_AMOUNT = 'K3';
 
 // --- HELPER: get today as YYYY-MM-DD ---
 function getToday(){
@@ -1678,7 +1678,7 @@ if(moreLinks){
     subItem.style.color = '#084';
     subItem.style.fontWeight = 'bold';
   } else {
-    subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access ('+PAYMENT_AMOUNT+'/week)';
+    subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access ('+PAYMENT_AMOUNT+'/4 days)';
     subItem.style.color = 'aqua';
     subItem.style.cursor = 'pointer';
     subItem.addEventListener('click', function(){
@@ -1983,7 +1983,7 @@ var _bemdic_offline_sub = function() {
       subItem.style.color = '#084';
       subItem.style.fontWeight = 'bold';
     } else {
-      subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access (' + PAYMENT_AMOUNT + '/week)';
+      subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access (' + PAYMENT_AMOUNT + '/4 days)';
       subItem.style.color = 'aqua';
       subItem.style.cursor = 'pointer';
       subItem.addEventListener('click', function() { showPaywall('words'); });
