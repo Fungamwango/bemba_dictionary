@@ -62,7 +62,7 @@ export async function onRequestPost(context) {
         var top = await db.prepare('SELECT id, name, points FROM users ORDER BY points DESC LIMIT 1').first();
         if (!top || top.points <= 0) return;
 
-        // Generate subscription code (same as verify.js)
+        // Generate subscription code - always 7 days for weekly reward
         var SUB_SECRET = parseInt(context.env.SUB_SECRET || '7391');
         var today = Math.floor(Date.now() / 86400000);
         var expiryDay = today + 7;

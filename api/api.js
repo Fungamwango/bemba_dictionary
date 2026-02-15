@@ -408,7 +408,7 @@ if (dicWrapper) {
     // LEADERBOARD
     + '<section id="leaderboard-section"><div id="leaderboard-wrapper">'
     + '<div class="section-heading"><span class="section-heading-icon">🏅</span> Leaderboard</div>'
-    + '<p style="color:#5f6368;font-size:13px;margin:4px 0 12px;line-height:1.4;">Top 30 users. The leader of the week gets a free 1 week subscription. Keep playing quiz to earn points!</p>'
+    + '<p style="color:#5f6368;font-size:13px;margin:4px 0 12px;line-height:1.4;">Top 30 users. The leader of the week gets a free 7-day subscription. Keep playing quiz to earn points!</p>'
     + '<div id="lb-global-list" class="s-loading">Loading...</div>'
     + '</div></section>'
     // NOTIFICATIONS
@@ -1232,7 +1232,7 @@ function renderNotifications(el, notifs, hasMore, append) {
     else if (n.type === 'friend_request') text += '<b>' + escapeHtml(data.from_name) + '</b> wants to be your friend';
     else if (n.type === 'friend_accepted') text += '<b>' + escapeHtml(data.from_name) + '</b> accepted your friend request';
     else if (n.type === 'weekly_reward') {
-      text += 'Congratulations! You are the <b>#1 leader</b> this week with <b>' + (data.points || 0) + '</b> points! Tap to claim your <b>free 1-week subscription</b>.';
+      text += 'Congratulations! You are the <b>#1 leader</b> this week with <b>' + (data.points || 0) + '</b> points! Tap to claim your <b>free 7-day subscription</b>.';
     }
 
     var picHtml = n.type === 'weekly_reward' ? '<span style="font-size:30px;">🏆</span>' : profilePicHtml(data.from_picture || '', 38, false);
