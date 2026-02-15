@@ -11,9 +11,18 @@ export async function onRequestPost(context) {
     return Response.json({ ok: false, error: 'Payment not configured' }, { status: 500 });
   }
 
-  // Config
+  // Config: read from DB settings first, fall back to env vars
   var AMOUNT = context.env.SUB_AMOUNT || '5';
   var SUB_DAYS = parseInt(context.env.SUB_DAYS || '7');
+  try {
+    var sRows = await db.prepare("SELECT key, value FROM settings WHERE key IN ('payment_amount','sub_days')").all();
+    if (sRows && sRows.results) {
+      for (var i = 0; i < sRows.results.length; i++) {
+        if (sRows.results[i].key === 'payment_amount') AMOUNT = sRows.results[i].value.replace(/[^0-9.]/g, '') || AMOUNT;
+        if (sRows.results[i].key === 'sub_days') SUB_DAYS = parseInt(sRows.results[i].value) || SUB_DAYS;
+      }
+    }
+  } catch(e) {}
 
   // Clean phone number: accept 09xx or 260xx format
   var cleanPhone = phone.replace(/\s+/g, '');
