@@ -66,6 +66,25 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
 .msg{text-align:center;padding:12px;margin:8px 0;border-radius:8px;font-size:13px;display:none;}
 .msg-ok{background:#e6f4ea;color:#137333;}
 .msg-err{background:#fce8e6;color:#ea4335;}
+
+/* Tabs */
+.tab-bar{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #e8e8e8;}
+.tab-btn{padding:10px 20px;background:none;border:none;font-size:14px;font-weight:600;color:#5f6368;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;}
+.tab-btn.active{color:#1a73e8;border-bottom-color:#1a73e8;}
+.tab-btn:hover{color:#1a73e8;background:#f8f9fa;}
+
+/* Settings */
+#settings-section{display:none;}
+.settings-card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.08);padding:24px;max-width:480px;}
+.settings-card label{font-size:13px;color:#5f6368;display:block;margin-bottom:4px;margin-top:16px;font-weight:500;}
+.settings-card label:first-child{margin-top:0;}
+.settings-card input{width:100%;padding:10px;border:1.5px solid #dadce0;border-radius:8px;font-size:14px;outline:none;}
+.settings-card input:focus{border-color:#1a73e8;}
+.settings-card .hint{font-size:11px;color:#80868b;margin-top:2px;}
+#settings-save{margin-top:20px;padding:10px 28px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;}
+#settings-save:hover{background:#1558b0;}
+#settings-save:disabled{background:#dadce0;cursor:default;}
+#settings-status{font-size:13px;margin-top:10px;min-height:20px;}
 </style>
 </head>
 <body>
@@ -87,10 +106,35 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
     </div>
   </div>
   <div id="msg" class="msg"></div>
-  <input type="text" id="search-input" placeholder="Search users by name or code...">
-  <div class="users-table" id="users-list"></div>
-  <div id="load-more-wrap" style="display:none;">
-    <button id="load-more-btn">Load More</button>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-users">Users</button>
+    <button class="tab-btn" id="tab-settings">Settings</button>
+  </div>
+  <div id="users-section">
+    <input type="text" id="search-input" placeholder="Search users by name or code...">
+    <div class="users-table" id="users-list"></div>
+    <div id="load-more-wrap" style="display:none;">
+      <button id="load-more-btn">Load More</button>
+    </div>
+  </div>
+  <div id="settings-section">
+    <div class="settings-card">
+      <h3 style="margin-bottom:4px;font-size:17px;">Subscription Settings</h3>
+      <p style="font-size:12px;color:#80868b;margin-bottom:8px;">Changes take effect immediately for all users on next page load.</p>
+      <label>Subscription Price</label>
+      <input type="text" id="set-price" placeholder="e.g. K2">
+      <div class="hint">Include currency symbol (e.g. K2, K5, K10)</div>
+      <label>Subscription Duration (days)</label>
+      <input type="number" id="set-days" min="1" placeholder="e.g. 4">
+      <label>Free Word Limit (per day)</label>
+      <input type="number" id="set-words" min="1" placeholder="e.g. 5">
+      <label>Free Quiz Limit (per day)</label>
+      <input type="number" id="set-quizzes" min="1" placeholder="e.g. 1">
+      <label>Payment Number (Mobile Money)</label>
+      <input type="tel" id="set-phone" placeholder="e.g. 0962464552">
+      <button id="settings-save">Save Settings</button>
+      <div id="settings-status"></div>
+    </div>
   </div>
 </div>
 
@@ -321,6 +365,79 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
+
+  // --- Tabs ---
+  var tabUsers = document.getElementById('tab-users');
+  var tabSettings = document.getElementById('tab-settings');
+  var usersSection = document.getElementById('users-section');
+  var settingsSection = document.getElementById('settings-section');
+
+  tabUsers.addEventListener('click', function() {
+    tabUsers.classList.add('active');
+    tabSettings.classList.remove('active');
+    usersSection.style.display = 'block';
+    settingsSection.style.display = 'none';
+  });
+  tabSettings.addEventListener('click', function() {
+    tabSettings.classList.add('active');
+    tabUsers.classList.remove('active');
+    usersSection.style.display = 'none';
+    settingsSection.style.display = 'block';
+    loadSettings();
+  });
+
+  // --- Settings ---
+  function loadSettings() {
+    var statusEl = document.getElementById('settings-status');
+    statusEl.textContent = 'Loading settings...';
+    statusEl.style.color = '#5f6368';
+    api('/settings', { action: 'get' }, function(resp) {
+      if (!resp.ok) { statusEl.textContent = 'Failed to load settings'; statusEl.style.color = '#ea4335'; return; }
+      statusEl.textContent = '';
+      var s = resp.settings;
+      document.getElementById('set-price').value = s.payment_amount || '';
+      document.getElementById('set-days').value = s.sub_days || '';
+      document.getElementById('set-words').value = s.free_word_limit || '';
+      document.getElementById('set-quizzes').value = s.free_quiz_limit || '';
+      document.getElementById('set-phone').value = s.payment_number || '';
+    });
+  }
+
+  document.getElementById('settings-save').addEventListener('click', function() {
+    var btn = this;
+    var statusEl = document.getElementById('settings-status');
+    var settings = {
+      payment_amount: document.getElementById('set-price').value.trim(),
+      sub_days: document.getElementById('set-days').value.trim(),
+      free_word_limit: document.getElementById('set-words').value.trim(),
+      free_quiz_limit: document.getElementById('set-quizzes').value.trim(),
+      payment_number: document.getElementById('set-phone').value.trim()
+    };
+
+    if (!settings.payment_amount || !settings.sub_days || !settings.free_word_limit || !settings.free_quiz_limit || !settings.payment_number) {
+      statusEl.textContent = 'All fields are required';
+      statusEl.style.color = '#ea4335';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    statusEl.textContent = '';
+
+    api('/settings', { action: 'update', settings: settings }, function(resp) {
+      btn.disabled = false;
+      btn.textContent = 'Save Settings';
+      if (resp.ok) {
+        statusEl.textContent = 'Settings saved successfully!';
+        statusEl.style.color = '#137333';
+        showMsg('Settings updated');
+      } else {
+        statusEl.textContent = resp.error || 'Save failed';
+        statusEl.style.color = '#ea4335';
+        showMsg(resp.error || 'Save failed', true);
+      }
+    });
+  });
 
   // Auto-login if token exists
   if (token) {

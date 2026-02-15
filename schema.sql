@@ -84,3 +84,13 @@ CREATE TABLE IF NOT EXISTS weekly_awards (
   sub_code TEXT NOT NULL,
   awarded_at TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+INSERT OR IGNORE INTO settings (key, value) VALUES ('free_word_limit', '5');
+INSERT OR IGNORE INTO settings (key, value) VALUES ('free_quiz_limit', '1');
+INSERT OR IGNORE INTO settings (key, value) VALUES ('sub_days', '4');
+INSERT OR IGNORE INTO settings (key, value) VALUES ('payment_amount', 'K2');
+INSERT OR IGNORE INTO settings (key, value) VALUES ('payment_number', '0962464552');

@@ -1303,13 +1303,45 @@ checkAndRegisterUser();
 
 (function(){
 
-// --- CONFIG (change these as needed) ---
+// --- CONFIG (defaults, overridden by server settings) ---
 var SUB_SECRET = 7391;  // secret number for code validation - CHANGE THIS to your own number
 var FREE_WORD_LIMIT = 5;
 var FREE_QUIZ_LIMIT = 1;
 var SUB_DAYS = 4;
 var PAYMENT_NUMBER = '0962464552'; // your mobile money number
 var PAYMENT_AMOUNT = 'K2';
+
+// --- FETCH SETTINGS FROM SERVER (updates config dynamically) ---
+(function(){
+  try {
+    var cached = localStorage.getItem('bemdic_server_settings');
+    if (cached) {
+      var s = JSON.parse(cached);
+      if (s.free_word_limit) FREE_WORD_LIMIT = parseInt(s.free_word_limit) || FREE_WORD_LIMIT;
+      if (s.free_quiz_limit) FREE_QUIZ_LIMIT = parseInt(s.free_quiz_limit) || FREE_QUIZ_LIMIT;
+      if (s.sub_days) SUB_DAYS = parseInt(s.sub_days) || SUB_DAYS;
+      if (s.payment_amount) PAYMENT_AMOUNT = s.payment_amount;
+      if (s.payment_number) PAYMENT_NUMBER = s.payment_number;
+    }
+  } catch(e){}
+  if (navigator.onLine) {
+    fetch(API_BASE + '/settings/get', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    }).then(function(r){ return r.json(); }).then(function(resp){
+      if (resp.ok && resp.settings) {
+        var s = resp.settings;
+        localStorage.setItem('bemdic_server_settings', JSON.stringify(s));
+        if (s.free_word_limit) FREE_WORD_LIMIT = parseInt(s.free_word_limit) || FREE_WORD_LIMIT;
+        if (s.free_quiz_limit) FREE_QUIZ_LIMIT = parseInt(s.free_quiz_limit) || FREE_QUIZ_LIMIT;
+        if (s.sub_days) SUB_DAYS = parseInt(s.sub_days) || SUB_DAYS;
+        if (s.payment_amount) PAYMENT_AMOUNT = s.payment_amount;
+        if (s.payment_number) PAYMENT_NUMBER = s.payment_number;
+      }
+    }).catch(function(){});
+  }
+})();
 
 // --- HELPER: get today as YYYY-MM-DD ---
 function getToday(){
