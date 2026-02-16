@@ -31,9 +31,46 @@ export async function onRequestPost(context) {
     if (!dup) break;
   }
 
+  var nowUtc = new Date().toISOString().replace('T', ' ').substring(0, 19);
   var user = await db.prepare(
-    'INSERT INTO users (device_id, name, friend_code) VALUES (?, ?, ?) RETURNING *'
-  ).bind(device_id, name, friend_code).first();
+    'INSERT INTO users (device_id, name, friend_code, last_seen) VALUES (?, ?, ?, ?) RETURNING *'
+  ).bind(device_id, name, friend_code, nowUtc).first();
+
+  // --- Welcome challenge from BemDic (picks a random played challenge from DB) ---
+  try {
+    var bemdic = await db.prepare("SELECT id, name FROM users WHERE device_id = 'system_bemdic'").first();
+    if (!bemdic) {
+      var bemdicLastSeen = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      bemdic = await db.prepare(
+        "INSERT INTO users (device_id, name, friend_code, points, last_seen) VALUES ('system_bemdic', 'BemDic', 'BEMDIC', 1, ?) RETURNING *"
+      ).bind(bemdicLastSeen).first();
+    }
+
+    // Pick a random existing challenge (not from BemDic itself) to reuse its questions
+    var existing = await db.prepare(
+      "SELECT questions, sender_score FROM challenges WHERE sender_id != ? ORDER BY RANDOM() LIMIT 1"
+    ).bind(bemdic.id).first();
+
+    if (existing) {
+      var welcomeMsg = 'Welcome to BemDic! Try beating my score \uD83D\uDE0A';
+      var welcomeChallenge = await db.prepare(
+        "INSERT INTO challenges (sender_id, receiver_id, sender_score, questions, message) VALUES (?, ?, ?, ?, ?) RETURNING *"
+      ).bind(bemdic.id, user.id, existing.sender_score, existing.questions, welcomeMsg).first();
+
+      await db.prepare(
+        "INSERT INTO notifications (user_id, type, data) VALUES (?, 'challenge_received', ?)"
+      ).bind(user.id, JSON.stringify({
+        challenge_id: welcomeChallenge.id,
+        from_name: 'BemDic',
+        from_id: bemdic.id,
+        sender_score: existing.sender_score,
+        message: welcomeMsg,
+        from_picture: ''
+      })).run();
+    }
+  } catch(e) {
+    // Welcome challenge is non-critical; don't fail registration
+  }
 
   return Response.json({ ok: true, user: user }, { status: 201 });
 }

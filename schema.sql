@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   challenges_lost INTEGER DEFAULT 0,
   challenges_drawn INTEGER DEFAULT 0,
   picture TEXT DEFAULT NULL,
-  last_seen TEXT DEFAULT (datetime('now')),
+  last_seen TEXT DEFAULT NULL,
   created_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_users_device_id ON users(device_id);
@@ -55,7 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_challenges_sender ON challenges(sender_id);
 CREATE TABLE IF NOT EXISTS notifications (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
-  type TEXT NOT NULL CHECK(type IN ('challenge_received','challenge_result','friend_request','friend_accepted','weekly_reward')),
+  type TEXT NOT NULL CHECK(type IN ('challenge_received','challenge_result','friend_request','friend_accepted','weekly_reward','post_liked','post_commented','message_received')),
   data TEXT NOT NULL,
   read INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now')),
@@ -85,6 +85,38 @@ CREATE TABLE IF NOT EXISTS weekly_awards (
   awarded_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS posts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS post_likes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE(post_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_post_likes_post ON post_likes(post_id);
+
+CREATE TABLE IF NOT EXISTS post_comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_post_comments_post ON post_comments(post_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -94,3 +126,17 @@ INSERT OR IGNORE INTO settings (key, value) VALUES ('free_quiz_limit', '1');
 INSERT OR IGNORE INTO settings (key, value) VALUES ('sub_days', '4');
 INSERT OR IGNORE INTO settings (key, value) VALUES ('payment_amount', 'K2');
 INSERT OR IGNORE INTO settings (key, value) VALUES ('payment_number', '0962464552');
+
+CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sender_id INTEGER NOT NULL,
+  receiver_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  read INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (sender_id) REFERENCES users(id),
+  FOREIGN KEY (receiver_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id, read);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(sender_id, receiver_id, created_at DESC);

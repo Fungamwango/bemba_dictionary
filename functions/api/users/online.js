@@ -1,4 +1,4 @@
-// POST /api/users/online - get online users (last seen within 3 minutes)
+// POST /api/users/online - get online users (last seen within 20 seconds)
 export async function onRequestPost(context) {
   var { device_id, query, offset } = await context.request.json();
   if (!device_id) {
@@ -11,7 +11,7 @@ export async function onRequestPost(context) {
     return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
   }
 
-  var cutoff = new Date(Date.now() - 3 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
+  var cutoff = new Date(Date.now() - 20 * 1000).toISOString().replace('T', ' ').substring(0, 19);
   var off = parseInt(offset) || 0;
   var limit = 20;
 

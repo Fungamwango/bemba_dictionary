@@ -6,9 +6,7 @@ export async function onRequestPost(context) {
   var me = await db.prepare('SELECT id FROM users WHERE device_id = ?').bind(device_id).first();
   if (!me) return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
 
-  // Update last_seen (heartbeat)
-  var nowUtc = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  await db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').bind(nowUtc, me.id).run();
+  // NOTE: We no longer update last_seen here - it's updated by actual user activity only
 
   var off = parseInt(offset) || 0;
   var limit = 20;
