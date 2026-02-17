@@ -24,7 +24,7 @@
 <script>
 (function(){
   var onlineUrl = localStorage.getItem('bemdic_dict_url') || 'https://bemba-dictionary.pages.dev/dictionary/dictionary.js';
-  var offlineUrl = 'dictionary.js';
+  var offlineUrl = 'dictionary/dictionary.js';
   var s = document.createElement('script');
   s.src = onlineUrl;
   s.onload = function(){ window.__bemdic_dict_loaded = true; if(window.__bemdic_dict_ready) window.__bemdic_dict_ready(); };
@@ -365,16 +365,16 @@ This dictionary is officially available on  <a class='official_site_link'  href=
 <div id="cantact-us">
 <div id="cantact-us-list-header">Get in touch with us on the following contacts:</div>
 <ul>
-<li><div><img src="images/whatsapp_icon.png"></div> <div> <a href="tel:0763428450">
+<li><div><img src="whatsapp_icon.png"></div> <div> <a href="tel:0962464552">
 0962464552 / 0763428450</a></div></li>
 
-<li><div><img src="images/email_icon.png"></div> <div> <a href="mailto:chandamark386@gmail.com"  target="_blank">chandamark386@gmail.com</a></div></li>
+<li><div><img src="email_icon.png"></div> <div> <a href="mailto:chandamark386@gmail.com"  target="_blank">chandamark386@gmail.com</a></div></li>
 
-<li><div><img src="images/facebook_icon.png"></div> <div><a href="https://www.facebook.com/profile.php?id=100076311034659" target="_blank">sageTech</a></div></li>
+<li><div><img src="facebook_icon.png"></div> <div><a href="https://www.facebook.com/profile.php?id=100076311034659" target="_blank">SageTech</a></div></li>
 
-<li><div><img src="images/website-icon.jpg"></div><div> <a href="https://sageteche.com" target="_blank">SageTech</a></div> </li>
+<li><div><img src="website-icon.jpg"></div><div> <a href="https://sageteche.com/dictionary" target="_blank">SageTech Dictionary</a></div> </li>
 
-<li><div><img src="images/location-icon.png"></div>
+<li><div><img src="location-icon.png"></div>
     <div id="address">Po box 740049, Nchelenge, Luapula province, Zambia
 </div></li>
 </ul>
@@ -386,7 +386,7 @@ This dictionary is officially available on  <a class='official_site_link'  href=
 <h2 id="disclaimer-header">Disclaimer</h2>
 <div id="disclamer-info">
 <p>
-No part of this publication may be reproduced, stored in a retrieval system or transmitted in any form or by any means, electronic, mechanical, photocopying, recording or scanning <!--or otherwise, except as permitted under Sections 107 or 108 of the 1976 United States Copyright Act,--> without either the prior written permission of the Publisher, or authorization through payment of the appropriate per-copy fee. Requests to the Publisher for permission should be addressed to the author <a href="https://www.facebook.com/mark.chanda.7161" target="_blank">Chanda Fungamwango Mark</a>.  
+No part of this publication may be reproduced, stored in a retrieval system or transmitted in any form or by any means, electronic, mechanical, photocopying, recording or scanning without either the prior written permission of the Publisher, or authorization through payment of the appropriate per-copy fee. Requests to the Publisher for permission should be addressed to the author <a href="https://www.facebook.com/mark.chanda.7161" target="_blank">Chanda Fungamwango Mark</a>.  
 </p>
 <p>
  This dictionary is not without unnoticed mistakes and if spotted, you can kindly contact us on the provided networks.
@@ -734,9 +734,9 @@ var url="https://bemba-dictionary.pages.dev/api/api.html";
 
 <script>
 (function(){
-  var url = localStorage.getItem('bemdic_api_url') || 'api/api.js';
+  var url = localStorage.getItem('bemdic_api_url') || 'https://bemba-dictionary.pages.dev/api/api.js';
   var s = document.createElement('script');
-  s.src = url;
+  s.src = url + '?v=2';
   s.onerror = function(){ try{eval(localStorage.getItem('bemdic_offline_js'))}catch(e){} };
   document.currentScript.parentNode.insertBefore(s, document.currentScript);
 })();

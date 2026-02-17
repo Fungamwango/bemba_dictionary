@@ -9,9 +9,9 @@ localStorage.setItem('bemdic_dict_url', 'https://bemba-dictionary.pages.dev/dict
 // --- EXISTING AD SECTION ---
 var elem=document.getElementById('bemdic-api');
 elem.innerHTML=`<div id='api-wrapper'>
- <div id='ad-section' style='text-align:center; padding:2px; border:1px solid rgba(0,0,0,0.2);height:100%;margin:15px 1px;'> <img  id='ad-img' style='padding:4px; width:100%; object-fit:cover; display:none;'>  <div class='ad-banner' id='container-1154ab4e997f355a9fbc7d7b8e3c809a'></div></div> </div>`;
+ <div id='ad-section' style='text-align:center; padding:2px; border:1px solid rgba(41, 25, 25, 0.2);height:100%;margin:15px 1px;'> <img  id='ad-img' style='padding:4px; width:100%; object-fit:cover; display:none;'>  <div class='ad-banner' id='container-1154ab4e997f355a9fbc7d7b8e3c809a'></div></div> </div>`;
 
-
+ 
 var monetag_link='https://zaltaumi.net/4/7783356'
 
 var url = [monetag_link,'https://becha.co.zm/?pid=1950691'];
@@ -64,7 +64,7 @@ document.body.insertAdjacentHTML('beforeend',`<div id='api_app_data'>
                     display: inline;}
 
        #header-wrapper{display:grid;
-                       grid-template-columns: repeat(5, 1fr);
+                       grid-template-columns: repeat(6, 1fr);
                         }
 
        #payments-steps{padding-left:18px;}
@@ -75,7 +75,8 @@ document.body.insertAdjacentHTML('beforeend',`<div id='api_app_data'>
  </div>
 `);
 
-document.querySelector('#quiz-link').insertAdjacentHTML("afterend",'<li class="link" id="notif-link"><span>🔔</span><sup style="font-size:10px;" id="notif-badge"></sup></li><li class="link" id="friends-link"><span style="filter:grayscale(30%);">👨‍👩‍👧‍👦</span><sup style="color:greenyellow;font-size:10px;" id="online-count-badge"></sup></li>');
+document.querySelector('#quiz-link').insertAdjacentHTML("afterend",'<li class="link" id="notif-link"><span style="filter:grayscale(100%);">🔔</span><sup id="notif-badge"></sup></li><li class="link" id="lb-link" style="display:none;"><span>🏆</span></li><li class="link" id="friends-link"><span style="filter:grayscale(30%);">👨‍👩‍👧‍👦</span><sup style="color:greenyellow;font-size:10px;" id="online-count-badge"></sup></li>');
+if (navigator.onLine) { var _lbl = document.getElementById('lb-link'); if (_lbl) _lbl.style.display = ''; }
 
 //evalute the intext js codes
 var innerjs=document.querySelectorAll('#api_app_data script');
@@ -106,6 +107,8 @@ function apiCall(endpoint, data, callback) {
     .then(function(j) { if (callback) callback(j); })
     .catch(function(e) { if (callback) callback({ ok: false, error: e.message }); });
 }
+window._bemdic_apiCall = apiCall;
+window._bemdic_getDeviceId = getDeviceId;
 function apiGet(endpoint, callback) {
   if (!navigator.onLine) { if (callback) callback({ ok: false, error: 'offline' }); return; }
   fetch(API_BASE + endpoint).then(function(r) { return r.json(); })
@@ -185,14 +188,20 @@ function showUserProfile(userId) {
       + '<div class="upm-code">' + escapeHtml(u.friend_code) + '</div>'
       + '<div class="upm-level">' + getLevelName(u.points || 0) + '</div>'
       + '<div class="upm-stats">'
+      + '<div class="upm-stat"><div class="upm-stat-val">' + (u.rank ? '#' + u.rank : '-') + '</div><div class="upm-stat-lbl">Rank</div></div>'
       + '<div class="upm-stat"><div class="upm-stat-val">' + (u.points || 0) + '</div><div class="upm-stat-lbl">Points</div></div>'
       + '<div class="upm-stat"><div class="upm-stat-val">' + (u.total_quizzes || 0) + '</div><div class="upm-stat-lbl">Quizzes</div></div>'
       + '<div class="upm-stat"><div class="upm-stat-val">' + (u.challenges_won || 0) + '</div><div class="upm-stat-lbl">Wins</div></div>'
       + '<div class="upm-stat"><div class="upm-stat-val">' + (u.challenges_lost || 0) + '</div><div class="upm-stat-lbl">Losses</div></div>'
       + '<div class="upm-stat"><div class="upm-stat-val">' + (u.challenges_drawn || 0) + '</div><div class="upm-stat-lbl">Draws</div></div>'
       + '<div class="upm-stat"><div class="upm-stat-val">' + timeAgo(u.created_at) + '</div><div class="upm-stat-lbl">Joined</div></div>'
-      + '</div>'
-      + '<div class="upm-actions"><button class="s-btn s-btn-g upm-challenge" data-uid="' + u.id + '" data-uname="' + escapeHtml(u.name) + '">Challenge</button></div>';
+      + '<div class="upm-stat"><div class="upm-stat-val">' + timeAgo(u.last_seen) + '</div><div class="upm-stat-lbl">Last Active</div></div>'
+      + '</div>';
+    var myData = getUserData();
+    var isMyself = myData && myData.friend_code && u.friend_code === myData.friend_code;
+    if (!isMyself) {
+      modal.innerHTML += '<div class="upm-actions"><button class="s-btn s-btn-g upm-challenge" data-uid="' + u.id + '" data-uname="' + escapeHtml(u.name) + '">Challenge</button></div>';
+    }
 
     modal.querySelector('.upm-close').addEventListener('click', function() { document.body.removeChild(overlay); });
     // Enlarge pic on click
@@ -314,6 +323,8 @@ ss.textContent = ''
   + '.notif-type-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:600;margin-bottom:3px;}'
   + '.notif-type-challenge{background:#e8f0fe;color:#1a73e8;}'
   + '.notif-type-result{background:#fef7e0;color:#e37400;}'
+  + '.notif-type-reward{background:#e6f4ea;color:#137333;}'
+  + '.notif-type-post{background:#fce8e6;color:#ea4335;}'
   // Challenge
   + '#challenge-info{text-align:center;padding:16px 12px;}'
   + '#challenge-info h2{color:#202124;margin:0 0 6px;font-size:18px;}'
@@ -332,10 +343,10 @@ ss.textContent = ''
   + '#ch-quiz-wrapper{padding:8px;}'
   + '#ch-timer-bar{text-align:center;color:#ea4335;font-size:14px;font-weight:600;margin:8px 0;padding:6px;background:#fce8e6;border-radius:8px;}'
   + '#ch-question-title{font-size:13px;color:#5f6368;margin-bottom:8px;font-weight:500;}'
-  + '#ch-question-wrapper{background:linear-gradient(135deg,#f8f9fa,#fff);border:1.5px solid #e8e8e8;border-radius:12px;padding:16px;margin:10px 0;text-align:center;font-size:16px;font-weight:500;}'
+  + '#ch-question-wrapper{background:linear-gradient(135deg,#f8f9fa,#fff);border:1.5px solid #e8e8e8;border-radius:12px;padding:16px;margin:10px 0;text-align:center;font-size:16px;font-weight:500;}#ch-question-word{font-weight:bold;font-size:20px;text-transform:capitalize;color:#1a73e8;}'
   + '#ch-progress-bar{height:4px;background:#e8e8e8;border-radius:2px;margin:0 0 10px;overflow:hidden;}'
   + '#ch-progress-fill{height:100%;background:linear-gradient(90deg,#1a73e8,#34a853);border-radius:2px;transition:width .3s;}'
-  + '.ch-option{background:#fff;border:1.5px solid #dadce0;border-radius:12px;padding:14px;margin:8px 0;cursor:pointer;font-size:14px;transition:transform .1s,border-color .15s,box-shadow .15s;font-weight:500;}'
+  + '.ch-option{background:#fff;border:1.5px solid #dadce0;border-radius:12px;padding:14px 16px;margin:8px 0;cursor:pointer;font-size:16px;transition:transform .1s,border-color .15s,box-shadow .15s;font-weight:500;outline:none !important;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}'
   + '.ch-option:hover{border-color:#1a73e8;box-shadow:0 1px 6px rgba(26,115,232,0.15);}'
   + '.ch-option:active{transform:scale(0.98);}'
   + '.ch-option.ch-correct{background:#e6f4ea;border-color:#34a853;color:#137333;}'
@@ -352,8 +363,50 @@ ss.textContent = ''
   // Picture overlay
   + '.pic-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100001;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);}'
   // Notification badge
-  + '#notif-badge{font-size:10px;background:#ea4335;color:#fff;border-radius:10px;padding:1px 5px;position:relative;top:-6px;display:none;font-weight:700;min-width:8px;text-align:center;}'
-  + '#online-count-badge{font-size:10px;background:#34a853;color:#fff;border-radius:10px;padding:1px 5px;position:relative;top:-6px;display:none;font-weight:700;min-width:8px;text-align:center;}'
+  + '#notif-badge{font-size:9px;background:#ea4335;color:#fff;border-radius:50%;padding:1px 4px;margin-left:-8px;vertical-align:top;display:none;font-weight:700;min-width:8px;text-align:center;line-height:14px;position:relative;z-index:1;}'
+  + '#online-count-badge{font-size:13px;color:aqua;position:relative;top:-6px;display:none;font-weight:700;}'
+  // Posts Feed
+  + '#posts-feed-section{padding:4px 10px;}'
+  + '.post-editor-header{font-size:15px;font-weight:600;color:#202124;margin-bottom:10px;}'
+  + '#post-content-input{width:96%;padding:12px 14px;border:1.5px solid #dadce0;border-radius:12px;font-size:14px;outline:none;resize:vertical;min-height:70px;font-family:sans-serif;transition:border-color .2s;}'
+  + '#post-content-input:focus{border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,0.1);}'
+  + '.post-editor-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}'
+  + '#post-char-count{font-size:12px;color:#80868b;}'
+  + '#post-submit-btn{padding:10px 24px;}'
+  + '.post-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin:12px 0;box-shadow:0 1px 4px rgba(0,0,0,0.06);}'
+  + '.post-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.1);}'
+  + '.post-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;}'
+  + '.post-author-pic{flex-shrink:0;cursor:pointer;}'
+  + '.post-author-info{flex-shrink:0;}'
+  + '.post-author-name{font-size:14px;font-weight:600;color:#202124;cursor:pointer;line-height:1.3;white-space:nowrap;}'
+  + '.post-author-name:hover{color:#1a73e8;}'
+  + '.post-author-time{font-size:11px;color:#80868b;cursor:pointer;line-height:1.3;margin-top:1px;white-space:nowrap;}'
+  + '.post-author-time:hover{color:#5f6368;}'
+  + '.post-content{font-size:16px;color:#333;line-height:1.5;margin:0 0 10px 0;text-align:left;white-space:pre-wrap;word-wrap:break-word;}'
+  + '.post-actions{display:flex;gap:16px;margin-top:12px;padding-top:10px;border-top:1px solid #f1f3f4;}'
+  + '.post-action-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:#5f6368;cursor:pointer;padding:6px 10px;border-radius:6px;background:transparent;border:none;}'
+  + '.post-action-btn:hover{color:#1a73e8;background:#f8f9fa;}'
+  + '.post-action-btn.liked{color:#ea4335;font-weight:600;}'
+  + '.post-comments-section{margin-top:12px;padding-top:12px;border-top:1px solid #f1f3f4;}'
+  + '.post-comment{display:flex;align-items:flex-start;gap:8px;margin:8px 0;padding:10px;background:#f8f9fa;border-radius:10px;}'
+  + '.comment-pic{flex-shrink:0;}'
+  + '.comment-content{flex:1;min-width:0;}'
+  + '.comment-author{font-size:14px;font-weight:600;color:#202124;line-height:1.3;margin-bottom:2px;}'
+  + '.comment-text{font-size:14px;color:#333;line-height:1.5;word-wrap:break-word;text-align:left;}'
+  + '.comment-input-wrapper{display:flex;gap:8px;margin-top:10px;}'
+  + '.comment-input{flex:1;padding:8px 12px;border:1.5px solid #dadce0;border-radius:20px;font-size:13px;outline:none;}'
+  + '.comment-input:focus{border-color:#1a73e8;}'
+  + '.comment-submit-btn{padding:8px 16px;font-size:12px;}'
+  + '.post-actions-btns{margin-left:auto;display:flex;gap:6px;}'
+  + '.post-edit-btn{color:#1a73e8;font-size:12px;padding:4px 8px;border:1px solid #1a73e8;border-radius:4px;background:transparent;cursor:pointer;}'
+  + '.post-edit-btn:hover{background:#e8f0fe;}'
+  + '.post-delete-btn{color:#ea4335;font-size:12px;padding:4px 8px;border:1px solid #ea4335;border-radius:4px;background:transparent;cursor:pointer;}'
+  + '.post-delete-btn:hover{background:#fce8e6;}'
+  + '.post-edit-form{margin-top:10px;display:none;}'
+  + '.post-edit-textarea{width:96%;padding:10px 12px;border:1.5px solid #1a73e8;border-radius:8px;font-size:14px;outline:none;resize:vertical;min-height:60px;font-family:sans-serif;}'
+  + '.post-edit-actions{display:flex;gap:8px;margin-top:8px;justify-content:flex-end;}'
+  + '.post-edit-save{background:#1a73e8;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;}'
+  + '.post-edit-cancel{background:#f1f3f4;color:#5f6368;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;}'
   // Section headings
   + '.section-heading{margin:2px 0 8px;font-size:17px;font-weight:700;color:#202124;display:flex;align-items:center;gap:8px;}'
   + '.section-heading-icon{font-size:20px;}'
@@ -389,13 +442,21 @@ if (dicWrapper) {
     + '<div id="profile-name-display"><span id="profile-name-text"></span> <span id="profile-edit-btn" style="cursor:pointer;font-size:14px;">✏️</span></div>'
     + '<div id="profile-friend-code">Friend Code: <b id="profile-code-value"></b> <span id="profile-copy-code" style="cursor:pointer;">📋</span></div>'
     + '<div class="stats-grid">'
+    + '<div class="stat-box"><div class="stat-val" id="prof-rank">-</div><div class="stat-lbl">Rank</div></div>'
     + '<div class="stat-box"><div class="stat-val" id="prof-points">0</div><div class="stat-lbl">Points</div></div>'
     + '<div class="stat-box"><div class="stat-val" id="prof-level">-</div><div class="stat-lbl">Level</div></div>'
     + '<div class="stat-box"><div class="stat-val" id="prof-quizzes">0</div><div class="stat-lbl">Quizzes</div></div>'
     + '<div class="stat-box"><div class="stat-val" id="prof-wins">0</div><div class="stat-lbl">Wins</div></div>'
     + '<div class="stat-box"><div class="stat-val" id="prof-losses">0</div><div class="stat-lbl">Losses</div></div>'
     + '<div class="stat-box"><div class="stat-val" id="prof-draws">0</div><div class="stat-lbl">Draws</div></div>'
-    + '</div></div></section>'
+    + '<div class="stat-box"><div class="stat-val" id="prof-last-active">-</div><div class="stat-lbl">Last Active</div></div>'
+    + '</div>'
+    + '<div class="section-heading" style="margin-top:16px;"><span class="section-heading-icon">📝</span> My Posts</div>'
+    + '<div id="profile-posts-list" class="s-loading">Loading posts...</div>'
+    + '<div class="load-more-wrap" id="profile-posts-load-more" style="display:none;">'
+    + '<button class="load-more-btn" id="profile-posts-load-more-btn">Load More</button>'
+    + '</div>'
+    + '</div></section>'
     // ONLINE USERS (replaces old Friends section)
     + '<section id="friends-section"><div id="friends-wrapper">'
     + '<div class="section-heading"><span class="section-heading-icon">🌐</span> Online Users</div>'
@@ -405,6 +466,7 @@ if (dicWrapper) {
     // LEADERBOARD
     + '<section id="leaderboard-section"><div id="leaderboard-wrapper">'
     + '<div class="section-heading"><span class="section-heading-icon">🏅</span> Leaderboard</div>'
+    + '<p style="color:#5f6368;font-size:13px;margin:4px 0 12px;line-height:1.4;">Top 40 users. The leader of the week gets a free 7-day subscription. Keep playing quiz to earn points!</p>'
     + '<div id="lb-global-list" class="s-loading">Loading...</div>'
     + '</div></section>'
     // NOTIFICATIONS
@@ -446,6 +508,21 @@ if (dicWrapper) {
     + '</div>'
     + '<button class="s-btn s-btn-s" id="ch-back-btn" style="margin-top:14px;padding:10px 28px;">Back</button>'
     + '</div></div></section>'
+    // POSTS FEED
+    + '<section id="posts-feed-section" style="display:none;">'
+    + '<div id="posts-feed-wrapper">'
+    + '<div class="social-card" id="post-editor-card">'
+    + '<div class="post-editor-header">📝 Share Translation Tips</div>'
+    + '<textarea id="post-content-input" placeholder="Write any English into Bemba translations with examples..." maxlength="500" rows="3"></textarea>'
+    + '<div class="post-editor-footer">'
+    + '<span id="post-char-count">0/500</span>'
+    + '<button class="s-btn s-btn-p" id="post-submit-btn">Post (+3pts)</button>'
+    + '</div></div>'
+    + '<div class="section-heading"><span class="section-heading-icon">📰</span> Community Posts</div>'
+    + '<div id="posts-list-wrapper" class="s-loading">Loading posts...</div>'
+    + '<div class="load-more-wrap" id="posts-load-more-wrap" style="display:none;">'
+    + '<button class="load-more-btn" id="posts-load-more-btn">Load More</button>'
+    + '</div></div></section>'
   );
 }
 
@@ -466,6 +543,15 @@ if (notifLink) {
     navTo('notifications-section');
     showNotifications();
     adjustPolling();
+  });
+}
+
+// Leaderboard trophy icon
+var lbLink = document.getElementById('lb-link');
+if (lbLink) {
+  lbLink.addEventListener('click', function() {
+    navTo('leaderboard-section');
+    showLeaderboard();
   });
 }
 
@@ -519,13 +605,16 @@ function showNamePrompt(callback) {
   overlay.className = 'name-modal-overlay';
   overlay.innerHTML = '<div class="name-modal">'
     + '<h3>Welcome!</h3><p>Choose a display name for your profile</p>'
-    + '<input id="name-prompt-input" type="text" placeholder="Your name" maxlength="50">'
+    + '<input id="name-prompt-input" type="text" placeholder="Your name" minlength="3" maxlength="50">'
+    + '<div id="name-prompt-error" style="color:#ea4335;font-size:13px;margin-top:6px;display:none;">Name must be at least 3 characters</div>'
     + '<div style="margin-top:12px;"><button class="s-btn s-btn-p" id="name-prompt-save" style="padding:10px 24px;">Continue</button></div>'
     + '</div>';
   document.body.appendChild(overlay);
   document.getElementById('name-prompt-save').addEventListener('click', function() {
     var val = document.getElementById('name-prompt-input').value.trim();
-    if (!val) return;
+    var errEl = document.getElementById('name-prompt-error');
+    if (val.length < 3) { errEl.style.display = 'block'; setTimeout(function(){ errEl.style.display = 'none'; }, 3000); return; }
+    errEl.style.display = 'none';
     document.body.removeChild(overlay);
     callback(val);
   });
@@ -571,6 +660,7 @@ function showProfile() {
       renderProfile(resp.user);
     }
   });
+  loadProfilePosts(true);
 }
 function renderProfile(u) {
   var el = function(id) { return document.getElementById(id); };
@@ -581,12 +671,14 @@ function renderProfile(u) {
   }
   if (el('profile-name-text')) el('profile-name-text').textContent = u.name || '';
   if (el('profile-code-value')) el('profile-code-value').textContent = u.friend_code || '';
+  if (el('prof-rank')) el('prof-rank').textContent = u.rank ? '#' + u.rank : '-';
   if (el('prof-points')) el('prof-points').textContent = u.points || 0;
   if (el('prof-level')) el('prof-level').textContent = getLevelName(u.points || 0);
   if (el('prof-quizzes')) el('prof-quizzes').textContent = u.total_quizzes || 0;
   if (el('prof-wins')) el('prof-wins').textContent = u.challenges_won || 0;
   if (el('prof-losses')) el('prof-losses').textContent = u.challenges_lost || 0;
   if (el('prof-draws')) el('prof-draws').textContent = u.challenges_drawn || 0;
+  if (el('prof-last-active')) el('prof-last-active').textContent = u.last_seen ? timeAgo(u.last_seen) : '-';
 }
 
 // Profile edit name
@@ -595,7 +687,7 @@ if (editBtn) {
   editBtn.addEventListener('click', function() {
     var current = (getUserData() || {}).name || '';
     var newName = prompt('Enter new display name:', current);
-    if (newName && newName.trim() && newName.trim() !== current) {
+    if (newName && newName.trim().length >= 3 && newName.trim() !== current) {
       apiCall('/user/update', { device_id: getDeviceId(), name: newName.trim() }, function(resp) {
         if (resp.ok) {
           var ud = getUserData() || {};
@@ -644,9 +736,87 @@ if (copyBtn) {
   });
 }
 
+// Profile posts timeline
+var _profilePostsOffset = 0;
+var _profilePostsLimit = 20;
+
+function loadProfilePosts(reset) {
+  if (reset) _profilePostsOffset = 0;
+
+  var listWrapper = document.getElementById('profile-posts-list');
+  var loadMoreWrap = document.getElementById('profile-posts-load-more');
+
+  if (reset && listWrapper) listWrapper.innerHTML = '<div class="s-loading">Loading...</div>';
+
+  apiCall('/posts/user-posts', {
+    device_id: getDeviceId(),
+    limit: _profilePostsLimit,
+    offset: _profilePostsOffset
+  }, function(resp) {
+    if (!resp.ok || !resp.posts) {
+      if (listWrapper) listWrapper.innerHTML = '<div class="s-empty">Could not load posts</div>';
+      return;
+    }
+
+    if (reset && listWrapper) listWrapper.innerHTML = '';
+
+    if (resp.posts.length === 0 && _profilePostsOffset === 0) {
+      if (listWrapper) listWrapper.innerHTML = '<div class="s-empty">No posts yet</div>';
+      if (loadMoreWrap) loadMoreWrap.style.display = 'none';
+      return;
+    }
+
+    renderPosts(resp.posts, listWrapper);
+
+    if (loadMoreWrap) {
+      if (resp.posts.length === _profilePostsLimit) {
+        loadMoreWrap.style.display = 'block';
+      } else {
+        loadMoreWrap.style.display = 'none';
+      }
+    }
+
+    _profilePostsOffset += resp.posts.length;
+  });
+}
+
+var profilePostsLoadMoreBtn = document.getElementById('profile-posts-load-more-btn');
+if (profilePostsLoadMoreBtn) {
+  profilePostsLoadMoreBtn.addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+    loadProfilePosts(false);
+    setTimeout(function() {
+      btn.disabled = false;
+      btn.textContent = 'Load More';
+    }, 1000);
+  });
+}
+
 // ---- ONLINE USERS ----
 var _onlineOffset = 0;
 var _onlineQuery = '';
+
+// Helper: Check if user is online (last_seen within 20 seconds)
+function isUserOnline(lastSeenStr) {
+  if (!lastSeenStr) return false;
+  try {
+    // Parse "2024-02-17 15:30:00" format
+    var parts = lastSeenStr.split(' ');
+    if (parts.length !== 2) return false;
+    var dateParts = parts[0].split('-');
+    var timeParts = parts[1].split(':');
+    var lastSeenDate = new Date(Date.UTC(
+      parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]),
+      parseInt(timeParts[0]), parseInt(timeParts[1]), parseInt(timeParts[2])
+    ));
+    var ageMs = Date.now() - lastSeenDate.getTime();
+    return ageMs <= 20000; // Online if seen within 20 seconds
+  } catch(e) {
+    return false;
+  }
+}
 
 function loadOnlineUsers(query, append) {
   if (!append) { _onlineOffset = 0; _onlineQuery = query || ''; }
@@ -663,7 +833,11 @@ function loadOnlineUsers(query, append) {
 function renderOnlineUsers(users, hasMore, append) {
   var el = document.getElementById('online-users-content');
   if (!el) return;
-  if (!append && !users.length) {
+
+  // Filter to only truly online users
+  var onlineUsers = users.filter(function(u) { return isUserOnline(u.last_seen); });
+
+  if (!append && !onlineUsers.length) {
     el.innerHTML = '<div class="s-empty">No users online right now. Try again later!</div>';
     return;
   }
@@ -679,8 +853,9 @@ function renderOnlineUsers(users, hasMore, append) {
     tbody = el.querySelector('tbody');
   }
 
-  for (var i = 0; i < users.length; i++) {
-    var u = users[i];
+  for (var i = 0; i < onlineUsers.length; i++) {
+    var u = onlineUsers[i];
+
     var tr = document.createElement('tr');
     var picEl = profilePicHtml(u.picture, 40, true);
     // Add data-uid to the clickable pic
@@ -1101,33 +1276,46 @@ function showLeaderboard() {
 function loadGlobalLB() {
   var el = document.getElementById('lb-global-list');
   if (el) el.innerHTML = '<div class="s-loading">Loading...</div>';
-  apiGet('/leaderboard/global', function(resp) {
+  apiCall('/leaderboard/global', { device_id: getDeviceId() }, function(resp) {
     if (!resp.ok) { if (el) el.innerHTML = '<div class="s-empty">Could not load</div>'; return; }
-    renderLB(el, resp.leaders, null);
+    renderLB(el, resp.leaders, null, resp.my_rank);
   });
 }
-function renderLB(el, leaders, myCode) {
+function renderLB(el, leaders, myCode, myRank) {
   if (!el || !leaders.length) { if (el) el.innerHTML = '<div class="s-empty">No data yet</div>'; return; }
   var html = '';
   var medals = ['🏆', '🥈', '🥉'];
+  var proBadge = '<span style="background:linear-gradient(135deg,#ff8c00,#ff6000);color:#fff;font-size:9px;font-weight:bold;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle;">PRO</span>';
   for (var i = 0; i < leaders.length; i++) {
     var l = leaders[i];
     var isMe = myCode && l.friend_code === myCode;
-    html += '<div class="lb-row' + (isMe ? ' lb-me' : '') + '">'
+    html += '<div class="lb-row' + (isMe ? ' lb-me' : '') + '" data-uid="' + (l.id || '') + '" style="border-bottom:1px solid #e0e0e0;cursor:pointer;">'
       + '<span class="lb-rank">' + (i < 3 ? medals[i] : '#' + (i + 1)) + '</span>'
       + '<span class="lb-pic">' + profilePicHtml(l.picture, 34, true) + '</span>'
-      + '<div class="lb-info"><div class="lb-name">' + escapeHtml(l.name) + '</div>'
+      + '<div class="lb-info"><div class="lb-name">' + escapeHtml(l.name) + (l.is_pro ? proBadge : '') + '</div>'
       + '<div class="lb-level">' + getLevelName(l.points) + '</div></div>'
       + '<span class="lb-pts">' + l.points + 'pts</span></div>';
   }
+
+  // Show current user's position if not in top 40
+  if (myRank) {
+    html += '<div style="text-align:center;padding:6px 0;color:#999;font-size:12px;border-bottom:1px solid #e0e0e0;">&#8942; &#8942; &#8942;</div>';
+    html += '<div class="lb-row lb-me" data-uid="' + (myRank.id || '') + '" style="border-bottom:1px solid #e0e0e0;cursor:pointer;background:#e3f2fd;">'
+      + '<span class="lb-rank" style="color:#1565c0;font-weight:bold;">#' + myRank.rank + '</span>'
+      + '<span class="lb-pic">' + profilePicHtml(myRank.picture, 34, true) + '</span>'
+      + '<div class="lb-info"><div class="lb-name" style="color:#1565c0;font-weight:bold;">' + escapeHtml(myRank.name) + ' (You)' + (myRank.is_pro ? proBadge : '') + '</div>'
+      + '<div class="lb-level">' + getLevelName(myRank.points) + '</div></div>'
+      + '<span class="lb-pts" style="color:#1565c0;font-weight:bold;">' + myRank.points + 'pts</span></div>';
+  }
+
   el.innerHTML = html;
 
-  // Clickable profile pictures
-  var pics = el.querySelectorAll('.clickable-pic');
-  for (var p = 0; p < pics.length; p++) {
-    pics[p].addEventListener('click', function(e) {
-      e.stopPropagation();
-      showPicOverlay(this.src);
+  // Click row to view profile
+  var rows = el.querySelectorAll('.lb-row');
+  for (var r = 0; r < rows.length; r++) {
+    rows[r].addEventListener('click', function() {
+      var uid = this.getAttribute('data-uid');
+      if (uid) showUserProfile(parseInt(uid));
     });
   }
 }
@@ -1146,18 +1334,82 @@ function adjustPolling() {
   pollNow();
   _pollInterval = setInterval(pollNow, delay);
 }
+// --- User activity tracking (idle = no interaction for 2 minutes) ---
+var _lastActivity = Date.now();
+var _userIdle = false;
+var _lastHeartbeat = 0;
+function _onUserActivity() {
+  _lastActivity = Date.now();
+  // Send heartbeat to update last_seen (throttled to once per 10 seconds)
+  if (Date.now() - _lastHeartbeat > 10000) {
+    _lastHeartbeat = Date.now();
+    apiCall('/user/update-activity', { device_id: getDeviceId(), status: 'online' }, function() {});
+  }
+  if (_userIdle) { _userIdle = false; adjustPolling(); }
+}
+['click','touchstart','keydown','scroll','mousemove'].forEach(function(evt) {
+  document.addEventListener(evt, _onUserActivity, { passive: true });
+});
+
+// --- Pause polling when tab hidden or user idle ---
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    clearInterval(_pollInterval);
+    _pollInterval = null;
+    // Mark user as offline immediately
+    apiCall('/user/update-activity', { device_id: getDeviceId(), status: 'offline' }, function() {});
+  } else {
+    _lastActivity = Date.now();
+    _userIdle = false;
+    adjustPolling();
+  }
+});
+
+// Send offline signal when page is being unloaded
+window.addEventListener('beforeunload', function() {
+  // Use sendBeacon for reliable delivery even when page is closing
+  if (navigator.sendBeacon) {
+    var data = JSON.stringify({ device_id: getDeviceId(), status: 'offline' });
+    navigator.sendBeacon(API_BASE + '/user/update-activity', data);
+  }
+});
+
 function pollNow() {
   if (!navigator.onLine) return;
+  if (document.hidden) return;
+
+  var timeSinceActivity = Date.now() - _lastActivity;
+
+  // Check idle: no interaction for 30 seconds
+  if (timeSinceActivity > 30000) {
+    if (!_userIdle) {
+      _userIdle = true;
+      // Mark user as offline when going idle
+      apiCall('/user/update-activity', { device_id: getDeviceId(), status: 'offline' }, function() {});
+    }
+    // Stop polling to prevent keeping user online
+    clearInterval(_pollInterval);
+    _pollInterval = null;
+    return;
+  }
+
   var ud = getUserData();
   if (!ud) return;
+
+  // Send heartbeat - user is active
   apiCall('/notifications/poll', { device_id: getDeviceId() }, function(resp) {
     if (resp.ok) {
       updateBadge(resp.unread_count);
     }
   });
+
   // Update online users count badge
   apiCall('/users/online', { device_id: getDeviceId() }, function(resp) {
-    if (resp.ok) updateOnlineCount((resp.users || []).length);
+    if (resp.ok) {
+      // Count only truly online users (within 20 seconds)
+      var onlineUsers = (resp.users || []).filter(function(u) { return isUserOnline(u.last_seen); });
+      updateOnlineCount(onlineUsers.length);
+    }
   });
 }
 function updateBadge(count) {
@@ -1174,7 +1426,7 @@ function updateOnlineCount(count) {
   var badge = document.getElementById('online-count-badge');
   if (!badge) return;
   if (count > 0) {
-    badge.textContent = count;
+    badge.textContent = '(' + count + ')';
     badge.style.display = 'inline';
   } else {
     badge.style.display = 'none';
@@ -1205,7 +1457,7 @@ function renderNotifications(el, notifs, hasMore, append) {
   var oldBtn = el.querySelector('.load-more-wrap');
   if (oldBtn) oldBtn.remove();
 
-  var typeBadges = { challenge_received: ['Challenge', 'notif-type-challenge'], challenge_result: ['Result', 'notif-type-result'] };
+  var typeBadges = { challenge_received: ['Challenge', 'notif-type-challenge'], challenge_result: ['Result', 'notif-type-result'], weekly_reward: ['🏆 Weekly Leader', 'notif-type-reward'], post_liked: ['❤️ Like', 'notif-type-post'], post_commented: ['💬 Comment', 'notif-type-post'] };
   for (var i = 0; i < notifs.length; i++) {
     var n = notifs[i];
     var data = typeof n.data === 'string' ? JSON.parse(n.data) : n.data;
@@ -1224,8 +1476,22 @@ function renderNotifications(el, notifs, hasMore, append) {
     }
     else if (n.type === 'friend_request') text += '<b>' + escapeHtml(data.from_name) + '</b> wants to be your friend';
     else if (n.type === 'friend_accepted') text += '<b>' + escapeHtml(data.from_name) + '</b> accepted your friend request';
+    else if (n.type === 'post_liked') {
+      text += '<b>' + escapeHtml(data.user_name) + '</b> liked your post';
+      if (data.post_snippet) text += '<br><i style="color:#80868b;">→ "' + escapeHtml(data.post_snippet) + '"</i>';
+      text += '<br><span style="color:#1a73e8;font-size:12px;">Tap to view post</span>';
+    }
+    else if (n.type === 'post_commented') {
+      text += '<b>' + escapeHtml(data.user_name) + '</b> commented on your post';
+      if (data.post_snippet) text += '<br><i style="color:#80868b;">→ "' + escapeHtml(data.post_snippet) + '"</i>';
+      if (data.comment) text += '<br><i style="color:#5f6368;">"' + escapeHtml(data.comment) + '"</i>';
+      text += '<br><span style="color:#1a73e8;font-size:12px;">Tap to view post</span>';
+    }
+    else if (n.type === 'weekly_reward') {
+      text += 'Congratulations! You are the <b>#1 leader</b> this week with <b>' + (data.points || 0) + '</b> points! Tap to claim your <b>free 7-day subscription</b>.';
+    }
 
-    var picHtml = profilePicHtml(data.from_picture || '', 38, false);
+    var picHtml = n.type === 'weekly_reward' ? '<span style="font-size:30px;">🏆</span>' : profilePicHtml(data.from_picture || '', 38, false);
     var row = document.createElement('div');
     row.className = 'notif-row' + (n.read ? '' : ' unread');
     row.setAttribute('data-ntype', n.type);
@@ -1238,8 +1504,48 @@ function renderNotifications(el, notifs, hasMore, append) {
     row.addEventListener('click', (function(ntype, ndata, nid, rowEl) {
       return function() {
         // Navigate to challenge
-        if (ntype === 'challenge_received' && ndata.challenge_id) openReceivedChallenge(ndata.challenge_id);
+        if (ntype === 'weekly_reward' && ndata.sub_code) {
+          // Auto-activate the free subscription
+          if (window._bemdic_activateCode) window._bemdic_activateCode(ndata.sub_code);
+        }
+        else if (ntype === 'challenge_received' && ndata.challenge_id) openReceivedChallenge(ndata.challenge_id);
         else if (ntype === 'challenge_result' && ndata.challenge_id) openReceivedChallenge(ndata.challenge_id);
+        else if ((ntype === 'post_liked' || ntype === 'post_commented') && ndata.post_id) {
+          // Navigate back to home view
+          var allSections = document.querySelectorAll('section[id$="-section"]');
+          for (var s = 0; s < allSections.length; s++) {
+            allSections[s].style.display = 'none';
+          }
+
+          // Show dictionary wrapper and pagination if they exist
+          var dicWrapper = document.getElementById('dictionary-wrapper');
+          var paginationBtns = document.getElementById('pagination-btns-wrapper');
+          if (dicWrapper) dicWrapper.style.display = 'block';
+          if (paginationBtns) paginationBtns.style.display = 'block';
+
+          // Ensure posts feed is visible and loaded
+          var postsFeed = document.getElementById('posts-feed-section');
+          if (postsFeed) {
+            postsFeed.style.display = 'block';
+
+            // Check if posts are already loaded, if not load them
+            var postsList = document.getElementById('posts-list-wrapper');
+            if (!postsList || postsList.children.length === 0) {
+              loadPosts(true);
+            }
+
+            // Wait for posts to load and then scroll
+            setTimeout(function() {
+              var postCard = document.querySelector('.post-card[data-post-id="' + ndata.post_id + '"]');
+              if (postCard) {
+                postCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                postCard.style.transition = 'background-color 0.5s';
+                postCard.style.backgroundColor = '#e8f0fe';
+                setTimeout(function() { postCard.style.backgroundColor = ''; }, 2000);
+              }
+            }, 800);
+          }
+        }
         // Delete notification
         rowEl.style.transition = 'opacity .3s, max-height .3s';
         rowEl.style.opacity = '0';
@@ -1265,6 +1571,426 @@ function renderNotifications(el, notifs, hasMore, append) {
   }
 }
 
+// ---- POSTS FEED ----
+var _postsOffset = 0;
+var _postsLimit = 20;
+
+function initPostEditor() {
+  var input = document.getElementById('post-content-input');
+  var charCount = document.getElementById('post-char-count');
+  var submitBtn = document.getElementById('post-submit-btn');
+
+  if (!input || !charCount || !submitBtn) return;
+
+  input.addEventListener('input', function() {
+    var len = this.value.length;
+    charCount.textContent = len + '/500';
+    if (len > 450) charCount.style.color = '#ea4335';
+    else charCount.style.color = '#80868b';
+  });
+
+  submitBtn.addEventListener('click', function() {
+    var content = input.value.trim();
+    if (content.length < 5) {
+      alert('Post must be at least 5 characters');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Posting...';
+
+    apiCall('/posts/create', { device_id: getDeviceId(), content: content }, function(resp) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Post (+3pts)';
+
+      if (resp.ok) {
+        input.value = '';
+        charCount.textContent = '0/500';
+        loadPosts(true);
+        syncPoints();
+      } else {
+        alert(resp.error || 'Failed to post');
+      }
+    });
+  });
+}
+
+function loadPosts(reset) {
+  if (reset) _postsOffset = 0;
+
+  var listWrapper = document.getElementById('posts-list-wrapper');
+  var loadMoreWrap = document.getElementById('posts-load-more-wrap');
+
+  if (reset && listWrapper) listWrapper.innerHTML = '<div class="s-loading">Loading...</div>';
+
+  apiCall('/posts/list', {
+    device_id: getDeviceId(),
+    limit: _postsLimit,
+    offset: _postsOffset
+  }, function(resp) {
+    if (!resp.ok || !resp.posts) {
+      if (listWrapper) listWrapper.innerHTML = '<div class="s-empty">Could not load posts</div>';
+      return;
+    }
+
+    if (reset && listWrapper) listWrapper.innerHTML = '';
+
+    if (resp.posts.length === 0 && _postsOffset === 0) {
+      if (listWrapper) listWrapper.innerHTML = '<div class="s-empty">No posts yet. Be the first to post!</div>';
+      if (loadMoreWrap) loadMoreWrap.style.display = 'none';
+      return;
+    }
+
+    renderPosts(resp.posts, listWrapper);
+
+    if (loadMoreWrap) {
+      if (resp.posts.length === _postsLimit) {
+        loadMoreWrap.style.display = 'block';
+      } else {
+        loadMoreWrap.style.display = 'none';
+      }
+    }
+
+    _postsOffset += resp.posts.length;
+  });
+}
+
+function renderPosts(posts, container) {
+  if (!container) return;
+
+  var myData = getUserData();
+  var myUserId = myData ? myData.id : null;
+  var isAdmin = myData && myData.name && myData.name.toLowerCase() === 'bemdic';
+
+  posts.forEach(function(post) {
+    var isMyPost = myUserId && post.user_id === myUserId;
+    var canEdit = isMyPost || isAdmin;
+
+    var actionButtons = '';
+    if (canEdit) {
+      actionButtons = '<div class="post-actions-btns">'
+        + '<button class="post-edit-btn" data-post-id="' + post.id + '">Edit</button>'
+        + '<button class="post-delete-btn" data-post-id="' + post.id + '">Delete</button>'
+        + '</div>';
+    }
+
+    var html = '<div class="post-card" data-post-id="' + post.id + '">'
+      + '<div class="post-header">'
+      + '<div class="post-author-pic" data-uid="' + post.user_id + '">' + profilePicHtml(post.user_picture, 40, true) + '</div>'
+      + '<div class="post-author-info">'
+      + '<div class="post-author-name" data-uid="' + post.user_id + '">' + escapeHtml(post.user_name) + '</div>'
+      + '<div class="post-author-time" data-uid="' + post.user_id + '">' + timeAgo(post.created_at) + '</div>'
+      + '</div>'
+      + actionButtons
+      + '</div>'
+      + '<div class="post-content" id="post-content-' + post.id + '">' + escapeHtml(post.content) + '</div>'
+      + '<div class="post-edit-form" id="post-edit-form-' + post.id + '">'
+      + '<textarea class="post-edit-textarea" id="post-edit-textarea-' + post.id + '">' + escapeHtml(post.content) + '</textarea>'
+      + '<div class="post-edit-actions">'
+      + '<button class="post-edit-cancel" data-post-id="' + post.id + '">Cancel</button>'
+      + '<button class="post-edit-save" data-post-id="' + post.id + '">Save</button>'
+      + '</div>'
+      + '</div>'
+      + '<div class="post-actions">'
+      + '<button class="post-action-btn like-btn' + (post.user_liked ? ' liked' : '') + '" data-post-id="' + post.id + '">'
+      + '<span class="action-icon">' + (post.user_liked ? '❤️' : '🤍') + '</span>'
+      + '<span class="action-count">' + (post.likes_count || 0) + '</span>'
+      + '</button>'
+      + '<button class="post-action-btn comment-btn" data-post-id="' + post.id + '">'
+      + '<span class="action-icon">💬</span>'
+      + '<span class="action-count">' + (post.comments_count || 0) + '</span>'
+      + '</button>'
+      + '</div>'
+      + '<div class="post-comments-section" id="comments-' + post.id + '" style="display:none;"></div>'
+      + '</div>';
+
+    container.insertAdjacentHTML('beforeend', html);
+  });
+
+  attachPostEventListeners(container);
+}
+
+function attachPostEventListeners(container) {
+  var likeBtns = container.querySelectorAll('.like-btn');
+  for (var i = 0; i < likeBtns.length; i++) {
+    likeBtns[i].addEventListener('click', function() {
+      var postId = parseInt(this.getAttribute('data-post-id'));
+      toggleLike(postId, this);
+    });
+  }
+
+  var commentBtns = container.querySelectorAll('.comment-btn');
+  for (var j = 0; j < commentBtns.length; j++) {
+    commentBtns[j].addEventListener('click', function() {
+      var postId = parseInt(this.getAttribute('data-post-id'));
+      toggleComments(postId);
+    });
+  }
+
+  var editBtns = container.querySelectorAll('.post-edit-btn');
+  for (var k = 0; k < editBtns.length; k++) {
+    editBtns[k].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var postId = parseInt(this.getAttribute('data-post-id'));
+      showEditForm(postId);
+    });
+  }
+
+  var deleteBtns = container.querySelectorAll('.post-delete-btn');
+  for (var l = 0; l < deleteBtns.length; l++) {
+    deleteBtns[l].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var postId = parseInt(this.getAttribute('data-post-id'));
+      deletePost(postId);
+    });
+  }
+
+  var cancelBtns = container.querySelectorAll('.post-edit-cancel');
+  for (var n = 0; n < cancelBtns.length; n++) {
+    cancelBtns[n].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var postId = parseInt(this.getAttribute('data-post-id'));
+      hideEditForm(postId);
+    });
+  }
+
+  var saveBtns = container.querySelectorAll('.post-edit-save');
+  for (var o = 0; o < saveBtns.length; o++) {
+    saveBtns[o].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var postId = parseInt(this.getAttribute('data-post-id'));
+      saveEditPost(postId);
+    });
+  }
+
+  var pics = container.querySelectorAll('.clickable-pic');
+  for (var m = 0; m < pics.length; m++) {
+    pics[m].addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (this.tagName === 'IMG') showPicOverlay(this.src);
+    });
+  }
+
+  // Profile click handlers for posts
+  var authorNames = container.querySelectorAll('.post-author-name');
+  for (var p = 0; p < authorNames.length; p++) {
+    authorNames[p].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var uid = parseInt(this.getAttribute('data-uid'));
+      if (uid) showUserProfile(uid);
+    });
+  }
+
+  var authorTimes = container.querySelectorAll('.post-author-time');
+  for (var q = 0; q < authorTimes.length; q++) {
+    authorTimes[q].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var uid = parseInt(this.getAttribute('data-uid'));
+      if (uid) showUserProfile(uid);
+    });
+  }
+
+  var authorPics = container.querySelectorAll('.post-author-pic');
+  for (var r = 0; r < authorPics.length; r++) {
+    authorPics[r].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var uid = parseInt(this.getAttribute('data-uid'));
+      if (uid) showUserProfile(uid);
+    });
+  }
+}
+
+function toggleLike(postId, btn) {
+  apiCall('/posts/like', { device_id: getDeviceId(), post_id: postId }, function(resp) {
+    if (resp.ok) {
+      var icon = btn.querySelector('.action-icon');
+      var count = btn.querySelector('.action-count');
+      var currentCount = parseInt(count.textContent) || 0;
+
+      if (resp.action === 'liked') {
+        btn.classList.add('liked');
+        icon.textContent = '❤️';
+        count.textContent = currentCount + 1;
+      } else {
+        btn.classList.remove('liked');
+        icon.textContent = '🤍';
+        count.textContent = Math.max(0, currentCount - 1);
+      }
+    }
+  });
+}
+
+function toggleComments(postId) {
+  var commentsSection = document.getElementById('comments-' + postId);
+  if (!commentsSection) return;
+
+  if (commentsSection.style.display === 'none') {
+    commentsSection.style.display = 'block';
+    loadComments(postId, commentsSection);
+  } else {
+    commentsSection.style.display = 'none';
+  }
+}
+
+function loadComments(postId, container) {
+  container.innerHTML = '<div class="s-loading">Loading comments...</div>';
+
+  apiCall('/posts/comments-list', { post_id: postId }, function(resp) {
+    if (!resp.ok || !resp.comments) {
+      container.innerHTML = '<div class="s-empty">Could not load comments</div>';
+      return;
+    }
+
+    container.innerHTML = '';
+
+    resp.comments.forEach(function(comment) {
+      var html = '<div class="post-comment">'
+        + '<div class="comment-pic">' + profilePicHtml(comment.user_picture, 32, false) + '</div>'
+        + '<div class="comment-content">'
+        + '<div class="comment-author">' + escapeHtml(comment.user_name) + '</div>'
+        + '<div class="comment-text">' + escapeHtml(comment.content) + '</div>'
+        + '</div></div>';
+      container.insertAdjacentHTML('beforeend', html);
+    });
+
+    var inputHtml = '<div class="comment-input-wrapper">'
+      + '<input type="text" class="comment-input" placeholder="Write a comment..." maxlength="300" data-post-id="' + postId + '">'
+      + '<button class="s-btn s-btn-p comment-submit-btn" data-post-id="' + postId + '">Send</button>'
+      + '</div>';
+    container.insertAdjacentHTML('beforeend', inputHtml);
+
+    var submitBtn = container.querySelector('.comment-submit-btn');
+    var input = container.querySelector('.comment-input');
+
+    if (submitBtn && input) {
+      submitBtn.addEventListener('click', function() {
+        submitComment(postId, input, container);
+      });
+
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') submitComment(postId, input, container);
+      });
+    }
+  });
+}
+
+function submitComment(postId, input, container) {
+  var content = input.value.trim();
+  if (!content) return;
+
+  apiCall('/posts/comment', {
+    device_id: getDeviceId(),
+    post_id: postId,
+    content: content
+  }, function(resp) {
+    if (resp.ok) {
+      input.value = '';
+      loadComments(postId, container);
+
+      var commentBtn = document.querySelector('.comment-btn[data-post-id="' + postId + '"]');
+      if (commentBtn) {
+        var countEl = commentBtn.querySelector('.action-count');
+        if (countEl) {
+          var current = parseInt(countEl.textContent) || 0;
+          countEl.textContent = current + 1;
+        }
+      }
+    } else {
+      alert(resp.error || 'Failed to post comment');
+    }
+  });
+}
+
+function deletePost(postId) {
+  if (!confirm('Delete this post? You will lose 3 points.')) return;
+
+  apiCall('/posts/delete', { device_id: getDeviceId(), post_id: postId }, function(resp) {
+    if (resp.ok) {
+      loadPosts(true);
+      syncPoints();
+    } else {
+      alert(resp.error || 'Failed to delete post');
+    }
+  });
+}
+
+function showEditForm(postId) {
+  var contentDiv = document.getElementById('post-content-' + postId);
+  var editForm = document.getElementById('post-edit-form-' + postId);
+
+  if (contentDiv) contentDiv.style.display = 'none';
+  if (editForm) editForm.style.display = 'block';
+}
+
+function hideEditForm(postId) {
+  var contentDiv = document.getElementById('post-content-' + postId);
+  var editForm = document.getElementById('post-edit-form-' + postId);
+  var textarea = document.getElementById('post-edit-textarea-' + postId);
+
+  if (contentDiv) contentDiv.style.display = 'block';
+  if (editForm) editForm.style.display = 'none';
+
+  // Reset textarea to original content
+  if (textarea && contentDiv) {
+    textarea.value = contentDiv.textContent;
+  }
+}
+
+function saveEditPost(postId) {
+  var textarea = document.getElementById('post-edit-textarea-' + postId);
+  if (!textarea) return;
+
+  var content = textarea.value.trim();
+  if (!content) {
+    alert('Post content cannot be empty');
+    return;
+  }
+
+  if (content.length < 5) {
+    alert('Post too short (min 5 characters)');
+    return;
+  }
+
+  apiCall('/posts/edit', {
+    device_id: getDeviceId(),
+    post_id: postId,
+    content: content
+  }, function(resp) {
+    if (resp.ok) {
+      hideEditForm(postId);
+      loadPosts(true);
+    } else {
+      alert(resp.error || 'Failed to edit post');
+    }
+  });
+}
+
+var loadMoreBtn = document.getElementById('posts-load-more-btn');
+if (loadMoreBtn) {
+  loadMoreBtn.addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+    loadPosts(false);
+    setTimeout(function() {
+      btn.disabled = false;
+      btn.textContent = 'Load More';
+    }, 1000);
+  });
+}
+
+window.addEventListener('load', function() {
+  var wordsLoader = document.getElementById('words-loader');
+  if (wordsLoader && wordsLoader.style.display !== 'none') {
+    var postsFeed = document.getElementById('posts-feed-section');
+    if (postsFeed) {
+      postsFeed.style.display = 'block';
+      loadPosts(true);
+      initPostEditor();
+    }
+  }
+});
+
 // ---- POINTS SYNC ----
 function syncPoints() {
   var localPts = parseInt(localStorage.getItem('quiz-points')) || 0;
@@ -1289,13 +2015,48 @@ checkAndRegisterUser();
 
 (function(){
 
-// --- CONFIG (change these as needed) ---
+// --- CONFIG (defaults, overridden by server settings) ---
 var SUB_SECRET = 7391;  // secret number for code validation - CHANGE THIS to your own number
-var FREE_WORD_LIMIT = 30;
-var FREE_QUIZ_LIMIT = 10;
-var SUB_DAYS = 30;
+var FREE_WORD_LIMIT = 5;
+var FREE_QUIZ_LIMIT = 1;
+var SUB_DAYS = 4;
 var PAYMENT_NUMBER = '0962464552'; // your mobile money number
-var PAYMENT_AMOUNT = 'K5';
+var PAYMENT_AMOUNT = 'K2';
+
+// --- FETCH SETTINGS FROM SERVER (updates config dynamically) ---
+(function(){
+  try {
+    var cached = localStorage.getItem('bemdic_server_settings');
+    if (cached) {
+      var s = JSON.parse(cached);
+      if (s.free_word_limit) FREE_WORD_LIMIT = parseInt(s.free_word_limit) || FREE_WORD_LIMIT;
+      if (s.free_quiz_limit) FREE_QUIZ_LIMIT = parseInt(s.free_quiz_limit) || FREE_QUIZ_LIMIT;
+      if (s.sub_days) SUB_DAYS = parseInt(s.sub_days) || SUB_DAYS;
+      if (s.payment_amount) PAYMENT_AMOUNT = s.payment_amount;
+      if (s.payment_number) PAYMENT_NUMBER = s.payment_number;
+    }
+  } catch(e){}
+  if (navigator.onLine) {
+    fetch('https://bemba-dictionary.pages.dev/api/settings/get', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    }).then(function(r){ return r.json(); }).then(function(resp){
+      if (resp.ok && resp.settings) {
+        var s = resp.settings;
+        localStorage.setItem('bemdic_server_settings', JSON.stringify(s));
+        if (s.free_word_limit) FREE_WORD_LIMIT = parseInt(s.free_word_limit) || FREE_WORD_LIMIT;
+        if (s.free_quiz_limit) FREE_QUIZ_LIMIT = parseInt(s.free_quiz_limit) || FREE_QUIZ_LIMIT;
+        if (s.sub_days) SUB_DAYS = parseInt(s.sub_days) || SUB_DAYS;
+        if (s.payment_amount) PAYMENT_AMOUNT = s.payment_amount;
+        if (s.payment_number) PAYMENT_NUMBER = s.payment_number;
+        // rebuild modal cache and refresh visible UI with updated values
+        localStorage.setItem('subscription_modal', buildModalHTML());
+        refreshSettingsUI();
+      }
+    }).catch(function(){});
+  }
+})();
 
 // --- HELPER: get today as YYYY-MM-DD ---
 function getToday(){
@@ -1400,28 +2161,35 @@ function activateSubscription(code){
   }
   return false;
 }
+window._bemdic_activateCode = activateSubscription;
 
-// --- PAYWALL MODAL (stored in localStorage for persistence) ---
-var subscription_modal = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;">'
-  + '<div style="background:#fff;border-radius:12px;padding:24px 18px;max-width:340px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.3);">'
-  + '<h2 style="margin:0 0 8px;color:#222;font-size:20px;">Get Unlimited dictionary</h2>'
+// --- PAYWALL MODAL (built dynamically to always use current settings) ---
+function buildModalHTML() {
+  return '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;overflow-y:auto;">'
+  + '<div style="background:#fff;border-radius:12px;padding:24px 18px;max-width:360px;width:92%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.3);margin:16px auto;">'
+  + '<h2 style="margin:0 0 8px;color:#222;font-size:20px;">Get Unlimited Dictionary</h2>'
   + '<p style="color:#444;font-size:14px;line-height:1.5;margin:8px 0;" id="bemdic-pw-reason"></p>'
-  + '<p style="color:#444;font-size:14px;"> for just <b>'+PAYMENT_AMOUNT+'</b>/month!</p>'
-  + '<div style="text-align:left;background:#f5f5f5;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13px;color:#333;">'
-  + '<div style="color:#084; margin-bottom:8px;">How to subscribe:</div>'
+  + '<p style="color:#444;font-size:14px;"> for just <b>'+PAYMENT_AMOUNT+'</b> for '+SUB_DAYS+' days!</p>'
+  + '<div id="bemdic-momo-section" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:8px;padding:14px;margin:12px 0;border:1px solid #c8e6c9;">'
+  + '<div style="color:#2e7d32;font-weight:bold;font-size:14px;margin-bottom:8px;">Pay with Mobile Money</div>'
+  + '<input type="tel" id="bemdic-momo-phone" placeholder="e.g. 0962464552" maxlength="13" style="width:80%;padding:10px;border:2px solid #a5d6a7;border-radius:8px;font-size:16px;text-align:center;margin:6px 0;outline:none;">'
+  + '<div id="bemdic-momo-status" style="font-size:13px;min-height:18px;margin:4px 0;color:#555;"></div>'
+  + '<button id="bemdic-momo-btn" style="padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;background:#2e7d32;color:#fff;margin-top:4px;">Pay '+PAYMENT_AMOUNT+' Now</button>'
+  + '</div>'
+  + '<div style="display:flex;align-items:center;margin:12px 0;"><div style="flex:1;height:1px;background:#ddd;"></div><span style="padding:0 10px;color:#999;font-size:12px;">OR enter code manually</span><div style="flex:1;height:1px;background:#ddd;"></div></div>'
+  + '<div style="text-align:left;background:#f5f5f5;border-radius:8px;padding:12px 14px;margin:0 0 12px;font-size:13px;color:#333;">'
+  + '<div style="color:#084;margin-bottom:8px;">Manual payment:</div>'
   + '<ol id="payments-steps"><li>Send <b>'+PAYMENT_AMOUNT+'</b> to <b>'+PAYMENT_NUMBER+'</b> via Airtel/MTN/Zamtel Money</li>'
-  + '<li>WhatsApp your <b>transaction ID</b> or <b>Screenshot</b> to <b>'+PAYMENT_NUMBER+'</b></li>'
-  + '<li>You will receive a <b>subscription code</b> once verified</li>'
-  + '<li>Enter the code below to activate</li></ol>'
+  + '<li>WhatsApp your <b>transaction ID</b> to <b>'+PAYMENT_NUMBER+'</b></li>'
+  + '<li>Enter the code you receive below</li></ol>'
   + '</div>'
   + '<div><input type="text" id="bemdic-sub-code" placeholder="Enter code e.g. A3F2-B1C4" maxlength="20" style="width:80%;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:16px;text-align:center;letter-spacing:2px;margin:8px 0;outline:none;"></div>'
   + '<div id="bemdic-pw-error" style="color:crimson;font-size:13px;min-height:18px;margin:4px 0;"></div>'
-  + '<div><button id="bemdic-activate-btn" style="display:inline-block;padding:10px 28px;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin:6px 4px;background:#084;color:#fff;">Activate</button>'
+  + '<div><button id="bemdic-activate-btn" style="display:inline-block;padding:10px 28px;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin:6px 4px;background:#084;color:#fff;">Activate Code</button>'
   + '<button id="bemdic-close-btn" style="display:inline-block;padding:10px 28px;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin:6px 4px;background:#eee;color:#555;">Try Tomorrow</button></div>'
   + '</div></div>';
-
-// store the modal HTML in localStorage so it persists
-localStorage.setItem('subscription_modal', subscription_modal);
+}
+localStorage.setItem('subscription_modal', buildModalHTML());
 
 function showPaywall(reason){
   if(document.getElementById('bemdic-paywall')) return;
@@ -1435,8 +2203,8 @@ function showPaywall(reason){
     if(u.quizzes >= FREE_QUIZ_LIMIT) reasonText = 'You have used your <b>'+FREE_QUIZ_LIMIT+' free quiz session</b> for today. Come back tomorrow or subscribe for unlimited access.';
   }
 
-  // read modal from localStorage
-  var modalHTML = localStorage.getItem('subscription_modal') || subscription_modal;
+  // build modal with current settings values
+  var modalHTML = buildModalHTML();
 
   var modal = document.createElement('div');
   modal.id = 'bemdic-paywall';
@@ -1477,6 +2245,86 @@ function showPaywall(reason){
     }
   });
 
+  // --- Mobile Money Pay button ---
+  var momoBtn = document.getElementById('bemdic-momo-btn');
+  if(momoBtn) momoBtn.addEventListener('click', function(){
+    var phone = document.getElementById('bemdic-momo-phone').value.trim();
+    var statusEl = document.getElementById('bemdic-momo-status');
+    if(!phone || phone.length < 10){
+      statusEl.style.color = 'crimson';
+      statusEl.textContent = 'Please enter a valid phone number';
+      return;
+    }
+    momoBtn.disabled = true;
+    momoBtn.textContent = 'Processing...';
+    statusEl.style.color = '#555';
+    statusEl.textContent = 'Initiating payment...';
+
+    var _api = window._bemdic_apiCall;
+    var _did = window._bemdic_getDeviceId;
+    if (!_api || !_did) { statusEl.style.color='crimson'; statusEl.textContent='Payment not available'; momoBtn.disabled=false; momoBtn.textContent='Pay '+PAYMENT_AMOUNT+' Now'; return; }
+
+    _api('/subscribe/pay', {
+      phone: phone,
+      device_id: _did()
+    }, function(resp){
+      if(resp.ok){
+        statusEl.style.color = '#2e7d32';
+        statusEl.textContent = resp.message || 'Check your phone for payment prompt!';
+        momoBtn.textContent = 'Waiting for confirmation...';
+        // Poll for payment verification
+        var txRef = resp.tx_ref;
+        var pollCount = 0;
+        var pollInterval = setInterval(function(){
+          pollCount++;
+          _api('/subscribe/verify', {
+            tx_ref: txRef,
+            device_id: _did()
+          }, function(vResp){
+            if(vResp.ok && vResp.status === 'successful' && vResp.subscription_code){
+              clearInterval(pollInterval);
+              if(activateSubscription(vResp.subscription_code)){
+                statusEl.style.color = '#2e7d32';
+                statusEl.innerHTML = '<b>Payment successful!</b> Enjoy ' + SUB_DAYS + ' days of unlimited access!';
+                momoBtn.style.display = 'none';
+                setTimeout(function(){
+                  document.body.removeChild(modal);
+                  var freeBar = document.getElementById('bemdic-free-bar');
+                  if(freeBar) freeBar.parentNode.removeChild(freeBar);
+                  var wl = document.getElementById('words-loader');
+                  var pb = document.getElementById('pagination-btns-wrapper');
+                  if(wl) wl.style.display = 'block';
+                  if(pb) pb.style.display = 'block';
+                  if(typeof _original_load_dictionary === 'function') _original_load_dictionary();
+                }, 2000);
+              }
+            } else if(vResp.ok && vResp.status === 'failed'){
+              clearInterval(pollInterval);
+              statusEl.style.color = 'crimson';
+              statusEl.textContent = 'Payment failed. Please try again.';
+              momoBtn.disabled = false;
+              momoBtn.textContent = 'Pay '+PAYMENT_AMOUNT+' Now';
+            }
+            // else still pending, keep polling
+          });
+          // Stop polling after 3 minutes
+          if(pollCount > 36){
+            clearInterval(pollInterval);
+            statusEl.style.color = '#e65100';
+            statusEl.textContent = 'Payment timed out. If you paid, contact '+PAYMENT_NUMBER;
+            momoBtn.disabled = false;
+            momoBtn.textContent = 'Try Again';
+          }
+        }, 5000); // poll every 5 seconds
+      } else {
+        statusEl.style.color = 'crimson';
+        statusEl.textContent = resp.error || 'Payment failed. Try again.';
+        momoBtn.disabled = false;
+        momoBtn.textContent = 'Pay '+PAYMENT_AMOUNT+' Now';
+      }
+    });
+  });
+
   // close button
   document.getElementById('bemdic-close-btn').addEventListener('click', function(){
     document.body.removeChild(modal);
@@ -1503,6 +2351,35 @@ function updateFreeBar(){
   bar.innerHTML = 'Free: <b>'+wLeft+'</b> words & <b>'+qLeft+'</b> quiz left today '+upgradeBtnHTML;
   var newBtn = document.getElementById('bemdic-upgrade-bar');
   if(newBtn) newBtn.addEventListener('click', function(){ showPaywall('words'); });
+}
+
+// --- REFRESH UI AFTER SETTINGS FETCH ---
+function refreshSettingsUI() {
+  // Update free bar
+  updateFreeBar();
+  // Update "Get Unlimited" upgrade button on free bar
+  var upgradeBar = document.getElementById('bemdic-upgrade-bar');
+  if (upgradeBar) upgradeBar.textContent = 'Get Unlimited- ' + PAYMENT_AMOUNT;
+  // Update More menu subscription link
+  var moreLinks = document.getElementById('more-links-wrapper');
+  if (moreLinks) {
+    var items = moreLinks.querySelectorAll('li');
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].textContent.indexOf('Get Unlimited') > -1) {
+        items[i].innerHTML = '<span>&#11088;</span> Get Unlimited access (' + PAYMENT_AMOUNT + ' for ' + SUB_DAYS + ' days)';
+        break;
+      }
+    }
+  }
+  // Update limit button if shown
+  var limitBtn = document.getElementById('bemdic-limit-btn');
+  if (limitBtn) limitBtn.textContent = 'Get Unlimited - ' + PAYMENT_AMOUNT + ' for ' + SUB_DAYS + ' days';
+  // Update loading_data message if over limit
+  var loadingEl = document.getElementById('loading_data');
+  if (loadingEl && loadingEl.querySelector('#bemdic-limit-btn')) {
+    var msgP = loadingEl.querySelector('p');
+    if (msgP) msgP.innerHTML = 'You\'ve used all <b>' + FREE_WORD_LIMIT + '</b> free translations for today.';
+  }
 }
 
 // --- INTERCEPT WORD VIEWS ---
@@ -1543,7 +2420,7 @@ var quizStartBtns = document.querySelectorAll('#start-quiz');
 for(var q = 0; q < quizStartBtns.length; q++){
   (function(btn){
     var originalOnclick = btn.getAttribute('onclick');
-    if(originalOnclick && originalOnclick.indexOf('load_question') > -1){
+    if(originalOnclick && originalOnclick.indexOf('load_question') > -1 && originalOnclick.indexOf('location.assign') === -1){
       btn.removeAttribute('onclick');
       btn.addEventListener('click', function(){
         if(!isSubscribed()){
@@ -1565,15 +2442,13 @@ var moreLinks = document.getElementById('more-links-wrapper');
 if(moreLinks){
   var subItem = document.createElement('li');
   if(isSubscribed()){
-    var days_left_text='days left'
-    if(getSubDaysLeft() < 2){
-      days_left_text='day left'
-    }
-    subItem.innerHTML = '<span>&#11088;</span> Premium (' + getSubDaysLeft() + days_left_text + ')';
+    var daysLeft = getSubDaysLeft();
+    var daysText = daysLeft === 1 ? 'day' : 'days';
+    subItem.innerHTML = '<span>&#11088;</span> Premium <span style="background:#084;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;margin-left:4px;">' + daysLeft + ' ' + daysText + ' left</span>';
     subItem.style.color = '#084';
     subItem.style.fontWeight = 'bold';
   } else {
-    subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access ('+PAYMENT_AMOUNT+'/month)';
+    subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access ('+PAYMENT_AMOUNT+' for '+SUB_DAYS+' days)';
     subItem.style.color = 'aqua';
     subItem.style.cursor = 'pointer';
     subItem.addEventListener('click', function(){
@@ -1590,7 +2465,16 @@ if(!isSubscribed()){
     // hide the word content that loaded before api.js
     var appendList = document.getElementById('append_list');
     if(appendList) appendList.innerHTML = '';
-    showPaywall('words');
+    // replace loading text with upgrade prompt
+    var loadingEl = document.getElementById('loading_data');
+    if(loadingEl){
+      loadingEl.innerHTML = '<div style="text-align:center;padding:30px 15px;">'
+        + '<p style="font-size:16px;color:#555;margin:0 0 8px;">You\'ve used all <b>'+FREE_WORD_LIMIT+'</b> free translations for today.</p>'
+        + '<p style="font-size:13px;color:#888;margin:0 0 14px;">Subscribe for unlimited access to all words and quizzes.</p>'
+        + '<button id="bemdic-limit-btn" style="padding:10px 22px;border:none;border-radius:8px;font-size:15px;cursor:pointer;background:#2e7d32;color:#fff;">Get Unlimited - '+PAYMENT_AMOUNT+' for '+SUB_DAYS+' days</button>'
+        + '</div>';
+      document.getElementById('bemdic-limit-btn').addEventListener('click', function(){ showPaywall('words'); });
+    }
   }
 }
 
@@ -1853,7 +2737,7 @@ var _bemdic_offline_sub = function() {
   for (var q = 0; q < quizBtns.length; q++) {
     (function(btn) {
       var origClick = btn.getAttribute('onclick');
-      if (origClick && origClick.indexOf('load_question') > -1) {
+      if (origClick && origClick.indexOf('load_question') > -1 && origClick.indexOf('location.assign') === -1) {
         btn.removeAttribute('onclick');
         btn.addEventListener('click', function() {
           if (!isSubscribed()) {
@@ -1872,12 +2756,13 @@ var _bemdic_offline_sub = function() {
   if (moreLinks) {
     var subItem = document.createElement('li');
     if (isSubscribed()) {
-      var days_left_text = getSubDaysLeft() < 2 ? 'day left' : 'days left';
-      subItem.innerHTML = '<span>&#11088;</span> Premium (' + getSubDaysLeft() + ' ' + days_left_text + ')';
+      var daysLeft = getSubDaysLeft();
+      var daysText = daysLeft === 1 ? 'day' : 'days';
+      subItem.innerHTML = '<span>&#11088;</span> Premium <span style="background:#084;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;margin-left:4px;">' + daysLeft + ' ' + daysText + ' left</span>';
       subItem.style.color = '#084';
       subItem.style.fontWeight = 'bold';
     } else {
-      subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access (' + PAYMENT_AMOUNT + '/month)';
+      subItem.innerHTML = '<span>&#11088;</span> Get Unlimited access (' + PAYMENT_AMOUNT + ' for '+SUB_DAYS+' days)';
       subItem.style.color = 'aqua';
       subItem.style.cursor = 'pointer';
       subItem.addEventListener('click', function() { showPaywall('words'); });

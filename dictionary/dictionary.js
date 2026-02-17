@@ -1,4 +1,3 @@
-
 var dictionary={
 abandon:'<span id=abandon class=bemba_text>ukulekelesha</span> <div class=in_english><span>English&gt;&gt;</span> Many people have  <b>abandoned</b>  their children</div><div class=in_bemba><span>Bemba&gt;&gt;</span> Abantu abengi  <b>balilekelesha</b>  abana babo</div>',
 abase:'<span id=abase class=bemba_text>ukumweneshamo</span> <div class=in_english><span>English&gt;&gt;</span> Some people like to    <b>abase</b>  others</div><div class=in_bemba><span>Bemba&gt;&gt;</span> Abantu bambo balitemwa  <b>ukumweneshamo</b>  bambi</div>',  

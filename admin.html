@@ -73,6 +73,15 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
 .tab-btn.active{color:#1a73e8;border-bottom-color:#1a73e8;}
 .tab-btn:hover{color:#1a73e8;background:#f8f9fa;}
 
+/* Posts */
+#posts-section{display:none;}
+.post-row{padding:14px;border-bottom:1px solid #e8e8e8;}
+.post-row:last-child{border-bottom:none;}
+.post-author{font-size:12px;color:#5f6368;margin-bottom:4px;font-weight:600;}
+.post-content{font-size:14px;color:#202124;margin-bottom:8px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.post-meta{font-size:11px;color:#80868b;margin-bottom:8px;}
+.post-btns{display:flex;gap:6px;}
+
 /* Settings */
 #settings-section{display:none;}
 .settings-card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.08);padding:24px;max-width:480px;}
@@ -108,6 +117,7 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
   <div id="msg" class="msg"></div>
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-users">Users</button>
+    <button class="tab-btn" id="tab-posts">Posts</button>
     <button class="tab-btn" id="tab-settings">Settings</button>
   </div>
   <div id="users-section">
@@ -115,6 +125,12 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
     <div class="users-table" id="users-list"></div>
     <div id="load-more-wrap" style="display:none;">
       <button id="load-more-btn">Load More</button>
+    </div>
+  </div>
+  <div id="posts-section" style="display:none;">
+    <div class="users-table" id="posts-list"></div>
+    <div id="posts-load-more-wrap" style="display:none;">
+      <button id="posts-load-more-btn">Load More</button>
     </div>
   </div>
   <div id="settings-section">
@@ -330,7 +346,7 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
       var newPts = parseInt(document.getElementById('edit-pts').value) || 0;
       if (!newName) return;
 
-      api('/user-edit', { user_id: parseInt(uid), name: newName, points: newPts }, function(resp) {
+      api('/useredit', { user_id: parseInt(uid), name: newName, points: newPts }, function(resp) {
         document.body.removeChild(overlay);
         if (resp.ok) {
           showMsg('User updated');
@@ -349,7 +365,7 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
     var name = btn.getAttribute('data-name');
     if (!confirm('Delete "' + name + '" and all their data? This cannot be undone.')) return;
 
-    api('/user-delete', { user_id: parseInt(uid) }, function(resp) {
+    api('/userdelete', { user_id: parseInt(uid) }, function(resp) {
       if (resp.ok) {
         showMsg('Deleted: ' + resp.deleted);
         // Remove row
@@ -366,22 +382,154 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // --- Posts Management ---
+  var postsOffset = 0;
+  var postsLimit = 20;
+
+  function loadPosts(append) {
+    var postsList = document.getElementById('posts-list');
+    var postsLoadMoreWrap = document.getElementById('posts-load-more-wrap');
+
+    if (!append) {
+      postsList.innerHTML = '<div class="loading">Loading posts...</div>';
+      postsOffset = 0;
+    }
+
+    api('/posts', { offset: postsOffset, limit: postsLimit }, function(resp) {
+      if (!resp.ok) {
+        postsList.innerHTML = '<div class="loading">Error loading posts</div>';
+        return;
+      }
+
+      if (!append) postsList.innerHTML = '';
+
+      var posts = resp.posts || [];
+      if (posts.length === 0 && postsOffset === 0) {
+        postsList.innerHTML = '<div class="loading">No posts yet</div>';
+        postsLoadMoreWrap.style.display = 'none';
+        return;
+      }
+
+      for (var i = 0; i < posts.length; i++) {
+        var p = posts[i];
+        var truncatedContent = p.content.length > 30 ? p.content.substring(0, 30) + '...' : p.content;
+        var row = document.createElement('div');
+        row.className = 'post-row';
+        row.innerHTML = '<div class="post-author">' + escapeHtml(p.user_name) + '</div>'
+          + '<div class="post-content">' + escapeHtml(truncatedContent) + '</div>'
+          + '<div class="post-meta">👍 ' + (p.likes_count || 0) + ' &middot; 💬 ' + (p.comments_count || 0) + ' &middot; ' + timeAgo(p.created_at) + '</div>'
+          + '<div class="post-btns">'
+          + '<button class="btn-edit" data-id="' + p.id + '" data-content="' + escapeHtml(p.content) + '">Edit</button>'
+          + '<button class="btn-del" data-id="' + p.id + '">Delete</button>'
+          + '</div>';
+        postsList.appendChild(row);
+      }
+
+      // Bind buttons
+      var editBtns = postsList.querySelectorAll('.btn-edit');
+      for (var e = 0; e < editBtns.length; e++) {
+        editBtns[e].onclick = function() { openPostEdit(this); };
+      }
+      var delBtns = postsList.querySelectorAll('.btn-del');
+      for (var d = 0; d < delBtns.length; d++) {
+        delBtns[d].onclick = function() { deletePost(this); };
+      }
+
+      postsLoadMoreWrap.style.display = posts.length === postsLimit ? 'block' : 'none';
+      postsOffset += posts.length;
+    });
+  }
+
+  // Load more posts
+  var postsLoadMoreBtn = document.getElementById('posts-load-more-btn');
+  if (postsLoadMoreBtn) {
+    postsLoadMoreBtn.addEventListener('click', function() {
+      loadPosts(true);
+    });
+  }
+
+  // Edit post
+  function openPostEdit(btn) {
+    var postId = btn.getAttribute('data-id');
+    var content = btn.getAttribute('data-content');
+
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = '<div class="modal">'
+      + '<h3>Edit Post</h3>'
+      + '<label>Content</label><textarea id="edit-post-content" style="width:100%;padding:10px;border:1.5px solid #dadce0;border-radius:8px;font-size:14px;min-height:100px;font-family:inherit;resize:vertical;" maxlength="500">' + escapeHtml(content) + '</textarea>'
+      + '<div class="modal-btns"><button class="btn-cancel" id="post-edit-cancel">Cancel</button><button class="btn-save" id="post-edit-save">Save</button></div>'
+      + '</div>';
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) document.body.removeChild(overlay); });
+    document.getElementById('post-edit-cancel').addEventListener('click', function() { document.body.removeChild(overlay); });
+    document.getElementById('post-edit-save').addEventListener('click', function() {
+      var newContent = document.getElementById('edit-post-content').value.trim();
+      if (!newContent || newContent.length < 5) {
+        alert('Content must be at least 5 characters');
+        return;
+      }
+
+      api('/postedit', { post_id: parseInt(postId), content: newContent }, function(resp) {
+        document.body.removeChild(overlay);
+        if (resp.ok) {
+          showMsg('Post updated');
+          loadPosts(false);
+        } else {
+          showMsg(resp.error || 'Update failed', true);
+        }
+      });
+    });
+  }
+
+  // Delete post
+  function deletePost(btn) {
+    var postId = btn.getAttribute('data-id');
+    if (!confirm('Delete this post?')) return;
+
+    api('/postdelete', { post_id: parseInt(postId) }, function(resp) {
+      if (resp.ok) {
+        showMsg('Post deleted');
+        var row = btn.closest('.post-row');
+        if (row) { row.style.transition = 'opacity .3s'; row.style.opacity = '0'; setTimeout(function() { row.remove(); }, 300); }
+      } else {
+        showMsg(resp.error || 'Delete failed', true);
+      }
+    });
+  }
+
   // --- Tabs ---
   var tabUsers = document.getElementById('tab-users');
+  var tabPosts = document.getElementById('tab-posts');
   var tabSettings = document.getElementById('tab-settings');
   var usersSection = document.getElementById('users-section');
+  var postsSection = document.getElementById('posts-section');
   var settingsSection = document.getElementById('settings-section');
 
   tabUsers.addEventListener('click', function() {
     tabUsers.classList.add('active');
+    tabPosts.classList.remove('active');
     tabSettings.classList.remove('active');
     usersSection.style.display = 'block';
+    postsSection.style.display = 'none';
     settingsSection.style.display = 'none';
+  });
+  tabPosts.addEventListener('click', function() {
+    tabPosts.classList.add('active');
+    tabUsers.classList.remove('active');
+    tabSettings.classList.remove('active');
+    usersSection.style.display = 'none';
+    postsSection.style.display = 'block';
+    settingsSection.style.display = 'none';
+    loadPosts();
   });
   tabSettings.addEventListener('click', function() {
     tabSettings.classList.add('active');
+    tabPosts.classList.remove('active');
     tabUsers.classList.remove('active');
     usersSection.style.display = 'none';
+    postsSection.style.display = 'none';
     settingsSection.style.display = 'block';
     loadSettings();
   });

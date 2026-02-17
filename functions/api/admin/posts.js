@@ -1,34 +1,33 @@
-// POST /api/admin/users - list users with pagination
+// POST /api/admin/posts - list all posts with pagination (admin only)
 export async function onRequestPost(context) {
   var result = await verifyAdmin(context);
   if (result.error) return result.error;
   var body = result.body;
 
   var offset = body.offset;
-  var search = body.search;
-  var db = context.env.DB;
+  var limit = Math.min(parseInt(body.limit) || 20, 50);
   var off = parseInt(offset) || 0;
-  var limit = 30;
 
-  var query, binds;
-  if (search && search.trim()) {
-    var s = '%' + search.trim() + '%';
-    query = 'SELECT id, name, friend_code, points, total_quizzes, challenges_won, challenges_lost, challenges_drawn, last_seen, created_at FROM users WHERE name LIKE ? OR friend_code LIKE ? ORDER BY points DESC LIMIT ? OFFSET ?';
-    binds = [s, s, limit + 1, off];
-  } else {
-    query = 'SELECT id, name, friend_code, points, total_quizzes, challenges_won, challenges_lost, challenges_drawn, last_seen, created_at FROM users ORDER BY points DESC LIMIT ? OFFSET ?';
-    binds = [limit + 1, off];
-  }
+  var db = context.env.DB;
 
-  var queryResult = await db.prepare(query).bind(...binds).all();
-  var users = queryResult.results || [];
-  var hasMore = users.length > limit;
-  if (hasMore) users = users.slice(0, limit);
+  // Get all posts ordered by creation date (newest first)
+  var posts = await db.prepare(`
+    SELECT
+      p.id, p.content, p.created_at,
+      u.id as user_id, u.name as user_name,
+      (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) as likes_count,
+      (SELECT COUNT(*) FROM post_comments WHERE post_id = p.id) as comments_count
+    FROM posts p
+    JOIN users u ON p.user_id = u.id
+    ORDER BY p.created_at DESC
+    LIMIT ? OFFSET ?
+  `).bind(limit + 1, off).all();
 
-  // Total user count
-  var total = await db.prepare('SELECT COUNT(*) as count FROM users').first();
+  var results = posts.results || [];
+  var hasMore = results.length > limit;
+  if (hasMore) results = results.slice(0, limit);
 
-  return Response.json({ ok: true, users: users, has_more: hasMore, total: total ? total.count : 0 });
+  return Response.json({ ok: true, posts: results, has_more: hasMore });
 }
 
 async function verifyAdmin(context) {
@@ -38,28 +37,17 @@ async function verifyAdmin(context) {
   }
   var token = body.token;
   if (!token) return { error: Response.json({ ok: false, error: 'Token required' }, { status: 401 }) };
-
   var parts = token.split('.');
   if (parts.length !== 2) return { error: Response.json({ ok: false, error: 'Invalid token' }, { status: 401 }) };
-
   var ts = parts[0];
   var sig = parts[1];
-
-  // Check token age (24 hours)
   var age = Date.now() - parseInt(ts);
   if (age > 86400000 || age < 0) return { error: Response.json({ ok: false, error: 'Token expired' }, { status: 401 }) };
-
-  // Verify HMAC
   var ADMIN_PASSWORD = context.env.ADMIN_PASSWORD;
   if (!ADMIN_PASSWORD) return { error: Response.json({ ok: false, error: 'Admin not configured' }, { status: 500 }) };
-
-  var key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(ADMIN_PASSWORD),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  );
+  var key = await crypto.subtle.importKey('raw', new TextEncoder().encode(ADMIN_PASSWORD), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   var expected = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ts));
   var expectedHex = Array.from(new Uint8Array(expected)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
-
   if (sig !== expectedHex) return { error: Response.json({ ok: false, error: 'Invalid token' }, { status: 401 }) };
   return { body: body };
 }

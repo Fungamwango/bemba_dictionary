@@ -1,9 +1,12 @@
 // POST /api/admin/user-edit - edit user name/points
 export async function onRequestPost(context) {
-  var authErr = await verifyAdmin(context);
-  if (authErr) return authErr;
+  var result = await verifyAdmin(context);
+  if (result.error) return result.error;
+  var body = result.body;
 
-  var { user_id, name, points } = await context.request.json();
+  var user_id = body.user_id;
+  var name = body.name;
+  var points = body.points;
   if (!user_id) return Response.json({ ok: false, error: 'user_id required' }, { status: 400 });
 
   var db = context.env.DB;
@@ -32,22 +35,22 @@ export async function onRequestPost(context) {
 
 async function verifyAdmin(context) {
   var body;
-  try { body = await context.request.clone().json(); } catch(e) {
-    return Response.json({ ok: false, error: 'Invalid request' }, { status: 400 });
+  try { body = await context.request.json(); } catch(e) {
+    return { error: Response.json({ ok: false, error: 'Invalid request' }, { status: 400 }) };
   }
   var token = body.token;
-  if (!token) return Response.json({ ok: false, error: 'Token required' }, { status: 401 });
+  if (!token) return { error: Response.json({ ok: false, error: 'Token required' }, { status: 401 }) };
   var parts = token.split('.');
-  if (parts.length !== 2) return Response.json({ ok: false, error: 'Invalid token' }, { status: 401 });
+  if (parts.length !== 2) return { error: Response.json({ ok: false, error: 'Invalid token' }, { status: 401 }) };
   var ts = parts[0];
   var sig = parts[1];
   var age = Date.now() - parseInt(ts);
-  if (age > 86400000 || age < 0) return Response.json({ ok: false, error: 'Token expired' }, { status: 401 });
+  if (age > 86400000 || age < 0) return { error: Response.json({ ok: false, error: 'Token expired' }, { status: 401 }) };
   var ADMIN_PASSWORD = context.env.ADMIN_PASSWORD;
-  if (!ADMIN_PASSWORD) return Response.json({ ok: false, error: 'Admin not configured' }, { status: 500 });
+  if (!ADMIN_PASSWORD) return { error: Response.json({ ok: false, error: 'Admin not configured' }, { status: 500 }) };
   var key = await crypto.subtle.importKey('raw', new TextEncoder().encode(ADMIN_PASSWORD), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   var expected = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ts));
   var expectedHex = Array.from(new Uint8Array(expected)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
-  if (sig !== expectedHex) return Response.json({ ok: false, error: 'Invalid token' }, { status: 401 });
-  return null;
+  if (sig !== expectedHex) return { error: Response.json({ ok: false, error: 'Invalid token' }, { status: 401 }) };
+  return { body: body };
 }

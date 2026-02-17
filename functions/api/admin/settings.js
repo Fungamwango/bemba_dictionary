@@ -19,7 +19,7 @@ export async function onRequestPost(context) {
 
   // Update settings - auth required
   if (action === 'update') {
-    var authErr = await verifyAdmin(context);
+    var authErr = await verifyAdmin(body, context.env.ADMIN_PASSWORD);
     if (authErr) return authErr;
 
     var settings = body.settings;
@@ -43,11 +43,7 @@ export async function onRequestPost(context) {
   return Response.json({ ok: false, error: 'Invalid action' }, { status: 400 });
 }
 
-async function verifyAdmin(context) {
-  var body;
-  try { body = await context.request.clone().json(); } catch(e) {
-    return Response.json({ ok: false, error: 'Invalid request' }, { status: 400 });
-  }
+async function verifyAdmin(body, ADMIN_PASSWORD) {
   var token = body.token;
   if (!token) return Response.json({ ok: false, error: 'Token required' }, { status: 401 });
   var parts = token.split('.');
@@ -56,7 +52,6 @@ async function verifyAdmin(context) {
   var sig = parts[1];
   var age = Date.now() - parseInt(ts);
   if (age > 86400000 || age < 0) return Response.json({ ok: false, error: 'Token expired' }, { status: 401 });
-  var ADMIN_PASSWORD = context.env.ADMIN_PASSWORD;
   if (!ADMIN_PASSWORD) return Response.json({ ok: false, error: 'Admin not configured' }, { status: 500 });
   var key = await crypto.subtle.importKey('raw', new TextEncoder().encode(ADMIN_PASSWORD), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   var expected = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ts));

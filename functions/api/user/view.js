@@ -11,9 +11,14 @@ export async function onRequestPost(context) {
   if (!me) return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
 
   var user = await db.prepare(
-    'SELECT id, name, friend_code, points, total_quizzes, challenges_won, challenges_lost, challenges_drawn, picture, created_at FROM users WHERE id = ?'
+    'SELECT id, name, friend_code, points, total_quizzes, challenges_won, challenges_lost, challenges_drawn, picture, created_at, last_seen FROM users WHERE id = ?'
   ).bind(user_id).first();
   if (!user) return Response.json({ ok: false, error: 'User not found' }, { status: 404 });
+
+  var rankRow = await db.prepare(
+    'SELECT COUNT(*) + 1 AS rank FROM users WHERE points > ?'
+  ).bind(user.points).first();
+  user.rank = rankRow ? rankRow.rank : 0;
 
   return Response.json({ ok: true, user: user });
 }
