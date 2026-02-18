@@ -50,12 +50,6 @@ document.querySelectorAll("#contact-wrapper ul li a")[3].href=online_dictionary_
 //save this url into the localstorage api
 window.localStorage.setItem('online_dictionary_url',online_dictionary_url);
 
-
-
-/*load the website in the iframe
-document.documentElement.innerHTML
-="<iframe id='external_site_iframe' src='https://bemdic.rf.gd/home' style='position: fixed; top: 0;left: 0; width: 100vw; height: 100vh; border: none; display: block;'>";*/
-
 //implementing the social features
 document.body.insertAdjacentHTML('beforeend',`<div id='api_app_data'>
    <style>
@@ -104,9 +98,71 @@ function apiCall(endpoint, data, callback) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(function(r) { return r.json(); })
-    .then(function(j) { if (callback) callback(j); })
+    .then(function(j) {
+      // Detect orphaned device_id (user deleted from admin panel)
+      // Only trigger if user WAS previously registered (has cached user data)
+      if (!j.ok && j.error === 'User not found' && isDeviceIdEndpoint(endpoint) && localStorage.getItem('bemdic_user_data')) {
+        handleOrphanedDeviceId();
+        return;
+      }
+      if (callback) callback(j);
+    })
     .catch(function(e) { if (callback) callback({ ok: false, error: e.message }); });
 }
+
+// Helper: Check if endpoint uses device_id for user lookup
+// (as opposed to looking up OTHER users by ID)
+function isDeviceIdEndpoint(endpoint) {
+  var deviceIdEndpoints = [
+    '/register',
+    '/user/profile',
+    '/user/sync-points',
+    '/user/update-activity',
+    '/notifications/poll',
+    '/users/online',
+    '/posts/list',
+    '/posts/create',
+    '/posts/like',
+    '/posts/comment',
+    '/posts/delete',
+    '/challenge/send',
+    '/challenge/respond',
+    '/friends/list',
+    '/friends/add',
+    '/friends/accept'
+  ];
+  return deviceIdEndpoints.indexOf(endpoint) !== -1;
+}
+
+// Handle orphaned device_id (user deleted from admin panel)
+function handleOrphanedDeviceId() {
+  // Prevent multiple triggers
+  if (sessionStorage.getItem('_orphan_handled')) return;
+
+  // Set flag to show message after reload
+  sessionStorage.setItem('_show_orphan_msg', '1');
+
+  // Clear all localStorage data
+  localStorage.removeItem('bemdic_device_id');
+  localStorage.removeItem('bemdic_user_data');
+  localStorage.removeItem('bemdic_user_name');
+  localStorage.removeItem('quiz-points');
+
+  // Reload page to restart registration flow
+  location.reload();
+}
+
+// Check if we need to show orphan message after reload
+if (sessionStorage.getItem('_show_orphan_msg')) {
+  sessionStorage.removeItem('_show_orphan_msg');
+  sessionStorage.setItem('_orphan_handled', '1'); // Prevent loop
+  alert('Your account was removed by an administrator. Please register again to continue using the app.');
+  // Clear the handled flag after a delay
+  setTimeout(function() {
+    sessionStorage.removeItem('_orphan_handled');
+  }, 5000);
+}
+
 window._bemdic_apiCall = apiCall;
 window._bemdic_getDeviceId = getDeviceId;
 function apiGet(endpoint, callback) {
@@ -116,10 +172,18 @@ function apiGet(endpoint, callback) {
     .catch(function(e) { if (callback) callback({ ok: false, error: e.message }); });
 }
 function generateUUID() {
-  if (crypto && crypto.randomUUID) return crypto.randomUUID();
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
+  var chars = '0123456789abcdef';
+  var id = '';
+  for (var i = 0; i < 10; i++) {
+    if (crypto && crypto.getRandomValues) {
+      var arr = new Uint8Array(1);
+      crypto.getRandomValues(arr);
+      id += chars[arr[0] % 16];
+    } else {
+      id += chars[Math.floor(Math.random() * 16)];
+    }
+  }
+  return id;
 }
 function getDeviceId() {
   var id = localStorage.getItem('bemdic_device_id');
@@ -388,10 +452,10 @@ ss.textContent = ''
   + '.post-action-btn:hover{color:#1a73e8;background:#f8f9fa;}'
   + '.post-action-btn.liked{color:#ea4335;font-weight:600;}'
   + '.post-comments-section{margin-top:12px;padding-top:12px;border-top:1px solid #f1f3f4;}'
-  + '.post-comment{display:flex;align-items:flex-start;gap:8px;margin:8px 0;padding:10px;background:#f8f9fa;border-radius:10px;}'
+  + '.post-comment{display:flex;align-items:flex-start;gap:6px;margin:8px 0;padding:10px;background:#f8f9fa;border-radius:10px;}'
   + '.comment-pic{flex-shrink:0;}'
   + '.comment-content{flex:1;min-width:0;}'
-  + '.comment-author{font-size:14px;font-weight:600;color:#202124;line-height:1.3;margin-bottom:2px;}'
+  + '.comment-author{font-size:13px;font-weight:600;color:#202124;line-height:1.3;margin-bottom:2px; align-items:flex-start;}'
   + '.comment-text{font-size:14px;color:#333;line-height:1.5;word-wrap:break-word;text-align:left;}'
   + '.comment-input-wrapper{display:flex;gap:8px;margin-top:10px;}'
   + '.comment-input{flex:1;padding:8px 12px;border:1.5px solid #dadce0;border-radius:20px;font-size:13px;outline:none;}'
@@ -646,6 +710,12 @@ function registerUser(deviceId, name) {
       localStorage.setItem('bemdic_user_data', JSON.stringify(resp.user));
       startPolling();
       syncPoints();
+      // Load posts after registration (they fail during initial page load for new users)
+      var postsFeed = document.getElementById('posts-feed-section');
+      if (postsFeed) {
+        postsFeed.style.display = 'block';
+        loadPosts(true);
+      }
     }
   });
 }

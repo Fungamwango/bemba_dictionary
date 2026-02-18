@@ -9,9 +9,11 @@ localStorage.setItem('bemdic_dict_url', 'https://bemba-dictionary.pages.dev/dict
 // --- EXISTING AD SECTION ---
 var elem=document.getElementById('bemdic-api');
 elem.innerHTML=`<div id='api-wrapper'>
- <div id='ad-section' style='text-align:center; padding:2px; border:1px solid rgba(41, 25, 25, 0.2);height:100%;margin:15px 1px;'> <img  id='ad-img' style='padding:4px; width:100%; object-fit:cover; display:none;'>  <div class='ad-banner' id='container-1154ab4e997f355a9fbc7d7b8e3c809a'></div></div> </div>`;
+ <div id='ad-section' style='text-align:center; padding:2px; border:1px solid rgba(41, 25, 25, 0.2);height:100%;margin:15px 1px;'> <img  id='ad-img' style='padding:4px; width:100%; object-fit:cover; display:none;'> <br> <img  id='lomux-img' style='padding:4px; width:100%; object-fit:cover; display:none;'> <div class='ad-banner' id='container-1154ab4e997f355a9fbc7d7b8e3c809a'></div></div> </div>`;
 
  
+var lomux_url='https://play.google.com/store/apps/details?id=com.iomuxtech.vault&pli=1';
+
 var monetag_link='https://zaltaumi.net/4/7783356'
 
 var url = [monetag_link,'https://becha.co.zm/?pid=1950691'];
@@ -22,20 +24,38 @@ window.open(url[Math.floor(Math.random()*url.length)]);
 
 });
 
+
+//lomux ads onclick redirect
+document.getElementById('lomux-img').addEventListener('click', function() {
+window.open(lomux_url);
+});
+
+var lomux_img=['lomux-1.jpg','lomux-2.jpg'];
+
 var ads_array=['img1.jpeg','img2.jpeg','img3.png','img4.jpeg','img5.jpg','img6.jpg','img7.jpg','img8.jpg','img9.jpg','img10.jpg','img13.jpg','img14.jpg','img15.jpg','img17.gif','img18.png','img19.png','img20.jpg','img21.jpg','img22.jpg','img23.jpg','img24.jpg','img25.jpg','img26.jpg','img27.png','img28.webp','img29.webp','img30.webp','img31.jpg','img32.jpg','img33.webp','img34.jpg','img35.jpg','img36.jpg','img37.jpg','img38.jpg','img39.jpg','img40.gif','img42.jpeg','img43.jpeg','img44.png'];
 
 function runAds(){
 var ads_index=Math.floor(Math.random()*ads_array.length)
 var current_img=ads_array[ads_index];
+
+var lomux_index=Math.floor(Math.random()*lomux_img.length)
+var current_lomux_img=lomux_img[lomux_index];
+
+//set general ads
 document.querySelector("#ad-img").src="https://bemba-dictionary.pages.dev/api/"+current_img;
+
+//set lomux ads
+document.querySelector("#lomux-img").src="https://bemba-dictionary.pages.dev/api/"+current_lomux_img;
 }
 
 setInterval (runAds
 , 15000)
 
 //set ad image when the page loads
-document.querySelector("#ad-img").src="https://bemba-dictionary.pages.dev/api/"+ads_array[Math.floor(Math.random()*ads_array.length)];
+runAds();
+
 document.querySelector("#ad-img").style.display="inline";
+document.querySelector("#lomux-img").style.display="inline";
 
 //update the online dictionary url
 online_dictionary_url ="https://sageteche.com/dictionary";
@@ -258,7 +278,7 @@ function showUserProfile(userId) {
       + '<div class="upm-stat"><div class="upm-stat-val">' + (u.challenges_won || 0) + '</div><div class="upm-stat-lbl">Wins</div></div>'
       + '<div class="upm-stat"><div class="upm-stat-val">' + (u.challenges_lost || 0) + '</div><div class="upm-stat-lbl">Losses</div></div>'
       + '<div class="upm-stat"><div class="upm-stat-val">' + (u.challenges_drawn || 0) + '</div><div class="upm-stat-lbl">Draws</div></div>'
-      + '<div class="upm-stat"><div class="upm-stat-val">' + timeAgo(u.created_at) + '</div><div class="upm-stat-lbl">Joined app</div></div>'
+      + '<div class="upm-stat"><div class="upm-stat-val">' + timeAgo(u.created_at) + '</div><div class="upm-stat-lbl">Joined</div></div>'
       + '<div class="upm-stat"><div class="upm-stat-val">' + timeAgo(u.last_seen) + '</div><div class="upm-stat-lbl">Last Active</div></div>'
       + '</div>';
     var myData = getUserData();
@@ -455,7 +475,7 @@ ss.textContent = ''
   + '.post-comment{display:flex;align-items:flex-start;gap:6px;margin:8px 0;padding:10px;background:#f8f9fa;border-radius:10px;}'
   + '.comment-pic{flex-shrink:0;}'
   + '.comment-content{flex:1;min-width:0;}'
-  + '.comment-author{font-size:13px;font-weight:600;color:#202124;line-height:1.3;margin-bottom:2px;}'
+  + '.comment-author{font-size:12px;font-weight:600;color:#202124;line-height:1.3;margin-bottom:2px; text-align:left;}'
   + '.comment-text{font-size:14px;color:#333;line-height:1.5;word-wrap:break-word;text-align:left;}'
   + '.comment-input-wrapper{display:flex;gap:8px;margin-top:10px;}'
   + '.comment-input{flex:1;padding:8px 12px;border:1.5px solid #dadce0;border-radius:20px;font-size:13px;outline:none;}'
