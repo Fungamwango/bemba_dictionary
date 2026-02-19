@@ -7,7 +7,7 @@ export async function onRequestPost(context) {
   var db = context.env.DB;
 
   var comments = await db.prepare(`
-    SELECT c.id, c.content, c.created_at, u.name as user_name, u.picture as user_picture
+    SELECT c.id, c.user_id, c.content, c.created_at, u.name as user_name, u.picture as user_picture
     FROM post_comments c
     JOIN users u ON c.user_id = u.id
     WHERE c.post_id = ?

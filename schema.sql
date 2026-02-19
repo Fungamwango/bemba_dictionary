@@ -127,6 +127,17 @@ INSERT OR IGNORE INTO settings (key, value) VALUES ('sub_days', '4');
 INSERT OR IGNORE INTO settings (key, value) VALUES ('payment_amount', 'K2');
 INSERT OR IGNORE INTO settings (key, value) VALUES ('payment_number', '0962464552');
 
+CREATE TABLE IF NOT EXISTS daily_visits (
+  date TEXT PRIMARY KEY,
+  count INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS user_visits (
+  user_id INTEGER NOT NULL,
+  date TEXT NOT NULL,
+  PRIMARY KEY (user_id, date)
+);
+
 CREATE TABLE IF NOT EXISTS messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   sender_id INTEGER NOT NULL,

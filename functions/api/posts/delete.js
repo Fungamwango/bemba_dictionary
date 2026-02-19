@@ -1,4 +1,4 @@
-// POST /api/posts/delete - delete own post (-3pts)
+// POST /api/posts/delete - delete own post (-1pt)
 export async function onRequestPost(context) {
   var { device_id, post_id } = await context.request.json();
   if (!device_id || !post_id) {
@@ -25,7 +25,7 @@ export async function onRequestPost(context) {
 
   // Only deduct points if deleting own post (not admin deleting others' posts)
   if (post.user_id === user.id) {
-    await db.prepare('UPDATE users SET points = MAX(0, points - 3) WHERE id = ?').bind(user.id).run();
+    await db.prepare('UPDATE users SET points = MAX(0, points - 1) WHERE id = ?').bind(user.id).run();
   }
 
   return Response.json({ ok: true });

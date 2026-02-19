@@ -84,6 +84,23 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
 
 /* Settings */
 #settings-section{display:none;}
+
+/* Stats */
+#stats-section{display:none;}
+.stats-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:#fff;border-radius:10px;padding:16px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,0.08);}
+.stat-card-val{font-size:28px;font-weight:800;color:#1a73e8;}
+.stat-card-lbl{font-size:12px;color:#80868b;margin-top:4px;}
+.stat-card.online .stat-card-val{color:#34a853;}
+.stat-card.money .stat-card-val{color:#f29900;}
+.stats-section-title{font-size:13px;font-weight:600;color:#80868b;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 10px;}
+.chart-wrap{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);}
+.chart-title{font-size:14px;font-weight:600;color:#202124;margin-bottom:14px;}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:120px;}
+.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;}
+.bar{width:100%;background:#1a73e8;border-radius:4px 4px 0 0;min-height:2px;transition:height 0.3s;}
+.bar-val{font-size:10px;color:#5f6368;margin-top:4px;}
+.bar-day{font-size:10px;color:#80868b;margin-top:2px;}
 .settings-card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.08);padding:24px;max-width:480px;}
 .settings-card label{font-size:13px;color:#5f6368;display:block;margin-bottom:4px;margin-top:16px;font-weight:500;}
 .settings-card label:first-child{margin-top:0;}
@@ -118,6 +135,7 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-users">Users</button>
     <button class="tab-btn" id="tab-posts">Posts</button>
+    <button class="tab-btn" id="tab-stats">Stats</button>
     <button class="tab-btn" id="tab-settings">Settings</button>
   </div>
   <div id="users-section">
@@ -131,6 +149,24 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
     <div class="users-table" id="posts-list"></div>
     <div id="posts-load-more-wrap" style="display:none;">
       <button id="posts-load-more-btn">Load More</button>
+    </div>
+  </div>
+  <div id="stats-section">
+    <div class="stats-section-title">Visitors</div>
+    <div class="stats-cards">
+      <div class="stat-card online"><div class="stat-card-val" id="stat-online">—</div><div class="stat-card-lbl">Online Now</div></div>
+      <div class="stat-card"><div class="stat-card-val" id="stat-today">—</div><div class="stat-card-lbl">Visitors Today</div></div>
+      <div class="stat-card"><div class="stat-card-val" id="stat-new">—</div><div class="stat-card-lbl">New Today</div></div>
+    </div>
+    <div class="stats-section-title">Subscriptions</div>
+    <div class="stats-cards">
+      <div class="stat-card money"><div class="stat-card-val" id="stat-paid-today">—</div><div class="stat-card-lbl">Paid Today</div></div>
+      <div class="stat-card money"><div class="stat-card-val" id="stat-subscribed">—</div><div class="stat-card-lbl">Active Subscribers</div></div>
+      <div class="stat-card money"><div class="stat-card-val" id="stat-earnings">—</div><div class="stat-card-lbl">Total Earnings</div></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">Daily Visitors — Last 7 Days</div>
+      <div class="bar-chart" id="visitors-chart"></div>
     </div>
   </div>
   <div id="settings-section">
@@ -502,37 +538,79 @@ h1{font-size:20px;margin-bottom:16px;color:#1a73e8;}
   // --- Tabs ---
   var tabUsers = document.getElementById('tab-users');
   var tabPosts = document.getElementById('tab-posts');
+  var tabStats = document.getElementById('tab-stats');
   var tabSettings = document.getElementById('tab-settings');
   var usersSection = document.getElementById('users-section');
   var postsSection = document.getElementById('posts-section');
+  var statsSection = document.getElementById('stats-section');
   var settingsSection = document.getElementById('settings-section');
+  var statsRefreshTimer = null;
 
-  tabUsers.addEventListener('click', function() {
-    tabUsers.classList.add('active');
-    tabPosts.classList.remove('active');
-    tabSettings.classList.remove('active');
-    usersSection.style.display = 'block';
+  function setActiveTab(active) {
+    [tabUsers, tabPosts, tabStats, tabSettings].forEach(function(t) { t.classList.remove('active'); });
+    active.classList.add('active');
+    usersSection.style.display = 'none';
     postsSection.style.display = 'none';
+    statsSection.style.display = 'none';
     settingsSection.style.display = 'none';
+    clearInterval(statsRefreshTimer);
+  }
+  tabUsers.addEventListener('click', function() {
+    setActiveTab(tabUsers);
+    usersSection.style.display = 'block';
   });
   tabPosts.addEventListener('click', function() {
-    tabPosts.classList.add('active');
-    tabUsers.classList.remove('active');
-    tabSettings.classList.remove('active');
-    usersSection.style.display = 'none';
+    setActiveTab(tabPosts);
     postsSection.style.display = 'block';
-    settingsSection.style.display = 'none';
     loadPosts();
   });
+  tabStats.addEventListener('click', function() {
+    setActiveTab(tabStats);
+    statsSection.style.display = 'block';
+    loadStats();
+    statsRefreshTimer = setInterval(loadStats, 30000);
+  });
   tabSettings.addEventListener('click', function() {
-    tabSettings.classList.add('active');
-    tabPosts.classList.remove('active');
-    tabUsers.classList.remove('active');
-    usersSection.style.display = 'none';
-    postsSection.style.display = 'none';
+    setActiveTab(tabSettings);
     settingsSection.style.display = 'block';
     loadSettings();
   });
+
+  // --- Stats ---
+  function loadStats() {
+    api('/stats', {}, function(resp) {
+      if (!resp.ok) return;
+      document.getElementById('stat-online').textContent = resp.online_now;
+      document.getElementById('stat-new').textContent = resp.new_today;
+      // Today's visitors from daily_visitors array (last item)
+      var daily = resp.daily_visitors || [];
+      var todayCount = daily.length ? daily[daily.length - 1].count : 0;
+      document.getElementById('stat-today').textContent = todayCount;
+      // Subscription stats
+      document.getElementById('stat-paid-today').textContent = resp.paid_today || 0;
+      document.getElementById('stat-subscribed').textContent = resp.subscribed_now || 0;
+      var earnings = parseFloat(resp.total_earnings || 0);
+      document.getElementById('stat-earnings').textContent = 'K' + (Number.isInteger(earnings) ? earnings : earnings.toFixed(2));
+      // Bar chart
+      var chart = document.getElementById('visitors-chart');
+      chart.innerHTML = '';
+      var max = 1;
+      for (var i = 0; i < daily.length; i++) if (daily[i].count > max) max = daily[i].count;
+      var dayAbbr = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      for (var j = 0; j < daily.length; j++) {
+        var d = daily[j];
+        var pct = Math.round((d.count / max) * 100);
+        var dayName = dayAbbr[new Date(d.date + 'T00:00:00Z').getUTCDay()];
+        var isToday = j === daily.length - 1;
+        var col = document.createElement('div');
+        col.className = 'bar-col';
+        col.innerHTML = '<div class="bar" style="height:' + pct + '%;background:' + (isToday ? '#34a853' : '#1a73e8') + ';"></div>'
+          + '<div class="bar-val">' + d.count + '</div>'
+          + '<div class="bar-day" style="font-weight:' + (isToday ? '700' : '400') + ';color:' + (isToday ? '#34a853' : '#80868b') + ';">' + dayName + '</div>';
+        chart.appendChild(col);
+      }
+    });
+  }
 
   // --- Settings ---
   function loadSettings() {

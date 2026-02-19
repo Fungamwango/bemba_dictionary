@@ -1,4 +1,4 @@
-// POST /api/posts/create - create new post (+3pts)
+// POST /api/posts/create - create new post (+1pt)
 export async function onRequestPost(context) {
   var { device_id, content } = await context.request.json();
   if (!device_id || !content) {
@@ -19,7 +19,7 @@ export async function onRequestPost(context) {
     'INSERT INTO posts (user_id, content) VALUES (?, ?) RETURNING *'
   ).bind(user.id, content).first();
 
-  await db.prepare('UPDATE users SET points = points + 3 WHERE id = ?').bind(user.id).run();
+  await db.prepare('UPDATE users SET points = points + 1 WHERE id = ?').bind(user.id).run();
 
   return Response.json({ ok: true, post: post });
 }

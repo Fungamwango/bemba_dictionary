@@ -144,6 +144,8 @@ function isDeviceIdEndpoint(endpoint) {
     '/posts/create',
     '/posts/like',
     '/posts/comment',
+    '/posts/comment-delete',
+    '/posts/comment-edit',
     '/posts/delete',
     '/challenge/send',
     '/challenge/respond',
@@ -347,7 +349,7 @@ function resizeAndUploadPicture(file, callback) {
 var ss = document.createElement('style');
 ss.textContent = ''
   + '#profile-section,#friends-section,#leaderboard-section,#notifications-section,#challenge-section{display:none;padding:4px 10px;}'
-  + '.social-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin:8px 0;box-shadow:0 1px 4px rgba(0,0,0,0.06);}'
+  + '.social-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:12px;margin:8px 0;box-shadow:0 1px 4px rgba(0,0,0,0.06);}'
   + '.social-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:2px solid #e0e0e0;}'
   + '.social-tab{flex:1;text-align:center;padding:10px 4px;cursor:pointer;font-size:13px;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;}'
   + '.social-tab.active-tab{color:#1a73e8;border-bottom-color:#1a73e8;font-weight:600;}'
@@ -457,7 +459,7 @@ ss.textContent = ''
   + '.post-editor-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}'
   + '#post-char-count{font-size:12px;color:#80868b;}'
   + '#post-submit-btn{padding:10px 24px;}'
-  + '.post-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin:12px 0;box-shadow:0 1px 4px rgba(0,0,0,0.06);}'
+  + '.post-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin:3px 0;box-shadow:0 1px 4px rgba(0,0,0,0.06);}'
   + '.post-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.1);}'
   + '.post-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;}'
   + '.post-author-pic{flex-shrink:0;cursor:pointer;}'
@@ -481,6 +483,15 @@ ss.textContent = ''
   + '.comment-input{flex:1;padding:8px 12px;border:1.5px solid #dadce0;border-radius:20px;font-size:13px;outline:none;}'
   + '.comment-input:focus{border-color:#1a73e8;}'
   + '.comment-submit-btn{padding:8px 16px;font-size:12px;}'
+  + '.comment-actions{display:flex;gap:8px;margin-top:4px;}'
+  + '.comment-action-btn{font-size:11px;color:#888;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline;}'
+  + '.comment-action-btn:hover{color:#1a73e8;}'
+  + '.comment-edit-form{margin-top:6px;display:none;}'
+  + '.comment-edit-input{width:100%;padding:6px 10px;border:1.5px solid #dadce0;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;resize:none;}'
+  + '.comment-edit-input:focus{border-color:#1a73e8;}'
+  + '.comment-edit-actions{display:flex;gap:6px;margin-top:4px;}'
+  + '.comment-save-btn{font-size:12px;padding:4px 10px;}'
+  + '.comment-cancel-btn{font-size:12px;padding:4px 10px;background:#f1f3f4;color:#333;border:none;border-radius:4px;cursor:pointer;}'
   + '.post-actions-btns{margin-left:auto;display:flex;gap:6px;}'
   + '.post-edit-btn{color:#1a73e8;font-size:12px;padding:4px 8px;border:1px solid #1a73e8;border-radius:4px;background:transparent;cursor:pointer;}'
   + '.post-edit-btn:hover{background:#e8f0fe;}'
@@ -492,7 +503,7 @@ ss.textContent = ''
   + '.post-edit-save{background:#1a73e8;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;}'
   + '.post-edit-cancel{background:#f1f3f4;color:#5f6368;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;}'
   // Section headings
-  + '.section-heading{margin:2px 0 8px;font-size:17px;font-weight:700;color:#202124;display:flex;align-items:center;gap:8px;}'
+  + '.section-heading{margin:2px 0 5px;font-size:17px;font-weight:700;color:#202124;display:flex;align-items:center;gap:8px;}'
   + '.section-heading-icon{font-size:20px;}'
   // Load more
   + '.load-more-wrap{text-align:center;padding:10px 0;}'
@@ -550,7 +561,7 @@ if (dicWrapper) {
     // LEADERBOARD
     + '<section id="leaderboard-section"><div id="leaderboard-wrapper">'
     + '<div class="section-heading"><span class="section-heading-icon">🏅</span> Leaderboard</div>'
-    + '<p style="color:#5f6368;font-size:13px;margin:4px 0 12px;line-height:1.4;">Top 40 users. The leader of the week gets a free 7-day subscription. Keep playing quiz to earn points!</p>'
+    + '<p style="color:#5f6368;font-size:13px;margin:4px 0 12px;line-height:1.4;">Top 40 users. The top leader of the week gets unlimited free 7-day subscription (win real money prizes soon). Keep playing quiz to earn points!</p>'
     + '<div id="lb-global-list" class="s-loading">Loading...</div>'
     + '</div></section>'
     // NOTIFICATIONS
@@ -596,11 +607,11 @@ if (dicWrapper) {
     + '<section id="posts-feed-section" style="display:none;">'
     + '<div id="posts-feed-wrapper">'
     + '<div class="social-card" id="post-editor-card">'
-    + '<div class="post-editor-header">📝 Share Translation Tips</div>'
-    + '<textarea id="post-content-input" placeholder="Write any English into Bemba translations with examples..." maxlength="500" rows="3"></textarea>'
+    + '<div class="post-editor-header">📝Post something</div>'
+    + '<textarea id="post-content-input" placeholder="Ask or Write something about english into bemba translations..." maxlength="500" rows="3"></textarea>'
     + '<div class="post-editor-footer">'
     + '<span id="post-char-count">0/500</span>'
-    + '<button class="s-btn s-btn-p" id="post-submit-btn">Post (+3pts)</button>'
+    + '<button class="s-btn s-btn-p" id="post-submit-btn">Post (+1pt)</button>'
     + '</div></div>'
     + '<div class="section-heading"><span class="section-heading-icon">📰</span> Community Posts</div>'
     + '<div id="posts-list-wrapper" class="s-loading">Loading posts...</div>'
@@ -1375,7 +1386,7 @@ function renderLB(el, leaders, myCode, myRank) {
   if (!el || !leaders.length) { if (el) el.innerHTML = '<div class="s-empty">No data yet</div>'; return; }
   var html = '';
   var medals = ['🏆', '🥈', '🥉'];
-  var proBadge = '<span style="background:linear-gradient(135deg,#ff8c00,#ff6000);color:#fff;font-size:9px;font-weight:bold;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle;">PRO</span>';
+  var proBadge = '<span style="background:linear-gradient(135deg,#ff8c00,#ff6000);color:#fff;font-size:9px;font-weight:bold;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle;">💸PAID</span>';
   for (var i = 0; i < leaders.length; i++) {
     var l = leaders[i];
     var isMe = myCode && l.friend_code === myCode;
@@ -1664,6 +1675,7 @@ function renderNotifications(el, notifs, hasMore, append) {
 // ---- POSTS FEED ----
 var _postsOffset = 0;
 var _postsLimit = 20;
+var _postsSeed = 0;
 
 function initPostEditor() {
   var input = document.getElementById('post-content-input');
@@ -1691,7 +1703,7 @@ function initPostEditor() {
 
     apiCall('/posts/create', { device_id: getDeviceId(), content: content }, function(resp) {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Post (+3pts)';
+      submitBtn.textContent = 'Post (+1pt)';
 
       if (resp.ok) {
         input.value = '';
@@ -1706,7 +1718,7 @@ function initPostEditor() {
 }
 
 function loadPosts(reset) {
-  if (reset) _postsOffset = 0;
+  if (reset) { _postsOffset = 0; _postsSeed = Math.floor(Math.random() * 9999998) + 1; }
 
   var listWrapper = document.getElementById('posts-list-wrapper');
   var loadMoreWrap = document.getElementById('posts-load-more-wrap');
@@ -1716,7 +1728,8 @@ function loadPosts(reset) {
   apiCall('/posts/list', {
     device_id: getDeviceId(),
     limit: _postsLimit,
-    offset: _postsOffset
+    offset: _postsOffset,
+    seed: _postsSeed
   }, function(resp) {
     if (!resp.ok || !resp.posts) {
       if (listWrapper) listWrapper.innerHTML = '<div class="s-empty">Could not load posts</div>';
@@ -1801,24 +1814,27 @@ function renderPosts(posts, container) {
 }
 
 function attachPostEventListeners(container) {
-  var likeBtns = container.querySelectorAll('.like-btn');
+  var likeBtns = container.querySelectorAll('.like-btn:not([data-la])');
   for (var i = 0; i < likeBtns.length; i++) {
+    likeBtns[i].setAttribute('data-la', '1');
     likeBtns[i].addEventListener('click', function() {
       var postId = parseInt(this.getAttribute('data-post-id'));
       toggleLike(postId, this);
     });
   }
 
-  var commentBtns = container.querySelectorAll('.comment-btn');
+  var commentBtns = container.querySelectorAll('.comment-btn:not([data-la])');
   for (var j = 0; j < commentBtns.length; j++) {
+    commentBtns[j].setAttribute('data-la', '1');
     commentBtns[j].addEventListener('click', function() {
       var postId = parseInt(this.getAttribute('data-post-id'));
       toggleComments(postId);
     });
   }
 
-  var editBtns = container.querySelectorAll('.post-edit-btn');
+  var editBtns = container.querySelectorAll('.post-edit-btn:not([data-la])');
   for (var k = 0; k < editBtns.length; k++) {
+    editBtns[k].setAttribute('data-la', '1');
     editBtns[k].addEventListener('click', function(e) {
       e.stopPropagation();
       var postId = parseInt(this.getAttribute('data-post-id'));
@@ -1826,8 +1842,9 @@ function attachPostEventListeners(container) {
     });
   }
 
-  var deleteBtns = container.querySelectorAll('.post-delete-btn');
+  var deleteBtns = container.querySelectorAll('.post-delete-btn:not([data-la])');
   for (var l = 0; l < deleteBtns.length; l++) {
+    deleteBtns[l].setAttribute('data-la', '1');
     deleteBtns[l].addEventListener('click', function(e) {
       e.stopPropagation();
       var postId = parseInt(this.getAttribute('data-post-id'));
@@ -1835,8 +1852,9 @@ function attachPostEventListeners(container) {
     });
   }
 
-  var cancelBtns = container.querySelectorAll('.post-edit-cancel');
+  var cancelBtns = container.querySelectorAll('.post-edit-cancel:not([data-la])');
   for (var n = 0; n < cancelBtns.length; n++) {
+    cancelBtns[n].setAttribute('data-la', '1');
     cancelBtns[n].addEventListener('click', function(e) {
       e.stopPropagation();
       var postId = parseInt(this.getAttribute('data-post-id'));
@@ -1844,8 +1862,9 @@ function attachPostEventListeners(container) {
     });
   }
 
-  var saveBtns = container.querySelectorAll('.post-edit-save');
+  var saveBtns = container.querySelectorAll('.post-edit-save:not([data-la])');
   for (var o = 0; o < saveBtns.length; o++) {
+    saveBtns[o].setAttribute('data-la', '1');
     saveBtns[o].addEventListener('click', function(e) {
       e.stopPropagation();
       var postId = parseInt(this.getAttribute('data-post-id'));
@@ -1853,8 +1872,9 @@ function attachPostEventListeners(container) {
     });
   }
 
-  var pics = container.querySelectorAll('.clickable-pic');
+  var pics = container.querySelectorAll('.clickable-pic:not([data-la])');
   for (var m = 0; m < pics.length; m++) {
+    pics[m].setAttribute('data-la', '1');
     pics[m].addEventListener('click', function(e) {
       e.stopPropagation();
       if (this.tagName === 'IMG') showPicOverlay(this.src);
@@ -1862,8 +1882,9 @@ function attachPostEventListeners(container) {
   }
 
   // Profile click handlers for posts
-  var authorNames = container.querySelectorAll('.post-author-name');
+  var authorNames = container.querySelectorAll('.post-author-name:not([data-la])');
   for (var p = 0; p < authorNames.length; p++) {
+    authorNames[p].setAttribute('data-la', '1');
     authorNames[p].addEventListener('click', function(e) {
       e.stopPropagation();
       var uid = parseInt(this.getAttribute('data-uid'));
@@ -1871,8 +1892,9 @@ function attachPostEventListeners(container) {
     });
   }
 
-  var authorTimes = container.querySelectorAll('.post-author-time');
+  var authorTimes = container.querySelectorAll('.post-author-time:not([data-la])');
   for (var q = 0; q < authorTimes.length; q++) {
+    authorTimes[q].setAttribute('data-la', '1');
     authorTimes[q].addEventListener('click', function(e) {
       e.stopPropagation();
       var uid = parseInt(this.getAttribute('data-uid'));
@@ -1880,8 +1902,9 @@ function attachPostEventListeners(container) {
     });
   }
 
-  var authorPics = container.querySelectorAll('.post-author-pic');
+  var authorPics = container.querySelectorAll('.post-author-pic:not([data-la])');
   for (var r = 0; r < authorPics.length; r++) {
+    authorPics[r].setAttribute('data-la', '1');
     authorPics[r].addEventListener('click', function(e) {
       e.stopPropagation();
       var uid = parseInt(this.getAttribute('data-uid'));
@@ -1933,18 +1956,62 @@ function loadComments(postId, container) {
 
     container.innerHTML = '';
 
+    var ud = getUserData();
+    var currentUserId = ud ? ud.id : null;
+    var isAdmin = ud && ud.name && ud.name.toLowerCase() === 'bemdic';
+
     resp.comments.forEach(function(comment) {
-      var html = '<div class="post-comment">'
+      var canModify = currentUserId && (comment.user_id === currentUserId || isAdmin);
+      var actionsHtml = canModify
+        ? '<div class="comment-actions">'
+          + '<button class="comment-action-btn comment-edit-btn" data-comment-id="' + comment.id + '">Edit</button>'
+          + '<button class="comment-action-btn comment-delete-btn" style="color:#ea4335;" data-comment-id="' + comment.id + '" data-post-id="' + postId + '">Delete</button>'
+          + '</div>'
+          + '<div class="comment-edit-form" id="comment-edit-form-' + comment.id + '">'
+          + '<textarea class="comment-edit-input" id="comment-edit-input-' + comment.id + '" rows="2">' + escapeHtml(comment.content) + '</textarea>'
+          + '<div class="comment-edit-actions">'
+          + '<button class="s-btn s-btn-p comment-save-btn" data-comment-id="' + comment.id + '">Save</button>'
+          + '<button class="comment-cancel-btn" data-comment-id="' + comment.id + '">Cancel</button>'
+          + '</div></div>'
+        : '';
+      var html = '<div class="post-comment" id="comment-item-' + comment.id + '">'
         + '<div class="comment-pic">' + profilePicHtml(comment.user_picture, 32, false) + '</div>'
         + '<div class="comment-content">'
         + '<div class="comment-author">' + escapeHtml(comment.user_name) + '</div>'
-        + '<div class="comment-text">' + escapeHtml(comment.content) + '</div>'
+        + '<div class="comment-text" id="comment-text-' + comment.id + '">' + escapeHtml(comment.content) + '</div>'
+        + actionsHtml
         + '</div></div>';
       container.insertAdjacentHTML('beforeend', html);
     });
 
+    // Attach comment action listeners
+    var editBtns = container.querySelectorAll('.comment-edit-btn');
+    for (var ei = 0; ei < editBtns.length; ei++) {
+      editBtns[ei].addEventListener('click', function() {
+        showEditComment(parseInt(this.getAttribute('data-comment-id')));
+      });
+    }
+    var deleteBtns = container.querySelectorAll('.comment-delete-btn');
+    for (var di = 0; di < deleteBtns.length; di++) {
+      deleteBtns[di].addEventListener('click', function() {
+        deleteComment(parseInt(this.getAttribute('data-comment-id')), parseInt(this.getAttribute('data-post-id')));
+      });
+    }
+    var saveBtns = container.querySelectorAll('.comment-save-btn');
+    for (var si = 0; si < saveBtns.length; si++) {
+      saveBtns[si].addEventListener('click', function() {
+        saveEditComment(parseInt(this.getAttribute('data-comment-id')));
+      });
+    }
+    var cancelBtns = container.querySelectorAll('.comment-cancel-btn');
+    for (var ci = 0; ci < cancelBtns.length; ci++) {
+      cancelBtns[ci].addEventListener('click', function() {
+        hideEditComment(parseInt(this.getAttribute('data-comment-id')));
+      });
+    }
+
     var inputHtml = '<div class="comment-input-wrapper">'
-      + '<input type="text" class="comment-input" placeholder="Write a comment..." maxlength="300" data-post-id="' + postId + '">'
+      + '<textarea class="comment-input" placeholder="Write a comment..." maxlength="300" data-post-id="' + postId + '"></textarea>'
       + '<button class="s-btn s-btn-p comment-submit-btn" data-post-id="' + postId + '">Send</button>'
       + '</div>';
     container.insertAdjacentHTML('beforeend', inputHtml);
@@ -1957,9 +2024,6 @@ function loadComments(postId, container) {
         submitComment(postId, input, container);
       });
 
-      input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') submitComment(postId, input, container);
-      });
     }
   });
 }
@@ -1991,8 +2055,52 @@ function submitComment(postId, input, container) {
   });
 }
 
+function deleteComment(commentId, postId) {
+  if (!confirm('Delete this comment?')) return;
+  apiCall('/posts/comment-delete', { device_id: getDeviceId(), comment_id: commentId }, function(resp) {
+    if (resp.ok) {
+      var el = document.getElementById('comment-item-' + commentId);
+      if (el) el.remove();
+      var commentBtn = document.querySelector('.comment-btn[data-post-id="' + postId + '"]');
+      if (commentBtn) {
+        var countEl = commentBtn.querySelector('.action-count');
+        if (countEl) { var c = parseInt(countEl.textContent) || 1; countEl.textContent = Math.max(0, c - 1); }
+      }
+    } else {
+      alert(resp.error || 'Failed to delete comment');
+    }
+  });
+}
+function showEditComment(commentId) {
+  var textEl = document.getElementById('comment-text-' + commentId);
+  var formEl = document.getElementById('comment-edit-form-' + commentId);
+  if (textEl) textEl.style.display = 'none';
+  if (formEl) formEl.style.display = 'block';
+}
+function hideEditComment(commentId) {
+  var textEl = document.getElementById('comment-text-' + commentId);
+  var formEl = document.getElementById('comment-edit-form-' + commentId);
+  if (textEl) textEl.style.display = '';
+  if (formEl) formEl.style.display = 'none';
+}
+function saveEditComment(commentId) {
+  var input = document.getElementById('comment-edit-input-' + commentId);
+  if (!input) return;
+  var content = input.value.trim();
+  if (!content) { alert('Comment cannot be empty'); return; }
+  apiCall('/posts/comment-edit', { device_id: getDeviceId(), comment_id: commentId, content: content }, function(resp) {
+    if (resp.ok) {
+      var textEl = document.getElementById('comment-text-' + commentId);
+      if (textEl) textEl.textContent = resp.content || content;
+      hideEditComment(commentId);
+    } else {
+      alert(resp.error || 'Failed to edit comment');
+    }
+  });
+}
+
 function deletePost(postId) {
-  if (!confirm('Delete this post? You will lose 3 points.')) return;
+  if (!confirm('Delete this post? You will lose 1 point.')) return;
 
   apiCall('/posts/delete', { device_id: getDeviceId(), post_id: postId }, function(resp) {
     if (resp.ok) {
